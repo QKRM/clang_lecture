@@ -25,6 +25,28 @@
 <h2>학습 목표</h2>
 <ol><li><code>sbs_strlen</code>을 구현하고 <code>\0</code> 처리를 이해한다.</li><li>버퍼 오버플로우가 왜 위험한지, "버퍼 안전" 함수가 왜 필요한지 설명한다.</li><li><code>sbs_strlcpy</code>의 크기 처리와 반환값을 구현한다.</li><li><code>sbs_strlcat</code>의 이어붙이기와 반환값 규칙을 구현한다.</li><li><code>sbs_strnlen</code>, <code>sbs_strncpy</code>, <code>sbs_strncat</code>, <code>sbs_strcmp</code>를 구현한다.</li></ol>
 <hr />
+<h2>0부: 들어가며 — 문자열 함수는 어디에 쓰이나</h2>
+<h3>왜 문자열을 다루는 함수가 따로 필요한가</h3>
+<p>C에는 파이썬의 <code>str</code>이나 자바의 <code>String</code> 같은 "문자열 타입"이 없습니다. C에서 문자열은 그냥 <strong><code>char</code> 배열 + 끝의 <code>\0</code></strong>일 뿐입니다(7차시). 그래서 <code>+</code>로 이어붙이거나 <code>==</code>로 비교할 수 없습니다. <code>==</code>는 두 배열의 <strong>주소</strong>만 비교할 뿐, 내용을 보지 않습니다.</p>
+<pre><code class="language-c">char a[] = "cat";
+char b[] = "cat";
+if (a == b)        // 거짓! 서로 다른 배열 → 주소가 다름
+if (a + b)         // 컴파일 에러. 포인터끼리 못 더함</code></pre>
+<p>그래서 길이 재기·복사·이어붙이기·비교·검색을 <strong>함수로 직접</strong> 해야 합니다. 이 함수들의 집합이 <code>&lt;string.h&gt;</code>이고, 우리는 그걸 <code>sbs_</code> 버전으로 손수 만들면서 내부 동작을 이해합니다.</p>
+<h3>str 계열 함수가 실제로 쓰이는 곳</h3>
+<p>문자열 처리는 거의 모든 프로그램의 바닥에 깔려 있습니다.</p>
+<table><thead><tr><th>분야</th><th>예시</th></tr></thead><tbody><tr><td>사용자 입력</td><td>이름·비밀번호·명령어를 받아 길이 검사, 비교</td></tr><tr><td>파일·로그</td><td>한 줄씩 읽어 키워드 검색, 잘라내기</td></tr><tr><td>네트워크</td><td>HTTP 헤더·프로토콜 메시지 파싱(문자열로 옴)</td></tr><tr><td>셸·CLI</td><td><code>ls -l</code> 같은 명령어와 인자를 토큰으로 분리</td></tr><tr><td>보안</td><td>입력 길이 검증으로 <strong>버퍼 오버플로우 방지</strong>(2부 핵심)</td></tr></tbody></table>
+<p>예를 들어 로그인 한 번에도 이런 함수들이 줄줄이 동작합니다.</p>
+<pre><code class="nohighlight">입력받은 ID 길이 확인        → strlen
+저장된 ID와 같은지 비교       → strcmp
+세션 버퍼에 안전하게 복사     → strlcpy
+"user=" 뒤에 ID 이어붙이기    → strlcat</code></pre>
+<h3>두 갈래: "끝까지" vs "n글자까지"</h3>
+<p>오늘 만드는 함수는 크게 두 묶음입니다. 이 구분이 str 계열 전체를 관통하는 핵심입니다.</p>
+<ul><li><strong>끝(<code>\0</code>)까지 처리</strong>: <code>strlen</code>, <code>strcpy</code>, <code>strcmp</code> — 간단하지만 입력을 믿어야 함</li><li><strong>최대 n글자/버퍼 크기까지만</strong>: <code>strnlen</code>, <code>strncpy</code>, <code>strncat</code>, <code>strlcpy</code>, <code>strlcat</code> — 길이 한계를 줘서 <strong>안전</strong></li></ul>
+<p>신뢰할 수 없는 입력(네트워크·파일·사용자)에는 거의 항상 <strong>n/size 버전</strong>을 씁니다. 왜 그런지는 2부 버퍼 오버플로우에서 직접 봅니다.</p>
+<blockquote>핵심: C 문자열엔 "길이"가 내장돼 있지 않다. 그래서 매번 <code>\0</code>을 찾아 세야 하고, 그 과정에서 버퍼를 넘지 않게 막는 게 안전한 문자열 처리의 전부다.</blockquote>
+<hr />
 <h2>1부: sbs_strlen — 길이 재기</h2>
 <p>문자열의 길이는 <code>\0</code>(끝 표시) <strong>직전까지의 글자 수</strong>입니다. <code>\0</code>을 만날 때까지 한 칸씩 세면 됩니다.</p>
 <pre><code class="language-c">size_t sbs_strlen(const char *s)
