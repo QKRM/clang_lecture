@@ -1,0 +1,243 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>14차시 · 문자열 함수 III — C언어 입문 강의</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/styles/atom-one-dark.min.css" />
+    <link rel="stylesheet" href="../lesson.css" />
+  </head>
+  <body>
+    <div id="readbar" class="readbar"></div>
+    <nav class="topnav">
+      <a class="back" href="../index.html">← 강의 목록</a>
+      <span class="crumb">C언어 입문 강의 · 14 / 16</span>
+    </nav>
+    <header class="lesson-hero">
+      <div class="lesson-hero-inner">
+        <span class="badge">libsbs 구현 · 14차시</span>
+        <h1>문자열 함수 III</h1>
+      </div>
+    </header>
+    <main class="wrap">
+      <article class="md">
+<p>이번 차시는 문자열을 <strong>비교</strong>하고(<code>strncmp</code>), 문자열을 <strong>정수로 변환</strong>하는(<code>atoi</code>) 함수를 만듭니다. 둘 다 새 메모리를 만들지 않고 입력을 읽어 결과를 계산하는 함수입니다. (문자열 복제 <code>strdup</code>은 11차시에서 다뤘습니다.)</p>
+<h2>학습 목표</h2>
+<ol><li><code>sbs_strncmp</code>로 문자열을 n글자까지 비교할 수 있다.</li><li><code>sbs_atoi</code>로 문자열을 정수로 변환하며 부호·공백을 처리할 수 있다.</li></ol>
+<hr />
+<h2>1부: sbs_strncmp</h2>
+<p><code>s1</code>과 <code>s2</code>를 최대 <code>n</code>글자 비교. 처음 다른 글자의 차이를 반환, 같으면 0. <strong><code>\0</code>을 만나면 멈춤</strong>(memcmp와 다른 점).</p>
+<pre><code class="language-c">int sbs_strncmp(const char *s1, const char *s2, size_t n)
+{
+    size_t i = 0;
+    while (i &lt; n)
+    {
+        if (s1[i] != s2[i] || s1[i] == '\0')
+            return ((unsigned char)s1[i] - (unsigned char)s2[i]);
+        i++;
+    }
+    return (0);
+}</code></pre>
+<p>핵심 포인트:</p>
+<ul><li><code>s1[i] == '\0'</code>이면 종료(문자열 끝). 한쪽이 짧으면 그 자리에서 결판</li><li><code>unsigned char</code>로 캐스팅해 차이 계산(부호 정확)</li><li>반환값의 <strong>부호</strong>가 중요</li></ul>
+<blockquote>memcmp(11차시)는 n바이트를 무조건 보지만, strncmp는 <code>\0</code>에서 멈춥니다.</blockquote>
+<hr />
+<h2>2부: sbs_atoi</h2>
+<p>문자열을 정수로 변환합니다. 표준 <code>atoi</code>의 동작 순서를 그대로 따릅니다.</p>
+<h3>2.1 처리 순서</h3>
+<ol><li><strong>선행 공백</strong> 건너뛰기 (스페이스, 탭, 개행 등)</li><li><strong>부호</strong> <code>+</code>/<code>-</code> 한 개 처리</li><li><strong>숫자</strong>를 만나는 동안 누적</li><li>숫자가 아닌 문자를 만나면 중단</li></ol>
+<pre><code class="language-c">static int is_space(char c)
+{
+    return (c == ' ' || c == '\t' || c == '\n'
+        || c == '\v' || c == '\f' || c == '\r');
+}
+
+int sbs_atoi(const char *str)
+{
+    int  i = 0;
+    int  sign = 1;
+    long result = 0;
+
+    while (is_space(str[i]))           // 1. 공백
+        i++;
+    if (str[i] == '+' || str[i] == '-')// 2. 부호
+    {
+        if (str[i] == '-')
+            sign = -1;
+        i++;
+    }
+    while (str[i] &gt;= '0' &amp;&amp; str[i] &lt;= '9')  // 3. 숫자 누적
+    {
+        result = result * 10 + (str[i] - '0');
+        i++;
+    }
+    return ((int)(result * sign));
+}</code></pre>
+<h3>2.2 엣지 케이스</h3>
+<table><thead><tr><th>입력</th><th>결과</th><th>이유</th></tr></thead><tbody><tr><td><code>"42"</code></td><td>42</td><td>기본</td></tr><tr><td><code>"-42"</code></td><td>-42</td><td>부호</td></tr><tr><td><code>"   123"</code></td><td>123</td><td>선행 공백</td></tr><tr><td><code>"12ab"</code></td><td>12</td><td>숫자만</td></tr><tr><td><code>"abc"</code></td><td>0</td><td>숫자 없음</td></tr><tr><td><code>"+-5"</code></td><td>0</td><td>부호 한 개만</td></tr></tbody></table>
+<blockquote><code>'5' - '0'</code> = 5(2차시 ASCII). <code>result</code>를 <code>long</code>으로 두면 큰 수에서 조금 안전합니다.</blockquote>
+<hr />
+<h2>3부: 채점</h2>
+<p><code>strncmp</code>와 <code>atoi</code> 모두 표준 함수와 결과를 비교합니다.</p>
+<pre><code class="language-bash">$ bash grade.sh
+✓ sbs_strncmp   (...)
+✓ sbs_atoi      (...)
+결과: 2 / 2 통과</code></pre>
+<hr />
+<h2>핵심 정리</h2>
+<ol><li><code>strncmp</code>는 n글자 비교, <code>\0</code>에서 멈춤, 부호 중요(unsigned char)</li><li><code>atoi</code>는 공백 → 부호 → 숫자 순으로 처리</li><li><code>'문자' - '0'</code>로 숫자 문자를 정수로</li><li>엣지 케이스가 점수를 가른다(빈 입력, 부호만, 혼합)</li></ol>
+<hr />
+<h2>다음 차시 예고</h2>
+<p>15차시에서는 Makefile과 정적 라이브러리를 다룹니다. 지금까지 만든 모든 <code>sbs_*.c</code>를 <code>ar</code>로 묶어 <code>libsbs.a</code>를 만들고, Makefile로 빌드를 자동화합니다. 16차시 종합 프로젝트의 준비 단계입니다.</p>
+<div class="section-split"><h2>실습</h2><p>아래 문제를 직접 풀어본 뒤, 맨 아래 정답 코드로 확인하세요.</p></div>
+<h2>실습 목표</h2>
+<ul><li><code>sbs_strncmp</code>로 n글자 비교를 구현한다.</li><li><code>sbs_atoi</code>로 부호·공백·혼합 입력을 처리해 정수로 변환한다.</li></ul>
+<blockquote><strong>금지</strong>: <code>&lt;string.h&gt;</code>, <code>&lt;strings.h&gt;</code>. 직접 구현해야 합니다.</blockquote>
+<hr />
+<h2>준비: libsbs.h에 추가</h2>
+<pre><code class="language-c">int		sbs_strncmp(const char *s1, const char *s2, size_t n);
+int		sbs_atoi(const char *str);</code></pre>
+<hr />
+<h2>과제 1: sbs_strncmp</h2>
+<p><code>sbs_strncmp.c</code> — 최대 n글자 비교, 처음 다른 글자 차이, 같으면 0.</p>
+<p>요구사항:</p>
+<ul><li><code>\0</code>을 만나면 종료(문자열 끝)</li><li><code>unsigned char</code>로 차이 계산</li><li>부호가 정확해야 함</li></ul>
+<p>힌트:</p>
+<pre><code class="language-c">while (i &lt; n)
+{
+    if (s1[i] != s2[i] || s1[i] == '\0')
+        return ((unsigned char)s1[i] - (unsigned char)s2[i]);
+    i++;
+}
+return (0);</code></pre>
+<blockquote>memcmp와 달리 <code>\0</code>에서 멈춥니다. 한쪽이 짧으면 거기서 결판.</blockquote>
+<hr />
+<h2>과제 2: sbs_atoi</h2>
+<p><code>sbs_atoi.c</code> — 문자열을 정수로. 공백 → 부호 → 숫자 순서.</p>
+<p>요구사항:</p>
+<ul><li>선행 공백 건너뛰기(<code> </code>, <code>\t</code>, <code>\n</code>, <code>\v</code>, <code>\f</code>, <code>\r</code>)</li><li><code>+</code>/<code>-</code> 부호 한 개 처리</li><li>숫자가 아닌 문자를 만나면 중단</li><li>숫자 없으면 0</li></ul>
+<p>힌트:</p>
+<pre><code class="language-c">while (is_space(str[i])) i++;
+if (str[i] == '+' || str[i] == '-')
+{
+    if (str[i] == '-') sign = -1;
+    i++;
+}
+while (str[i] &gt;= '0' &amp;&amp; str[i] &lt;= '9')
+{
+    result = result * 10 + (str[i] - '0');
+    i++;
+}
+return ((int)(result * sign));</code></pre>
+<p>엣지 케이스 (꼭 테스트):</p>
+<pre><code class="nohighlight">"42"→42  "-42"→-42  "  +7"→7  "12ab"→12
+"abc"→0  ""→0  "+-5"→0  "\t-99x"→-99</code></pre>
+<blockquote><code>is_space</code> 보조 함수를 만들면 깔끔합니다. <code>result</code>를 <code>long</code>으로 두면 큰 수에 조금 안전.</blockquote>
+<hr />
+<h2>과제 3: 채점 + 엣지 케이스</h2>
+<pre><code class="language-bash">$ bash grade.sh
+=== libsbs 14차시 채점 ===
+✓ sbs_strncmp   (...)
+✓ sbs_atoi      (...)
+결과: 2 / 2 통과</code></pre>
+<p>실패 시 <code>bash grade.sh -v</code>로 어떤 입력에서 틀렸는지 확인.</p>
+<p>메모리 누수 점검(권장):</p>
+<pre><code class="language-bash">$ valgrind --leak-check=full ./a.out</code></pre>
+<hr />
+<h2>제출 확인 사항</h2>
+<ul><li>[ ] <code>libsbs.h</code>에 2개 프로토타입 추가</li><li>[ ] <code>sbs_strncmp.c</code> - n글자 비교, \0 종료, 부호 정확</li><li>[ ] <code>sbs_atoi.c</code> - 공백·부호·숫자 처리, 엣지 케이스</li><li>[ ] <code>&lt;string.h&gt;</code> 미사용</li><li>[ ] <code>bash grade.sh</code> → 2 / 2 통과</li></ul>
+<hr />
+<h2>더 생각해볼 거리</h2>
+<ol><li>strncmp가 <code>\0</code>에서 멈추는 이유는? (문자열은 \0이 끝)</li><li>atoi가 오버플로(범위 초과 숫자)를 만나면? (표준은 정의되지 않음 — 여기선 long으로 완화)</li><li>strncmp를 <code>char</code>로 비교하면 왜 부호가 뒤집힐까? (0x80 이상 바이트가 음수)</li></ol>
+<div class="section-split"><h2>정답 코드</h2><p>각 항목의 "정답 보기"를 눌러 펼치세요. 먼저 직접 풀어본 뒤 확인하는 것을 권장합니다.</p></div>
+<div class="answer"><div class="answer-head"><span class="answer-name">📄 <span class="file">libsbs.h</span></span><button class="answer-toggle">정답 보기</button></div><div class="answer-body"><pre><code class="language-c">#ifndef LIBSBS_H
+# define LIBSBS_H
+
+# include &lt;stddef.h&gt;
+
+/* 14차시 — 문자열 비교와 변환 */
+int		sbs_strncmp(const char *s1, const char *s2, size_t n);
+int		sbs_atoi(const char *str);
+
+#endif</code></pre></div></div>
+<div class="answer"><div class="answer-head"><span class="answer-name">📄 <span class="file">sbs_atoi.c</span></span><button class="answer-toggle">정답 보기</button></div><div class="answer-body"><pre><code class="language-c">#include "libsbs.h"
+
+static int	is_space(char c)
+{
+	return (c == ' ' || c == '\t' || c == '\n'
+		|| c == '\v' || c == '\f' || c == '\r');
+}
+
+int	sbs_atoi(const char *str)
+{
+	int		i;
+	int		sign;
+	long	result;
+
+	i = 0;
+	sign = 1;
+	result = 0;
+	while (is_space(str[i]))
+		i++;
+	if (str[i] == '+' || str[i] == '-')
+	{
+		if (str[i] == '-')
+			sign = -1;
+		i++;
+	}
+	while (str[i] &gt;= '0' &amp;&amp; str[i] &lt;= '9')
+	{
+		result = result * 10 + (str[i] - '0');
+		i++;
+	}
+	return ((int)(result * sign));
+}</code></pre></div></div>
+<div class="answer"><div class="answer-head"><span class="answer-name">📄 <span class="file">sbs_strncmp.c</span></span><button class="answer-toggle">정답 보기</button></div><div class="answer-body"><pre><code class="language-c">#include "libsbs.h"
+
+int	sbs_strncmp(const char *s1, const char *s2, size_t n)
+{
+	size_t	i;
+
+	i = 0;
+	while (i &lt; n)
+	{
+		if (s1[i] != s2[i] || s1[i] == '\0')
+			return ((unsigned char)s1[i] - (unsigned char)s2[i]);
+		i++;
+	}
+	return (0);
+}</code></pre></div></div>
+
+      </article>
+    </main>
+    <button id="toTop" class="to-top" aria-label="맨 위로">↑</button>
+    <script>
+      document.querySelectorAll(".answer-head").forEach(function (h) {
+        h.addEventListener("click", function () {
+          var card = h.parentElement;
+          card.classList.toggle("open");
+          h.querySelector(".answer-toggle").textContent =
+            card.classList.contains("open") ? "정답 숨기기" : "정답 보기";
+        });
+      });
+      var bar = document.getElementById("readbar");
+      var toTopBtn = document.getElementById("toTop");
+      function onScroll() {
+        var y = window.scrollY || document.documentElement.scrollTop;
+        var dh = document.documentElement.scrollHeight - window.innerHeight;
+        var r = dh > 0 ? y / dh : 0;
+        bar.style.width = (Math.min(1, Math.max(0, r)) * 100) + "%";
+        toTopBtn.classList.toggle("show", y > 400);
+      }
+      window.addEventListener("scroll", onScroll, { passive: true });
+      toTopBtn.addEventListener("click", function () { window.scrollTo({ top: 0, behavior: "smooth" }); });
+      onScroll();
+    </script>
+    <script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/highlight.min.js"></script>
+    <script>
+      if (window.hljs) {
+        document.querySelectorAll("pre code:not(.nohighlight)").forEach(function (el) { hljs.highlightElement(el); });
+      }
+    </script>
+  </body>
+</html>

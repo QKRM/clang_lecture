@@ -1,0 +1,112 @@
+<!--
+Quiz page for C Language Session 10 (메모리 함수 I).
+15 multiple-choice questions, instant feedback, final score. Cyan & Amber palette.
+NEITHER Mermaid JS NOR SVG were used anywhere in this output.
+-->
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>10차시 퀴즈: 메모리 함수 I</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+      @import url("https://fonts.googleapis.com/css2?family=Pretendard:wght@400;500;600;700;800;900&display=swap");
+      body { font-family: "Pretendard", sans-serif; background-color: #0f172a; color: #f8fafc; }
+      pre, code { font-family: 'Courier New', Courier, monospace; }
+    </style>
+  </head>
+  <body class="min-h-screen">
+    <div class="bg-slate-900 border-b border-slate-800 px-6 py-4 flex flex-wrap items-center justify-between gap-4 sticky top-0 z-50">
+      <div class="flex items-center gap-3">
+        <span class="bg-cyan-600 text-white text-xs font-bold px-2.5 py-1 rounded-full uppercase tracking-wider">Quiz 10</span>
+        <h1 class="text-sm md:text-base font-bold text-slate-200">10차시 퀴즈 — 메모리 함수 I</h1>
+      </div>
+      <div class="flex items-center gap-2 bg-slate-800 px-3 py-1.5 rounded-lg border border-slate-700">
+        <span class="text-xs text-slate-400">진행:</span>
+        <span id="progress" class="text-xs font-bold text-cyan-400">0 / 15</span>
+      </div>
+    </div>
+
+    <div class="max-w-3xl mx-auto p-4 md:p-8">
+      <div id="intro" class="bg-slate-900 rounded-3xl p-8 border border-slate-800 mb-6">
+        <h2 class="text-2xl font-black text-white mb-2">수업 마무리 퀴즈</h2>
+        <p class="text-slate-400 text-sm mb-4">void*, 바이트 단위 처리, 메모리 함수 4개를 점검합니다. 총 15문항. 답을 고르면 바로 정답·해설이 표시됩니다.</p>
+        <button onclick="startQuiz()" class="bg-cyan-600 hover:bg-cyan-700 text-white text-sm font-semibold px-5 py-2.5 rounded-lg transition-colors">퀴즈 시작</button>
+      </div>
+      <div id="quizArea" class="hidden space-y-4"></div>
+      <div id="result" class="hidden bg-slate-900 rounded-3xl p-8 border border-slate-800 text-center mt-6">
+        <h2 class="text-2xl font-black text-white mb-2">결과</h2>
+        <p id="scoreText" class="text-4xl font-black mb-3"></p>
+        <p id="scoreMsg" class="text-slate-400 text-sm mb-5"></p>
+        <button onclick="location.reload()" class="bg-slate-800 hover:bg-slate-700 text-slate-200 text-sm font-semibold px-5 py-2.5 rounded-lg border border-slate-700 transition-colors">다시 풀기</button>
+      </div>
+    </div>
+
+    <script>
+      const QUESTIONS = [
+        { q: "메모리 함수들이 인자를 <code class='text-cyan-300'>void *</code>로 받는 이유는?", opts: ["속도 때문", "어떤 타입이든 받기 위해", "문법 규칙", "포인터가 작아서"], answer: 1, why: "메모리 함수는 int·구조체·문자열 무엇이든 받아야 하므로 타입을 가리지 않는 void*를 씁니다." },
+        { q: "void* 를 역참조하려면 먼저 무엇을 해야 하나?", opts: ["free", "구체적 타입으로 캐스팅", "NULL 검사", "복사"], answer: 1, why: "void*는 무엇을 가리키는지 모르므로 unsigned char* 등 구체 타입으로 캐스팅해야 역참조 가능." },
+        { q: "메모리를 바이트 단위로 다룰 때 캐스팅하는 타입은?", opts: ["char *", "unsigned char *", "int *", "void *"], answer: 1, why: "unsigned char(0~255)로 캐스팅. char는 부호가 있어 음수 바이트가 깨질 수 있습니다." },
+        { q: "길이 인자에 쓰는 부호 없는 정수 타입은?", opts: ["int", "long", "size_t", "char"], answer: 2, why: "size_t. <stddef.h>에 정의되어 있어 헤더에 # include <stddef.h>가 필요합니다." },
+        { q: "sbs_memset이 반환하는 값은?", opts: ["채운 바이트 수", "첫 인자 b 포인터", "void(없음)", "NULL"], answer: 1, why: "memset은 채운 뒤 첫 인자(대상 포인터) b를 그대로 반환합니다." },
+        { q: "sbs_bzero의 반환값은?", opts: ["채운 포인터", "0", "없음(void)", "n"], answer: 2, why: "bzero는 void 함수. 0으로 채우기만 하고 아무것도 반환하지 않습니다." },
+        { q: "sbs_bzero를 가장 간단히 구현하는 방법은?", opts: ["반복문 새로 작성", "sbs_memset(s, 0, n) 호출", "calloc 사용", "memcpy 사용"], answer: 1, why: "bzero는 memset의 값=0 특수형. sbs_memset(s, 0, n)을 호출하면 한 줄." },
+        { q: "memcpy에서 src 인자에 const를 붙이는 이유는?", opts: ["속도", "src는 읽기만 하기 때문", "필수 문법", "크기 때문"], answer: 1, why: "원본 src는 읽기만 하므로 const. 실수로 수정하면 컴파일 에러로 막힙니다." },
+        { q: "sbs_memcpy가 보장하지 않는 상황은?", opts: ["n이 0", "dst와 src가 겹칠 때", "src가 NULL이 아닐 때", "큰 버퍼"], answer: 1, why: "memcpy는 겹치는 영역을 보장하지 않습니다. 겹치는 복사는 11차시 memmove." },
+        { q: "sbs_memccpy가 문자 c를 찾았을 때 반환하는 것은?", opts: ["NULL", "dst에서 c 다음 위치", "c의 인덱스", "복사한 바이트 수"], answer: 1, why: "c를 찾으면 dst에서 그 문자 '다음' 위치의 포인터를 반환합니다." },
+        { q: "sbs_memccpy가 n바이트 안에 c를 못 찾으면?", opts: ["dst 반환", "NULL 반환", "마지막 위치", "0 반환"], answer: 1, why: "끝까지 c를 못 찾으면 NULL을 반환합니다." },
+        { q: "memccpy에서 정지 문자를 비교할 때 캐스팅은?", opts: ["(int)c", "(unsigned char)c", "(char)c", "캐스팅 안 함"], answer: 1, why: "바이트 비교이므로 s[i]와 (unsigned char)c를 비교합니다." },
+        { q: "9차시 libsbs.h에 10차시 함수를 어떻게 넣나?", opts: ["덮어쓴다", "기존 선언 아래에 추가한다", "새 헤더를 만든다", "넣지 않는다"], answer: 1, why: "기존 7개 선언을 유지하고 아래에 메모리 함수 4개를 추가합니다(누적)." },
+        { q: "10차시 채점에서 금지된 헤더는?", opts: ["<stdio.h>", "<stddef.h>", "<string.h>/<strings.h>", "<stdlib.h>"], answer: 2, why: "표준 memcpy 등으로 우회하지 못하게 <string.h>, <strings.h>는 금지입니다." },
+        { q: "채점 스크립트가 메모리 함수를 검증하는 방법은?", opts: ["출력 글자 수만", "버퍼 내용 + 반환 포인터를 표준과 비교", "컴파일만", "실행 시간"], answer: 1, why: "표준 함수와 같은 입력을 처리한 뒤, 버퍼 내용과 반환 포인터가 일치하는지 비교합니다." }
+      ];
+
+      let current = 0, score = 0;
+      function startQuiz() { document.getElementById("intro").classList.add("hidden"); document.getElementById("quizArea").classList.remove("hidden"); renderQuestion(); }
+      function renderQuestion() {
+        const area = document.getElementById("quizArea");
+        const item = QUESTIONS[current];
+        document.getElementById("progress").innerText = (current + 1) + " / " + QUESTIONS.length;
+        const card = document.createElement("div");
+        card.className = "bg-slate-900 rounded-3xl p-6 md:p-8 border border-slate-800";
+        let html = '<div class="flex items-start gap-3 mb-5"><span class="bg-cyan-600 text-white text-sm font-black w-7 h-7 rounded-full flex items-center justify-center shrink-0">' + (current + 1) + '</span><p class="text-white text-base font-semibold">' + item.q + '</p></div><div class="space-y-2">';
+        item.opts.forEach(function (opt, idx) { html += '<button data-idx="' + idx + '" class="optBtn w-full text-left bg-slate-800/50 hover:bg-slate-800 text-slate-200 text-sm px-4 py-3 rounded-xl border border-slate-700 transition-colors"><span class="text-cyan-400 font-bold mr-2">' + String.fromCharCode(65 + idx) + '</span>' + opt + '</button>'; });
+        html += '</div><div class="feedback hidden mt-4 p-4 rounded-xl text-sm"></div><div class="nextWrap hidden mt-4 text-right"><button onclick="nextQuestion()" class="bg-cyan-600 hover:bg-cyan-700 text-white text-sm font-semibold px-5 py-2.5 rounded-lg transition-colors">' + (current === QUESTIONS.length - 1 ? "결과 보기" : "다음 문제") + '</button></div>';
+        card.innerHTML = html;
+        area.appendChild(card);
+        card.querySelectorAll(".optBtn").forEach(function (btn) { btn.addEventListener("click", function () { selectAnswer(card, parseInt(btn.dataset.idx)); }); });
+        card.scrollIntoView({ behavior: "smooth", block: "start" });
+      }
+      function selectAnswer(card, idx) {
+        const item = QUESTIONS[current];
+        const btns = card.querySelectorAll(".optBtn");
+        btns.forEach(function (b) { b.disabled = true; b.classList.add("cursor-default"); });
+        const correct = item.answer;
+        if (idx === correct) score++;
+        btns[correct].className = "optBtn w-full text-left bg-emerald-600/20 text-emerald-200 text-sm px-4 py-3 rounded-xl border border-emerald-500/50";
+        if (idx !== correct) btns[idx].className = "optBtn w-full text-left bg-rose-600/20 text-rose-200 text-sm px-4 py-3 rounded-xl border border-rose-500/50";
+        const fb = card.querySelector(".feedback");
+        fb.classList.remove("hidden");
+        if (idx === correct) { fb.className = "feedback mt-4 p-4 rounded-xl text-sm bg-emerald-950/40 border border-emerald-500/30 text-emerald-200"; fb.innerHTML = "<span class='font-bold'>정답!</span> " + item.why; }
+        else { fb.className = "feedback mt-4 p-4 rounded-xl text-sm bg-rose-950/40 border border-rose-500/30 text-rose-200"; fb.innerHTML = "<span class='font-bold'>오답.</span> 정답: " + String.fromCharCode(65 + correct) + ". " + item.why; }
+        card.querySelector(".nextWrap").classList.remove("hidden");
+      }
+      function nextQuestion() { current++; if (current < QUESTIONS.length) renderQuestion(); else showResult(); }
+      function showResult() {
+        document.getElementById("quizArea").classList.add("hidden");
+        const res = document.getElementById("result"); res.classList.remove("hidden");
+        const pct = Math.round((score / QUESTIONS.length) * 100);
+        const st = document.getElementById("scoreText"); st.innerText = score + " / " + QUESTIONS.length;
+        st.className = "text-4xl font-black mb-3 " + (pct >= 70 ? "text-emerald-400" : pct >= 40 ? "text-amber-400" : "text-rose-400");
+        let msg;
+        if (pct === 100) msg = "완벽합니다! 메모리 함수를 확실히 이해했네요.";
+        else if (pct >= 70) msg = "잘했어요. 틀린 문항의 해설을 다시 확인하세요.";
+        else if (pct >= 40) msg = "절반 정도입니다. 강의 노트를 복습하고 다시 도전하세요.";
+        else msg = "복습이 필요합니다. lecture.md를 다시 읽어보세요.";
+        document.getElementById("scoreMsg").innerText = msg;
+        res.scrollIntoView({ behavior: "smooth" });
+      }
+    </script>
+  </body>
+</html>

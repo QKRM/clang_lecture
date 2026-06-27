@@ -1,0 +1,779 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>libsbs 따라잡기 — Codespaces · 터미널 · C언어 1~8차시</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <!-- 모바일 상단바 -->
+    <header class="topbar">
+      <button id="menuBtn" class="menu-btn" aria-label="메뉴">☰</button>
+      <span class="topbar-title">libsbs 따라잡기</span>
+      <span class="topbar-badge">1~8차시</span>
+    </header>
+
+    <!-- 사이드바 -->
+    <aside id="sidebar" class="sidebar">
+      <div class="sidebar-head">
+        <h1>libsbs<br /><span>따라잡기</span></h1>
+        <p>8차시까지 못 들은 사람을 위한 한 페이지 요약</p>
+      </div>
+      <nav id="nav">
+        <a href="#intro" class="nav-link">시작하기</a>
+        <p class="nav-group">환경</p>
+        <a href="#codespaces" class="nav-link">1. GitHub Codespaces</a>
+        <a href="#terminal" class="nav-link">2. 터미널 명령어</a>
+        <a href="#compile" class="nav-link">3. 컴파일과 실행</a>
+        <p class="nav-group">C언어 1~8차시</p>
+        <a href="#s1" class="nav-link">1차시 · Hello World</a>
+        <a href="#s2" class="nav-link">2차시 · 변수·자료형</a>
+        <a href="#s3" class="nav-link">3차시 · 조건문·반복문</a>
+        <a href="#s4" class="nav-link">4차시 · 함수·재귀</a>
+        <a href="#s5" class="nav-link">5차시 · 포인터</a>
+        <a href="#s6" class="nav-link">6차시 · 배열·포인터</a>
+        <a href="#s7" class="nav-link">7차시 · 문자열</a>
+        <a href="#s8" class="nav-link">8차시 · 구조체</a>
+        <a href="#next" class="nav-link">다음 단계</a>
+      </nav>
+      <div class="sidebar-foot">진도 <span id="progressPct">0%</span></div>
+    </aside>
+    <div id="overlay" class="overlay"></div>
+
+    <!-- 본문 -->
+    <main class="content">
+      <div id="readbar" class="readbar"></div>
+
+      <!-- 시작 -->
+      <section id="intro" class="hero">
+        <span class="kicker">CATCH-UP GUIDE</span>
+        <h2>8차시까지 한 번에 따라잡기</h2>
+        <p class="lead">
+          이 페이지 하나면 됩니다. GitHub Codespaces로 개발 환경을 켜고, 터미널 기본 명령어를 익히고,
+          C언어 1~8차시 핵심을 코드와 함께 복습합니다. 왼쪽 메뉴로 원하는 곳으로 바로 이동하세요.
+        </p>
+        <div class="hero-cards">
+          <a href="#codespaces" class="hero-card">
+            <span class="hc-num">01</span>
+            <span class="hc-title">개발 환경</span>
+            <span class="hc-desc">Codespaces + 터미널 + 컴파일</span>
+          </a>
+          <a href="#s1" class="hero-card">
+            <span class="hc-num">02</span>
+            <span class="hc-title">C언어 기초</span>
+            <span class="hc-desc">Hello World부터 구조체까지</span>
+          </a>
+          <a href="#next" class="hero-card">
+            <span class="hc-num">03</span>
+            <span class="hc-title">다음 단계</span>
+            <span class="hc-desc">9차시 libsbs 구현 준비</span>
+          </a>
+        </div>
+      </section>
+
+      <!-- 1. Codespaces -->
+      <section id="codespaces" class="block">
+        <span class="sec-tag">환경 · 1</span>
+        <h3>GitHub Codespaces 활용</h3>
+        <p>Codespaces는 브라우저에서 바로 열리는 클라우드 개발 환경입니다. 설치 없이 VS Code + gcc가 준비됩니다.</p>
+
+        <h4>생성 순서</h4>
+        <ol class="steps">
+          <li><b>github.com</b> 로그인</li>
+          <li><b>+</b> → New repository → 이름 <code>libsbs</code> → <b>Add a README</b> 체크 → Create</li>
+          <li>리포지토리 → <code>&lt;&gt; Code</code> → <b>Codespaces</b> 탭 → <b>Create codespace on main</b></li>
+          <li>1~2분 대기 → 브라우저에 VS Code 환경이 열림</li>
+        </ol>
+
+        <div class="callout warn">
+          <b>주의</b> README 체크를 빠뜨리면 Codespace 생성이 안 됩니다.
+        </div>
+
+        <h4>환경 확인</h4>
+        <div class="code" data-lang="bash">
+          <button class="copy">복사</button>
+          <pre><code>$ gcc --version
+gcc (Ubuntu 11.4.0) 11.4.0</code></pre>
+        </div>
+        <p class="note">gcc가 보이면 준비 완료. 안 보이면 로딩이 덜 된 것 — 잠시 후 다시.</p>
+      </section>
+
+      <!-- 2. 터미널 -->
+      <section id="terminal" class="block">
+        <span class="sec-tag">환경 · 2</span>
+        <h3>터미널 기본 명령어</h3>
+        <p>터미널은 명령어로 컴퓨터를 다루는 창입니다. 자주 쓰는 것만 외우면 됩니다.</p>
+
+        <table class="tbl">
+          <thead><tr><th>명령어</th><th>의미</th><th>예시</th></tr></thead>
+          <tbody>
+            <tr><td><code>pwd</code></td><td>현재 위치 경로</td><td><code>pwd</code></td></tr>
+            <tr><td><code>ls</code></td><td>파일 목록</td><td><code>ls -la</code></td></tr>
+            <tr><td><code>cd</code></td><td>폴더 이동</td><td><code>cd src</code> / <code>cd ..</code></td></tr>
+            <tr><td><code>mkdir</code></td><td>폴더 생성</td><td><code>mkdir day1</code></td></tr>
+            <tr><td><code>touch</code></td><td>빈 파일 생성</td><td><code>touch hello.c</code></td></tr>
+            <tr><td><code>cat</code></td><td>파일 내용 출력</td><td><code>cat hello.c</code></td></tr>
+            <tr><td><code>rm</code></td><td>삭제</td><td><code>rm hello</code></td></tr>
+            <tr><td><code>clear</code></td><td>화면 지우기</td><td><code>clear</code></td></tr>
+            <tr><td><code>man</code></td><td>함수/명령 설명서</td><td><code>man 3 strlen</code></td></tr>
+          </tbody>
+        </table>
+
+        <div class="callout tip">
+          <b>Tab 자동완성</b> 파일·폴더 이름 입력 중 Tab을 누르면 자동 완성됩니다. 필수 습관.
+        </div>
+      </section>
+
+      <!-- 3. 컴파일 -->
+      <section id="compile" class="block">
+        <span class="sec-tag">환경 · 3</span>
+        <h3>컴파일과 실행</h3>
+        <p>소스 코드(<code>.c</code>)를 <b>gcc</b>로 컴파일해 실행 파일을 만들고 돌립니다. gcc 대신 <code>cc</code>를 써도 됩니다(보통 같은 컴파일러를 가리킴).</p>
+
+        <div class="code" data-lang="bash">
+          <button class="copy">복사</button>
+          <pre><code># 컴파일 (경고를 엄격하게)
+$ gcc -Wall -Wextra -Werror hello.c -o hello
+
+# 실행 (./ 를 앞에 붙인다)
+$ ./hello
+Hello, World!</code></pre>
+        </div>
+
+        <h4>컴파일 4단계</h4>
+        <p>한 줄 명령처럼 보이지만 내부에서 4단계를 거칩니다.</p>
+        <div class="code" data-lang="text">
+          <button class="copy">복사</button>
+          <pre><code>소스(.c)
+  │ ① 전처리 (preprocess)  #include·#define 처리
+  ▼
+  │ ② 컴파일 (compile)     C → 어셈블리(.s)
+  ▼
+  │ ③ 어셈블 (assemble)    어셈블리 → 기계어(.o)
+  ▼
+  │ ④ 링크 (link)          .o + 라이브러리 → 실행 파일
+  ▼
+실행 파일 (a.out / hello)</code></pre>
+        </div>
+
+        <h4>필수 경고 옵션</h4>
+        <table class="tbl">
+          <thead><tr><th>옵션</th><th>의미</th></tr></thead>
+          <tbody>
+            <tr><td><code>-Wall</code></td><td>대부분의 경고 표시</td></tr>
+            <tr><td><code>-Wextra</code></td><td>추가 경고 표시 (미사용 매개변수 등)</td></tr>
+            <tr><td><code>-Werror</code></td><td>경고를 에러로 처리 → 경고 있으면 컴파일 실패</td></tr>
+            <tr><td><code>-o 이름</code></td><td>실행 파일 이름 지정 (없으면 <code>a.out</code>)</td></tr>
+          </tbody>
+        </table>
+        <div class="callout warn">
+          <b>libsbs 규칙</b> 항상 <code>-Wall -Wextra -Werror</code>로 컴파일. 경고 0개가 목표입니다.
+        </div>
+
+        <h4>단계별·디버깅 옵션</h4>
+        <table class="tbl">
+          <thead><tr><th>옵션</th><th>역할</th><th>언제 쓰나</th></tr></thead>
+          <tbody>
+            <tr><td><code>-c</code></td><td>링크 없이 <code>.o</code>만 생성</td><td>여러 파일 분리 컴파일·라이브러리</td></tr>
+            <tr><td><code>-E</code></td><td>전처리 결과만 출력</td><td>매크로·include 확인</td></tr>
+            <tr><td><code>-S</code></td><td>어셈블리(<code>.s</code>) 생성</td><td>저수준 확인(심화)</td></tr>
+            <tr><td><code>-g</code></td><td>디버그 정보 포함</td><td><code>gdb</code>·<code>valgrind</code> 쓸 때</td></tr>
+            <tr><td><code>-O0</code> ~ <code>-O2</code></td><td>최적화 수준 (0=없음)</td><td>디버그는 <code>-O0</code>, 배포는 <code>-O2</code></td></tr>
+            <tr><td><code>-std=c99</code></td><td>C 표준 버전 지정</td><td>표준 호환성 맞출 때</td></tr>
+            <tr><td><code>-I.</code></td><td>헤더 검색 경로 추가(현재 폴더)</td><td><code>"libsbs.h"</code> 못 찾을 때</td></tr>
+            <tr><td><code>-L. -lsbs</code></td><td>라이브러리 경로·링크</td><td><code>libsbs.a</code> 링크 (15차시)</td></tr>
+            <tr><td><code>-fsanitize=address</code></td><td>메모리 오류 런타임 검출</td><td>잘못된 접근·누수 추적(심화)</td></tr>
+          </tbody>
+        </table>
+
+        <h4>여러 파일 분리 컴파일</h4>
+        <div class="code" data-lang="bash">
+          <button class="copy">복사</button>
+          <pre><code># 각각 .o로 컴파일
+$ gcc -Wall -Wextra -Werror -c main.c   -o main.o
+$ gcc -Wall -Wextra -Werror -c utils.c  -o utils.o
+
+# .o들을 묶어 실행 파일로 (링크)
+$ gcc main.o utils.o -o program
+$ ./program</code></pre>
+        </div>
+        <p class="note">파일이 많아지면 이 과정을 <b>Makefile</b>로 자동화합니다 (15차시).</p>
+
+        <h4>디버깅 도구와 함께</h4>
+        <div class="code" data-lang="bash">
+          <button class="copy">복사</button>
+          <pre><code># 디버그 정보 포함 컴파일 후 메모리 누수 검사
+$ gcc -Wall -Wextra -Werror -g main.c -o prog
+$ valgrind --leak-check=full ./prog
+
+# 주소 새니타이저 (잘못된 메모리 접근 즉시 검출)
+$ gcc -g -fsanitize=address main.c -o prog
+$ ./prog</code></pre>
+        </div>
+        <div class="callout tip">
+          <b>자주 쓰는 조합</b> 평소엔 <code>gcc -Wall -Wextra -Werror</code>, 메모리 버그 추적엔 <code>-g</code> + <code>valgrind</code> 또는 <code>-fsanitize=address</code>.
+        </div>
+      </section>
+
+      <!-- 1차시 -->
+      <section id="s1" class="block">
+        <span class="sec-tag">C · 1차시</span>
+        <h3>Hello World와 소스 구조</h3>
+        <div class="code" data-lang="c">
+          <button class="copy">복사</button>
+          <pre><code>#include &lt;stdio.h&gt;
+
+int main(void)
+{
+    printf("Hello, World!\n");
+    return (0);
+}</code></pre>
+        </div>
+        <ul class="bullets">
+          <li><code>#include &lt;stdio.h&gt;</code> — <b>전처리기 지시문</b>. <code>printf</code> 선언을 가져옴</li>
+          <li><code>int main(void)</code> — 프로그램의 <b>진입점</b>. 실행은 여기서 시작</li>
+          <li><code>{ }</code> — 함수 본문을 감싸는 블록</li>
+          <li><code>printf("...\n")</code> — 화면 출력, <code>\n</code>은 줄바꿈</li>
+          <li><code>return (0);</code> — 0 = 정상 종료. OS가 이 값으로 성공/실패 판단</li>
+          <li>모든 문장은 세미콜론 <code>;</code>으로 끝남</li>
+        </ul>
+
+        <h4>printf 서식 지정자</h4>
+        <table class="tbl">
+          <thead><tr><th>지정자</th><th>타입</th><th>예시 출력</th></tr></thead>
+          <tbody>
+            <tr><td><code>%d</code></td><td>정수 int</td><td><code>42</code></td></tr>
+            <tr><td><code>%c</code></td><td>문자 char</td><td><code>A</code></td></tr>
+            <tr><td><code>%s</code></td><td>문자열</td><td><code>hello</code></td></tr>
+            <tr><td><code>%f</code> / <code>%.2f</code></td><td>실수 / 소수 2자리</td><td><code>3.14</code></td></tr>
+            <tr><td><code>%p</code></td><td>포인터(주소)</td><td><code>0x7ffe...</code></td></tr>
+            <tr><td><code>%zu</code></td><td>size_t (크기)</td><td><code>8</code></td></tr>
+            <tr><td><code>%x</code></td><td>16진수</td><td><code>2a</code></td></tr>
+            <tr><td><code>%%</code></td><td>% 기호 자체</td><td><code>%</code></td></tr>
+          </tbody>
+        </table>
+
+        <h4>이스케이프 문자</h4>
+        <table class="tbl">
+          <thead><tr><th>표기</th><th>의미</th></tr></thead>
+          <tbody>
+            <tr><td><code>\n</code></td><td>줄바꿈</td></tr>
+            <tr><td><code>\t</code></td><td>탭</td></tr>
+            <tr><td><code>\"</code></td><td>큰따옴표 자체</td></tr>
+            <tr><td><code>\\</code></td><td>역슬래시 자체</td></tr>
+            <tr><td><code>\0</code></td><td>null 문자 (문자열 끝 — 7차시 핵심)</td></tr>
+          </tbody>
+        </table>
+
+        <h4>여러 값 출력 예시</h4>
+        <div class="code" data-lang="c">
+          <button class="copy">복사</button>
+          <pre><code>int    age = 21;
+double height = 175.5;
+char   grade = 'A';
+
+printf("나이: %d, 키: %.1f, 등급: %c\n", age, height, grade);
+// 나이: 21, 키: 175.5, 등급: A</code></pre>
+        </div>
+        <div class="callout tip">
+          <b>man 활용</b> <code>man 3 printf</code>로 모든 서식 지정자를 확인할 수 있습니다.
+        </div>
+      </section>
+
+      <!-- 2차시 -->
+      <section id="s2" class="block">
+        <span class="sec-tag">C · 2차시</span>
+        <h3>변수, 자료형, 연산자</h3>
+        <table class="tbl">
+          <thead><tr><th>자료형</th><th>크기</th><th>범위</th><th>용도</th></tr></thead>
+          <tbody>
+            <tr><td><code>char</code></td><td>1 byte</td><td>-128 ~ 127</td><td>문자 1개 / 작은 정수</td></tr>
+            <tr><td><code>unsigned char</code></td><td>1 byte</td><td>0 ~ 255</td><td>바이트 단위 메모리</td></tr>
+            <tr><td><code>int</code></td><td>4 byte</td><td>±21억</td><td>일반 정수</td></tr>
+            <tr><td><code>long</code></td><td>8 byte</td><td>매우 큰 정수</td><td>큰 정수</td></tr>
+            <tr><td><code>float</code></td><td>4 byte</td><td>7자리 정밀도</td><td>실수</td></tr>
+            <tr><td><code>double</code></td><td>8 byte</td><td>15자리 정밀도</td><td>정밀한 실수</td></tr>
+            <tr><td><code>size_t</code></td><td>8 byte</td><td>0 ~ 매우 큼</td><td>크기·길이 (부호 없음)</td></tr>
+          </tbody>
+        </table>
+        <p class="note">크기는 시스템마다 다를 수 있음 → 항상 <code>sizeof</code>로 확인. Codespaces(64비트)에선 위 값.</p>
+
+        <h4>변수 선언과 초기화</h4>
+        <div class="code" data-lang="c">
+          <button class="copy">복사</button>
+          <pre><code>int x;              // 선언만 → 쓰레기값! (위험)
+int score = 100;    // 선언 + 초기화 (올바름)
+const int MAX = 1024;   // const = 변하지 않는 값
+
+printf("int 크기: %zu 바이트\n", sizeof(int));   // 4</code></pre>
+        </div>
+
+        <h4>산술 / 나눗셈</h4>
+        <div class="code" data-lang="c">
+          <button class="copy">복사</button>
+          <pre><code>int    a = 17, b = 5;
+
+a + b      // 22
+a - b      // 12
+a * b      // 85
+a / b      // 3   ← 정수 나눗셈 (소수점 버림!)
+a % b      // 2   ← 나머지
+
+double r = (double)a / b;   // 3.4 (형 변환 필요)</code></pre>
+        </div>
+
+        <h4>연산자 정리</h4>
+        <table class="tbl">
+          <thead><tr><th>분류</th><th>연산자</th></tr></thead>
+          <tbody>
+            <tr><td>산술</td><td><code>+ - * / %</code></td></tr>
+            <tr><td>비교 (결과 0/1)</td><td><code>== != &gt; &lt; &gt;= &lt;=</code></td></tr>
+            <tr><td>논리</td><td><code>&amp;&amp;</code> (AND) <code>||</code> (OR) <code>!</code> (NOT)</td></tr>
+            <tr><td>증감</td><td><code>a++</code> (후위) <code>++a</code> (전위)</td></tr>
+            <tr><td>복합 대입</td><td><code>+= -= *= /= %=</code></td></tr>
+          </tbody>
+        </table>
+        <p class="note">우선순위: <code>()</code> → <code>! ++ --</code> → <code>* / %</code> → <code>+ -</code> → 비교 → <code>&amp;&amp;</code> → <code>||</code> → 대입. 헷갈리면 괄호.</p>
+
+        <h4>형 변환과 ASCII</h4>
+        <ul class="bullets">
+          <li><code>sizeof</code> 출력은 <code>%zu</code> 사용 (아니면 경고)</li>
+          <li>정수÷정수 = 정수. 실수가 필요하면 <code>(double)</code> 캐스팅</li>
+          <li>문자 <code>'5'</code> → 정수 5: <code>'5' - '0'</code> (atoi의 핵심)</li>
+          <li>대문자 → 소문자: <code>c + 32</code> · 소문자 → 대문자: <code>c - 32</code></li>
+          <li><code>'A'</code>=65, <code>'a'</code>=97, <code>'0'</code>=48, <code>' '</code>=32</li>
+        </ul>
+      </section>
+
+      <!-- 3차시 -->
+      <section id="s3" class="block">
+        <span class="sec-tag">C · 3차시</span>
+        <h3>조건문과 반복문</h3>
+        <h4>조건문 if / else if / else</h4>
+        <div class="code" data-lang="c">
+          <button class="copy">복사</button>
+          <pre><code>if (score >= 90)
+    printf("A\n");
+else if (score >= 80)
+    printf("B\n");        // 위에서부터 처음 참인 가지만 실행
+else
+    printf("F\n");</code></pre>
+        </div>
+        <div class="callout warn">
+          <b>중괄호 주의</b> <code>{}</code>를 생략하면 <b>바로 다음 한 문장만</b> 조건에 묶입니다. 항상 <code>{}</code>를 쓰는 습관이 버그를 막습니다.
+        </div>
+
+        <h4>switch (fall-through 주의)</h4>
+        <div class="code" data-lang="c">
+          <button class="copy">복사</button>
+          <pre><code>switch (day)
+{
+    case 1:
+        printf("월\n");
+        break;            // 없으면 다음 case로 흘러내림!
+    case 2:
+        printf("화\n");
+        break;
+    default:
+        printf("기타\n");
+}</code></pre>
+        </div>
+
+        <h4>반복문 3종</h4>
+        <div class="code" data-lang="c">
+          <button class="copy">복사</button>
+          <pre><code>for (int i = 0; i < 5; i++)   // 횟수 정해짐
+    printf("%d ", i);          // 0 1 2 3 4
+
+int i = 0;
+while (i < 5)                 // 조건 기반
+{
+    printf("%d ", i);
+    i++;                      // 종료 조건 변경 (무한루프 방지)
+}
+
+do {
+    printf("최소 1회\n");      // 먼저 실행 후 조건 검사
+} while (0);</code></pre>
+        </div>
+
+        <table class="tbl">
+          <thead><tr><th>상황</th><th>추천</th></tr></thead>
+          <tbody>
+            <tr><td>반복 횟수가 정해짐</td><td><code>for</code></td></tr>
+            <tr><td>조건 기반 (입력/탐색)</td><td><code>while</code></td></tr>
+            <tr><td>최소 1회 보장</td><td><code>do-while</code></td></tr>
+          </tbody>
+        </table>
+
+        <h4>흐름 제어 + 중첩</h4>
+        <div class="code" data-lang="c">
+          <button class="copy">복사</button>
+          <pre><code>for (int i = 0; i < 10; i++)
+{
+    if (i == 5)
+        break;        // 반복 전체 종료
+    if (i % 2 == 0)
+        continue;     // 현재 회차만 건너뜀
+    printf("%d ", i); // 1 3
+}
+
+// 중첩 반복문 — 구구단
+for (int dan = 2; dan <= 9; dan++)
+    for (int n = 1; n <= 9; n++)
+        printf("%d x %d = %d\n", dan, n, dan * n);</code></pre>
+        </div>
+        <ul class="bullets">
+          <li>C에서 <b>0은 거짓, 0이 아니면 참</b> (음수도 참)</li>
+          <li><code>switch</code>는 각 <code>case</code> 끝에 <code>break</code> 필수</li>
+          <li><code>break</code> 반복 종료, <code>continue</code> 현재 회차만 건너뜀</li>
+          <li>FizzBuzz: 15의 배수를 <b>가장 먼저</b> 검사 (순서 중요)</li>
+        </ul>
+      </section>
+
+      <!-- 4차시 -->
+      <section id="s4" class="block">
+        <span class="sec-tag">C · 4차시</span>
+        <h3>함수와 재귀</h3>
+        <h4>선언 · 정의 · 호출</h4>
+        <div class="code" data-lang="c">
+          <button class="copy">복사</button>
+          <pre><code>int add(int a, int b);   // 1. 선언(프로토타입) — main 위
+
+int main(void)
+{
+    int result = add(3, 5);      // 3. 호출
+    printf("%d\n", result);      // 8
+    return (0);
+}
+
+int add(int a, int b)    // 2. 정의 (본문)
+{
+    return (a + b);
+}</code></pre>
+        </div>
+        <p class="note">C는 위에서 아래로 읽습니다. <code>main</code> 아래 정의된 함수를 호출하려면 위에 <b>프로토타입</b>이 필요합니다.</p>
+
+        <h4>값에 의한 전달 (pass by value)</h4>
+        <div class="code" data-lang="c">
+          <button class="copy">복사</button>
+          <pre><code>void try_change(int x)
+{
+    x = 100;          // 복사본만 변경
+}
+
+int main(void)
+{
+    int a = 5;
+    try_change(a);
+    printf("%d\n", a);   // 5  ← 원본 안 바뀜!
+}</code></pre>
+        </div>
+        <p class="note">원본을 바꾸려면 <b>주소(포인터)</b>를 넘겨야 합니다 → 5차시.</p>
+
+        <h4>재귀 (recursion)</h4>
+        <div class="code" data-lang="c">
+          <button class="copy">복사</button>
+          <pre><code>int factorial(int n)
+{
+    if (n <= 1)              // 종료 조건 (base case) — 필수!
+        return (1);
+    return (n * factorial(n - 1));   // 재귀 호출
+}
+
+// factorial(4) = 4*3*2*1 = 24</code></pre>
+        </div>
+        <ul class="bullets">
+          <li>함수 = 반환타입 + 이름 + 매개변수 + 본문</li>
+          <li>인자는 <b>값으로 복사</b>되어 전달 — 원본은 안 바뀜</li>
+          <li>함수 호출마다 <b>스택 프레임</b>이 쌓이고 <code>return</code> 시 제거</li>
+          <li>재귀는 <b>종료 조건</b> + <b>재귀 호출</b> 두 가지 필수</li>
+          <li>종료 조건 없으면 스택 오버플로로 크래시</li>
+          <li><code>void</code> = 반환값 없음 / 매개변수 없음</li>
+        </ul>
+      </section>
+
+      <!-- 5차시 -->
+      <section id="s5" class="block">
+        <span class="sec-tag">C · 5차시</span>
+        <h3>포인터 기초</h3>
+        <h4>주소와 역참조</h4>
+        <div class="code" data-lang="c">
+          <button class="copy">복사</button>
+          <pre><code>int n = 42;
+int *p = &n;        // p는 n의 주소를 담음
+
+printf("%d\n", n);          // 42  (값)
+printf("%p\n", (void *)&n); // 0x... (주소)
+printf("%d\n", *p);         // 42  (*p = 가리키는 값)
+
+*p = 100;           // p가 가리키는 곳에 100
+printf("%d\n", n);  // 100  ← n이 바뀜! (*p와 n은 같은 메모리)</code></pre>
+        </div>
+
+        <table class="tbl">
+          <thead><tr><th>표현</th><th>의미</th><th>결과</th></tr></thead>
+          <tbody>
+            <tr><td><code>n</code></td><td>변수 n</td><td>값 (42)</td></tr>
+            <tr><td><code>&amp;n</code></td><td>n의 주소</td><td>주소 (0x...)</td></tr>
+            <tr><td><code>p</code></td><td>포인터 p</td><td>주소 (0x...)</td></tr>
+            <tr><td><code>*p</code></td><td>p가 가리키는 값</td><td>값 (42)</td></tr>
+          </tbody>
+        </table>
+
+        <h4>swap — 포인터로 원본 교환</h4>
+        <div class="code" data-lang="c">
+          <button class="copy">복사</button>
+          <pre><code>void swap(int *a, int *b)
+{
+    int tmp = *a;   // a가 가리키는 값 보관
+    *a = *b;
+    *b = tmp;
+}
+
+int x = 3, y = 7;
+swap(&x, &y);       // 반드시 주소(&)를 넘김
+// x=7, y=3</code></pre>
+        </div>
+
+        <h4>NULL과 안전</h4>
+        <div class="code" data-lang="c">
+          <button class="copy">복사</button>
+          <pre><code>int *p;       // 초기화 안 함 → 쓰레기 주소
+// *p = 5;    // 위험! 크래시 (segmentation fault)
+
+int *q = NULL;   // 안전하게 초기화
+if (q != NULL)   // 쓰기 전 확인
+    *q = 5;</code></pre>
+        </div>
+        <ul class="bullets">
+          <li><code>&amp;n</code> = 값→주소, <code>*p</code> = 주소→값 (반대 방향)</li>
+          <li>선언의 <code>*</code>(포인터다)와 사용의 <code>*</code>(가리키는 값)는 다른 역할</li>
+          <li>함수에 <b>주소를 넘기면</b> 원본을 바꿀 수 있다 (swap)</li>
+          <li>초기화 안 한 포인터 역참조 = 크래시 → <code>NULL</code>로 초기화 후 확인</li>
+          <li><code>%p</code> 출력엔 <code>(void *)</code> 캐스팅</li>
+        </ul>
+      </section>
+
+      <!-- 6차시 -->
+      <section id="s6" class="block">
+        <span class="sec-tag">C · 6차시</span>
+        <h3>배열과 포인터</h3>
+        <h4>배열의 메모리 배치</h4>
+        <div class="code" data-lang="c">
+          <button class="copy">복사</button>
+          <pre><code>int arr[5] = {10, 20, 30, 40, 50};
+
+// 주소        값
+// 0x1000     10   arr[0]
+// 0x1004     20   arr[1]   ← int 4바이트씩 증가
+// 0x1008     30   arr[2]
+// ...
+
+arr == &arr[0]      // 배열 이름 = 첫 원소 주소
+int *p = arr;       // & 안 붙임!</code></pre>
+        </div>
+
+        <h4>포인터 산술</h4>
+        <div class="code" data-lang="c">
+          <button class="copy">복사</button>
+          <pre><code>int *p = arr;
+*(p + 0)   // arr[0]
+*(p + 2)   // arr[2]  ← 포인터 산술 = 인덱스
+
+// 포인터를 직접 이동하며 순회
+while (p < arr + 5)
+{
+    printf("%d ", *p);
+    p++;            // 다음 원소 (타입 크기만큼 이동)
+}</code></pre>
+        </div>
+        <p class="note"><code>p + 1</code>은 1바이트가 아니라 <b>타입 크기</b>만큼(int면 4바이트) 이동합니다.</p>
+
+        <h4>배열을 함수에 전달 (버블 정렬)</h4>
+        <div class="code" data-lang="c">
+          <button class="copy">복사</button>
+          <pre><code>void bubble_sort(int *arr, int size)   // 주소가 넘어감 → 원본 변경
+{
+    for (int i = 0; i < size - 1; i++)
+        for (int j = 0; j < size - 1 - i; j++)
+            if (arr[j] > arr[j + 1])
+            {
+                int tmp = arr[j];
+                arr[j] = arr[j + 1];
+                arr[j + 1] = tmp;
+            }
+}</code></pre>
+        </div>
+        <ul class="bullets">
+          <li>배열은 메모리에 <b>연속</b> 배치 (int면 4바이트씩)</li>
+          <li>배열 이름은 첫 원소의 주소 (<code>arr == &amp;arr[0]</code>) — <code>&amp;</code> 안 붙임</li>
+          <li><code>arr[i]</code>는 사실 <code>*(arr + i)</code></li>
+          <li>함수에 배열을 넘기면 <b>주소가 전달</b>되어 원본이 바뀜</li>
+          <li>함수는 크기를 모르므로 <code>size</code>를 항상 같이 넘긴다</li>
+          <li>인덱스는 <code>0 ~ size-1</code>. 범위 초과 접근은 위험</li>
+        </ul>
+      </section>
+
+      <!-- 7차시 -->
+      <section id="s7" class="block">
+        <span class="sec-tag">C · 7차시</span>
+        <h3>문자열과 포인터</h3>
+        <h4>문자열의 구조</h4>
+        <div class="code" data-lang="c">
+          <button class="copy">복사</button>
+          <pre><code>char s[6] = "hello";
+// 인덱스  0   1   2   3   4   5
+// 값     'h' 'e' 'l' 'l' 'o' '\0'
+//                             ↑ 끝 표시 (6바이트)</code></pre>
+        </div>
+        <p class="note"><code>\0</code>이 없으면 문자열이 어디서 끝나는지 알 수 없어 출력·길이 계산이 폭주합니다.</p>
+
+        <h4>배열 vs 포인터</h4>
+        <div class="code" data-lang="c">
+          <button class="copy">복사</button>
+          <pre><code>char  arr[] = "hello";   // 복사본 — 수정 가능
+arr[0] = 'H';            // OK → "Hello"
+
+char *ptr = "hello";     // 리터럴 — 읽기 전용
+// ptr[0] = 'H';         // 위험! 크래시</code></pre>
+        </div>
+
+        <h4>포인터로 순회 (길이 세기)</h4>
+        <div class="code" data-lang="c">
+          <button class="copy">복사</button>
+          <pre><code>int len = 0;
+while (s[len])          // s[len]이 '\0'(0)이면 종료
+    len++;
+
+// 또는 포인터로
+char *p = s;
+while (*p)
+{
+    printf("%c", *p);
+    p++;
+}</code></pre>
+        </div>
+
+        <h4>문자 다루기 (ASCII)</h4>
+        <div class="code" data-lang="c">
+          <button class="copy">복사</button>
+          <pre><code>// 대문자로 ('a'~'z'만 -32)
+if (c >= 'a' && c <= 'z')
+    c = c - 32;
+
+// 뒤집기 (양끝 → 가운데 swap)
+int left = 0, right = len - 1;
+while (left < right)
+{
+    char tmp = s[left];
+    s[left] = s[right];
+    s[right] = tmp;
+    left++; right--;
+}</code></pre>
+        </div>
+        <ul class="bullets">
+          <li>문자열 = <code>char</code> 배열 + 끝의 <code>\0</code> (null terminator)</li>
+          <li>"hello"는 글자 5 + <code>\0</code> 1 = <b>6바이트</b></li>
+          <li><code>char arr[]</code>는 수정 가능, <code>char *p = "..."</code>는 읽기 전용(수정 시 크래시)</li>
+          <li><code>while (*p)</code>로 <code>\0</code>까지 순회 (길이를 몰라도 됨)</li>
+          <li>문자는 ASCII 정수 — 대소문자는 ±32</li>
+          <li>복사할 땐 마지막에 <code>\0</code>을 꼭 붙인다</li>
+        </ul>
+      </section>
+
+      <!-- 8차시 -->
+      <section id="s8" class="block">
+        <span class="sec-tag">C · 8차시</span>
+        <h3>구조체와 typedef</h3>
+        <h4>구조체 선언과 typedef</h4>
+        <div class="code" data-lang="c">
+          <button class="copy">복사</button>
+          <pre><code>typedef struct s_student
+{
+    char name[20];
+    int  age;
+    int  score;
+}   t_student;          // 별칭 → struct 생략 가능
+
+t_student s = {"Kim", 20, 95};   // 멤버 순서대로 초기화</code></pre>
+        </div>
+        <p class="note">구조체 정의 끝에 세미콜론 <code>};</code> 필수. 빠뜨리면 컴파일 에러.</p>
+
+        <h4>멤버 접근 — . 과 -&gt;</h4>
+        <div class="code" data-lang="c">
+          <button class="copy">복사</button>
+          <pre><code>t_student s = {"Kim", 20, 95};
+printf("%d\n", s.age);        // 변수는 점(.)
+
+t_student *p = &s;
+printf("%d\n", p->age);       // 포인터는 화살표(->)
+p->age++;                     // 원본 수정 (p->age == (*p).age)</code></pre>
+        </div>
+
+        <h4>문자열 멤버 + 구조체 배열</h4>
+        <div class="code" data-lang="c">
+          <button class="copy">복사</button>
+          <pre><code>#include &lt;string.h&gt;
+
+strcpy(s.name, "Kim");   // 배열은 대입 불가 → 복사
+
+t_student class[3] = {
+    {"Kim", 20, 95},
+    {"Lee", 21, 88},
+    {"Park", 22, 77}
+};
+for (int i = 0; i < 3; i++)
+    printf("%s %d\n", class[i].name, class[i].score);</code></pre>
+        </div>
+
+        <h4>함수에 전달</h4>
+        <div class="code" data-lang="c">
+          <button class="copy">복사</button>
+          <pre><code>void print_student(t_student s);          // 값 (복사, 읽기)
+void set_score(t_student *p, int sc)      // 포인터 (원본 수정)
+{
+    p->score = sc;
+}</code></pre>
+        </div>
+        <ul class="bullets">
+          <li>구조체 = 서로 다른 데이터를 하나로 묶기</li>
+          <li>정의 끝에 <code>};</code> 세미콜론 필수</li>
+          <li>변수 멤버는 <code>.</code>, 포인터 멤버는 <code>-&gt;</code> (<code>p-&gt;age == (*p).age</code>)</li>
+          <li><code>typedef</code>로 별칭 → <code>struct</code> 생략</li>
+          <li>문자열 멤버는 <code>strcpy</code>로 채움 (대입 불가)</li>
+          <li>읽기만 하면 값 전달, 수정하려면 포인터 전달</li>
+        </ul>
+      </section>
+
+      <!-- 다음 단계 -->
+      <section id="next" class="block next-block">
+        <span class="sec-tag">다음 단계</span>
+        <h3>9차시부터는 libsbs 구현</h3>
+        <p>
+          1~8차시 기초를 다졌다면, 9차시부터 표준 C 라이브러리 함수를 직접 만듭니다.
+          포인터·메모리·문자열·구조체가 모두 쓰입니다.
+        </p>
+        <div class="next-grid">
+          <div class="next-item"><b>9차시</b> 헤더 파일 + 문자 분류 함수</div>
+          <div class="next-item"><b>10~11차시</b> 메모리 함수 (memset, memcpy…)</div>
+          <div class="next-item"><b>12~14차시</b> 문자열 함수 (strlen, atoi…)</div>
+          <div class="next-item"><b>15~16차시</b> Makefile + libsbs.a 통합</div>
+        </div>
+        <div class="callout tip">
+          <b>준비 완료 체크</b> Codespaces에서 <code>gcc --version</code>이 나오고,
+          <code>gcc -Wall -Wextra -Werror hello.c -o hello</code>로 컴파일·실행이 되면 9차시 시작 준비 끝.
+        </div>
+      </section>
+
+      <footer class="foot">
+        libsbs 따라잡기 가이드 · C언어 1~8차시 요약 · GitHub Codespaces 기반
+      </footer>
+    </main>
+
+    <button id="toTop" class="to-top" aria-label="맨 위로">↑</button>
+
+    <script src="script.js"></script>
+  </body>
+</html>

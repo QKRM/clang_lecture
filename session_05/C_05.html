@@ -1,0 +1,705 @@
+<!--
+Palette: Cyan & Amber (same as C_01/C_02/C_03/C_04 — consistent course design)
+Plan Summary: 16-slide interactive presentation for C Language Session 5.
+Covers memory & address, & and * operators, pointer declaration, dereference, modifying originals via pointers, swap, NULL safety.
+NEITHER Mermaid JS NOR SVG were used anywhere in this output.
+-->
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>5차시 강의자료: 포인터 기초</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+      @import url("https://fonts.googleapis.com/css2?family=Pretendard:wght@400;500;600;700;800;900&display=swap");
+      body {
+        font-family: "Pretendard", sans-serif;
+        background-color: #0f172a;
+        color: #f8fafc;
+        overflow-x: hidden;
+      }
+      pre, code { font-family: 'Courier New', Courier, monospace; }
+    </style>
+  </head>
+  <body class="min-h-screen flex flex-col justify-between">
+
+    <!-- Top Nav -->
+    <div class="bg-slate-900 border-b border-slate-800 px-6 py-4 flex flex-wrap items-center justify-between gap-4 sticky top-0 z-50">
+      <div class="flex items-center gap-3">
+        <span class="bg-cyan-600 text-white text-xs font-bold px-2.5 py-1 rounded-full uppercase tracking-wider">Session 5</span>
+        <h1 class="text-sm md:text-base font-bold text-slate-200">C언어 기초 — libsbs 구현 과정</h1>
+      </div>
+      <div class="flex items-center gap-4">
+        <div class="flex items-center gap-2 bg-slate-800 px-3 py-1.5 rounded-lg border border-slate-700">
+          <span class="text-xs text-slate-400">슬라이드:</span>
+          <span id="slideCounter" class="text-xs font-bold text-cyan-400">1 / 16</span>
+        </div>
+      </div>
+    </div>
+
+    <div id="deckContainer" class="flex-grow flex items-center justify-center p-4 md:p-8">
+
+      <!-- Slide 01: Cover -->
+      <div id="slide1" class="bg-gradient-to-br from-slate-900 via-cyan-950 to-slate-900 w-full max-w-5xl aspect-[16/9] rounded-3xl p-8 md:p-12 shadow-2xl border border-slate-800 flex flex-col justify-between">
+        <div class="flex justify-between items-start">
+          <span class="text-cyan-400 font-bold tracking-wider text-sm uppercase">Slide 01 / Cover</span>
+          <span class="text-slate-500 text-sm">5차시: 포인터 기초</span>
+        </div>
+        <div class="my-auto">
+          <span class="inline-block bg-cyan-500/20 text-cyan-300 text-xs font-extrabold px-3 py-1.5 rounded-md mb-4 border border-cyan-500/30">5차시 · 3시간 · 주소 + 역참조 + 포인터</span>
+          <h2 class="text-3xl md:text-5xl font-black text-white leading-tight mb-4">
+            포인터<br /><span class="text-transparent bg-clip-text bg-gradient-to-r from-amber-400 to-orange-300">기초</span>
+          </h2>
+          <p class="text-slate-400 text-base md:text-lg max-w-2xl">
+            변수는 메모리 어딘가에 산다. <code class="text-cyan-300">&amp;</code>로 주소를 얻고 <code class="text-cyan-300">*</code>로 그 값을 다룬다. 값 전달의 한계를 포인터로 넘습니다.
+          </p>
+        </div>
+        <div class="flex justify-between items-center text-xs text-slate-500 border-t border-slate-800/80 pt-4">
+          <span>C Language — libsbs Implementation Course</span>
+          <span>Time Frame: 3 Hours</span>
+        </div>
+      </div>
+
+      <!-- Slide 02: 오늘의 목표 -->
+      <div id="slide2" class="bg-slate-900 w-full max-w-5xl aspect-[16/9] rounded-3xl p-8 md:p-12 shadow-2xl border border-slate-800 flex flex-col justify-between hidden">
+        <div class="flex justify-between items-start">
+          <span class="text-cyan-400 font-bold tracking-wider text-sm uppercase">Slide 02 / Goal</span>
+          <span class="text-slate-500 text-sm">5차시: 포인터 기초</span>
+        </div>
+        <div class="my-auto">
+          <h3 class="text-2xl md:text-3xl font-bold text-white mb-6 border-b border-slate-800 pb-3">오늘의 목표</h3>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <div class="space-y-3">
+              <div class="p-4 bg-slate-800/30 rounded-xl border-l-4 border-cyan-500">
+                <h4 class="font-bold text-white text-sm mb-1">1부 — 강사 설명</h4>
+                <p class="text-slate-400 text-xs">메모리와 주소, `&`와 `*`, 포인터 선언, 포인터로 원본 수정, NULL</p>
+              </div>
+              <div class="p-4 bg-slate-800/30 rounded-xl border-l-4 border-amber-500">
+                <h4 class="font-bold text-white text-sm mb-1">2부 — 직접 구현</h4>
+                <p class="text-slate-400 text-xs">주소·역참조 실습 + swap + 포인터로 원본 수정 + 포인터 추적</p>
+              </div>
+            </div>
+            <div class="bg-slate-800/50 p-6 rounded-xl border border-slate-700">
+              <h4 class="font-bold text-amber-400 text-sm mb-3">오늘 수업이 끝나면</h4>
+              <ul class="space-y-2 text-xs text-slate-300">
+                <li class="flex items-start gap-2"><span class="text-emerald-400 font-bold mt-0.5">1</span><span>주소와 메모리 개념을 설명한다</span></li>
+                <li class="flex items-start gap-2"><span class="text-emerald-400 font-bold mt-0.5">2</span><span><code class="text-cyan-300 bg-slate-950 px-1 rounded">&amp;</code>와 <code class="text-cyan-300 bg-slate-950 px-1 rounded">*</code>를 사용한다</span></li>
+                <li class="flex items-start gap-2"><span class="text-emerald-400 font-bold mt-0.5">3</span><span>포인터로 원본 값을 수정한다</span></li>
+                <li class="flex items-start gap-2"><span class="text-emerald-400 font-bold mt-0.5">4</span><span>swap을 포인터로 구현한다</span></li>
+              </ul>
+              <div class="mt-4 bg-cyan-950/40 p-3 rounded-lg border border-cyan-500/20">
+                <p class="text-cyan-300 text-xs font-semibold">libsbs와의 연결</p>
+                <p class="text-slate-400 text-[10px] mt-1">모든 <code class="text-amber-300">sbs_mem*</code>, <code class="text-amber-300">sbs_str*</code> 함수가 포인터로 메모리를 다룬다</p>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="flex justify-between items-center text-xs text-slate-500 border-t border-slate-800/80 pt-4">
+          <span>Today's Goal</span><span>Session 5</span>
+        </div>
+      </div>
+
+      <!-- Slide 03: 메모리와 주소 -->
+      <div id="slide3" class="bg-slate-900 w-full max-w-5xl aspect-[16/9] rounded-3xl p-8 md:p-12 shadow-2xl border border-slate-800 flex flex-col justify-between hidden">
+        <div class="flex justify-between items-start">
+          <span class="text-cyan-400 font-bold tracking-wider text-sm uppercase">Slide 03 / Memory &amp; Address</span>
+          <span class="text-slate-500 text-sm">5차시: 포인터 기초</span>
+        </div>
+        <div class="my-auto">
+          <h3 class="text-2xl md:text-3xl font-bold text-white mb-4 border-b border-slate-800 pb-3">메모리와 주소</h3>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="space-y-4">
+              <div class="bg-slate-800/40 p-5 rounded-xl border border-slate-700">
+                <h4 class="font-bold text-cyan-400 text-sm mb-3">변수는 메모리에 산다</h4>
+                <p class="text-white text-base font-semibold mb-2">변수를 선언하면 메모리에 공간이 생기고, 그 공간엔 주소가 있다</p>
+                <p class="text-slate-400 text-xs">주소 = 메모리의 번지수. <code class="text-white">n</code>을 쓰면 그 주소에서 값을 꺼낸다.</p>
+              </div>
+              <div class="bg-amber-950/20 p-4 rounded-xl border border-amber-500/20">
+                <p class="text-amber-400 text-xs font-semibold mb-2">이미 만난 적 있다</p>
+                <p class="text-slate-400 text-[10px]">3차시 <code class="text-white">scanf("%d", &amp;guess)</code>의 <code class="text-white">&amp;</code>가 바로 주소 연산자.</p>
+              </div>
+            </div>
+            <div>
+              <span class="text-slate-400 text-xs font-bold uppercase block mb-2">메모리 그림</span>
+              <pre class="bg-slate-950 text-slate-200 p-4 rounded-xl text-[11px] leading-relaxed border border-slate-700"><code>주소        값
+0x7ffe04   <span class="text-emerald-300">42</span>   ← int n
+0x7ffe08    ?
+0x7ffe0c    ?
+
+<span class="text-cyan-300">int</span> n = 42;
+<span class="text-slate-500">// 이름 n = "42가 든 주소"</span></code></pre>
+              <div class="mt-3 bg-cyan-950/30 p-3 rounded-xl border border-cyan-500/20">
+                <p class="text-slate-400 text-[10px]">주소값은 실행할 때마다 달라질 수 있다. 중요한 건 "변수마다 고유 주소가 있다"는 사실.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="flex justify-between items-center text-xs text-slate-500 border-t border-slate-800/80 pt-4">
+          <span>Memory &amp; Address</span><span>Session 5</span>
+        </div>
+      </div>
+
+      <!-- Slide 04: & 주소 연산자 -->
+      <div id="slide4" class="bg-slate-900 w-full max-w-5xl aspect-[16/9] rounded-3xl p-8 md:p-12 shadow-2xl border border-slate-800 flex flex-col justify-between hidden">
+        <div class="flex justify-between items-start">
+          <span class="text-cyan-400 font-bold tracking-wider text-sm uppercase">Slide 04 / Address-of &amp;</span>
+          <span class="text-slate-500 text-sm">5차시: 포인터 기초</span>
+        </div>
+        <div class="my-auto">
+          <h3 class="text-2xl md:text-3xl font-bold text-white mb-4 border-b border-slate-800 pb-3">주소 연산자 <code class="text-amber-400">&amp;</code></h3>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <p class="text-slate-400 text-xs mb-3">변수 앞에 <code class="text-white">&amp;</code>를 붙이면 그 변수의 <span class="text-white font-semibold">주소</span>를 얻는다.</p>
+              <pre class="bg-slate-950 text-slate-200 p-4 rounded-xl text-[11px] leading-relaxed border border-slate-700"><code><span class="text-cyan-300">int</span> n = 42;
+
+printf(<span class="text-emerald-300">"%d\n"</span>, n);
+<span class="text-slate-500">// 42 (값)</span>
+
+printf(<span class="text-emerald-300">"%p\n"</span>, (<span class="text-cyan-300">void</span> *)&amp;n);
+<span class="text-slate-500">// 0x7ffe... (주소)</span></code></pre>
+            </div>
+            <div class="space-y-3">
+              <div class="bg-slate-800/40 p-4 rounded-xl border border-slate-700">
+                <p class="text-amber-400 text-xs font-semibold mb-2">%p로 주소 출력</p>
+                <p class="text-slate-300 text-[10px]">주소는 <code class="text-white">%p</code> 형식으로 출력. <code class="text-white">(void *)</code>로 캐스팅하면 경고가 사라진다.</p>
+              </div>
+              <div class="bg-cyan-950/30 p-4 rounded-xl border border-cyan-500/20">
+                <p class="text-cyan-300 text-xs font-semibold mb-1">기억할 것</p>
+                <p class="text-slate-400 text-[10px]"><code class="text-white">n</code>은 값, <code class="text-white">&amp;n</code>은 그 값이 사는 주소. 둘은 완전히 다른 것.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="flex justify-between items-center text-xs text-slate-500 border-t border-slate-800/80 pt-4">
+          <span>Address-of Operator</span><span>Session 5</span>
+        </div>
+      </div>
+
+      <!-- Slide 05: 포인터 선언 -->
+      <div id="slide5" class="bg-slate-900 w-full max-w-5xl aspect-[16/9] rounded-3xl p-8 md:p-12 shadow-2xl border border-slate-800 flex flex-col justify-between hidden">
+        <div class="flex justify-between items-start">
+          <span class="text-cyan-400 font-bold tracking-wider text-sm uppercase">Slide 05 / Pointer Declaration</span>
+          <span class="text-slate-500 text-sm">5차시: 포인터 기초</span>
+        </div>
+        <div class="my-auto">
+          <h3 class="text-2xl md:text-3xl font-bold text-white mb-4 border-b border-slate-800 pb-3">포인터 — 주소를 담는 변수</h3>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <pre class="bg-slate-950 text-slate-200 p-4 rounded-xl text-[11px] leading-relaxed border border-slate-700"><code><span class="text-cyan-300">int</span> n = 42;
+<span class="text-cyan-300">int</span> *p;      <span class="text-slate-500">// int를 가리키는 포인터</span>
+p = &amp;n;       <span class="text-slate-500">// p에 n의 주소 저장</span>
+
+<span class="text-slate-500">// 또는 한 줄로</span>
+<span class="text-cyan-300">int</span> *p = &amp;n;</code></pre>
+              <div class="mt-3 bg-slate-950 rounded-xl border border-slate-700 overflow-hidden">
+                <table class="w-full text-xs">
+                  <tbody class="divide-y divide-slate-800">
+                    <tr><td class="px-3 py-1.5"><code class="text-cyan-300">int *p;</code></td><td class="px-3 py-1.5 text-slate-400">p는 int 포인터</td></tr>
+                    <tr><td class="px-3 py-1.5"><code class="text-amber-300">&amp;n</code></td><td class="px-3 py-1.5 text-slate-400">n의 주소</td></tr>
+                    <tr><td class="px-3 py-1.5"><code class="text-amber-300">p = &amp;n;</code></td><td class="px-3 py-1.5 text-slate-400">p가 n을 가리킴</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+            <div class="space-y-3">
+              <div class="bg-amber-950/20 p-4 rounded-xl border border-amber-500/20">
+                <p class="text-amber-400 text-xs font-semibold mb-2">타입이 중요</p>
+                <p class="text-slate-400 text-[10px]"><code class="text-white">int *</code>는 int를, <code class="text-white">char *</code>는 char를 가리킨다. 가리키는 타입에 따라 역참조 크기가 정해진다.</p>
+              </div>
+              <div class="bg-cyan-950/30 p-4 rounded-xl border border-cyan-500/20">
+                <p class="text-cyan-300 text-xs font-semibold mb-1">그림으로</p>
+                <pre class="bg-slate-950 text-slate-200 p-2 rounded text-[10px] border border-slate-700"><code>  p          n
+[0x7ffe04] → [42]</code></pre>
+                <p class="text-slate-400 text-[10px] mt-2">p는 n의 주소를 담고, 그 주소엔 42가 있다.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="flex justify-between items-center text-xs text-slate-500 border-t border-slate-800/80 pt-4">
+          <span>Pointer Declaration</span><span>Session 5</span>
+        </div>
+      </div>
+
+      <!-- Slide 06: 역참조 * -->
+      <div id="slide6" class="bg-slate-900 w-full max-w-5xl aspect-[16/9] rounded-3xl p-8 md:p-12 shadow-2xl border border-slate-800 flex flex-col justify-between hidden">
+        <div class="flex justify-between items-start">
+          <span class="text-cyan-400 font-bold tracking-wider text-sm uppercase">Slide 06 / Dereference *</span>
+          <span class="text-slate-500 text-sm">5차시: 포인터 기초</span>
+        </div>
+        <div class="my-auto">
+          <h3 class="text-2xl md:text-3xl font-bold text-white mb-4 border-b border-slate-800 pb-3">역참조 연산자 <code class="text-amber-400">*</code></h3>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <p class="text-slate-400 text-xs mb-3">포인터 앞 <code class="text-white">*</code> = 그 주소에 있는 <span class="text-white font-semibold">값</span>. 읽기도 쓰기도 된다.</p>
+              <pre class="bg-slate-950 text-slate-200 p-4 rounded-xl text-[11px] leading-relaxed border border-slate-700"><code><span class="text-cyan-300">int</span> n = 42;
+<span class="text-cyan-300">int</span> *p = &amp;n;
+
+printf(<span class="text-emerald-300">"%d\n"</span>, *p);  <span class="text-slate-500">// 42 읽기</span>
+*p = 100;             <span class="text-slate-500">// 쓰기</span>
+printf(<span class="text-emerald-300">"%d\n"</span>, n);   <span class="text-slate-500">// 100!</span></code></pre>
+              <p class="text-slate-500 text-[10px] mt-2"><code class="text-white">*p</code>와 <code class="text-white">n</code>은 같은 메모리. 하나 바꾸면 둘 다 바뀐 듯 보인다.</p>
+            </div>
+            <div class="bg-rose-950/20 p-5 rounded-xl border border-rose-500/20">
+              <h4 class="text-rose-400 text-sm font-bold mb-3">`*`의 두 가지 얼굴</h4>
+              <pre class="bg-slate-950 text-slate-200 p-3 rounded-lg text-[11px] border border-slate-700"><code><span class="text-cyan-300">int</span> *p;   <span class="text-slate-500">// 선언: "포인터다"</span>
+*p = 5;   <span class="text-slate-500">// 사용: "가리키는 곳에 5"</span></code></pre>
+              <p class="text-slate-400 text-[10px] mt-3">선언할 때의 <code class="text-white">*</code>와 사용할 때의 <code class="text-white">*</code>는 역할이 다르다. 헷갈리지 말 것.</p>
+            </div>
+          </div>
+        </div>
+        <div class="flex justify-between items-center text-xs text-slate-500 border-t border-slate-800/80 pt-4">
+          <span>Dereference Operator</span><span>Session 5</span>
+        </div>
+      </div>
+
+      <!-- Slide 07: 포인터로 원본 바꾸기 -->
+      <div id="slide7" class="bg-slate-900 w-full max-w-5xl aspect-[16/9] rounded-3xl p-8 md:p-12 shadow-2xl border border-slate-800 flex flex-col justify-between hidden">
+        <div class="flex justify-between items-start">
+          <span class="text-cyan-400 font-bold tracking-wider text-sm uppercase">Slide 07 / Modify Original</span>
+          <span class="text-slate-500 text-sm">5차시: 포인터 기초</span>
+        </div>
+        <div class="my-auto">
+          <h3 class="text-2xl md:text-3xl font-bold text-white mb-4 border-b border-slate-800 pb-3">포인터로 원본 바꾸기 — 4차시의 한계 돌파</h3>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <pre class="bg-slate-950 text-slate-200 p-4 rounded-xl text-[11px] leading-relaxed border border-slate-700"><code><span class="text-slate-500">// 복사 — 원본 안 바뀜</span>
+<span class="text-cyan-300">void</span> try_change(<span class="text-cyan-300">int</span> x)
+{ x = 100; }
+
+<span class="text-slate-500">// 주소 — 원본 바뀜!</span>
+<span class="text-cyan-300">void</span> real_change(<span class="text-cyan-300">int</span> *p)
+{ *p = 100; }</code></pre>
+            </div>
+            <div>
+              <pre class="bg-slate-950 text-slate-200 p-4 rounded-xl text-[11px] leading-relaxed border border-slate-700"><code><span class="text-cyan-300">int</span> a = 5;
+
+try_change(a);
+printf(<span class="text-emerald-300">"%d\n"</span>, a);  <span class="text-slate-500">// 5</span>
+
+real_change(&amp;a);
+printf(<span class="text-emerald-300">"%d\n"</span>, a);  <span class="text-slate-500">// 100</span></code></pre>
+              <div class="mt-3 bg-cyan-950/30 p-3 rounded-xl border border-cyan-500/20">
+                <p class="text-slate-400 text-[10px]">4차시: 값 전달은 복사라 원본을 못 바꿨다. <span class="text-white">주소를 넘기면</span> 함수가 원본에 직접 접근한다.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="flex justify-between items-center text-xs text-slate-500 border-t border-slate-800/80 pt-4">
+          <span>Modify Original via Pointer</span><span>Session 5</span>
+        </div>
+      </div>
+
+      <!-- Slide 08: swap -->
+      <div id="slide8" class="bg-slate-900 w-full max-w-5xl aspect-[16/9] rounded-3xl p-8 md:p-12 shadow-2xl border border-slate-800 flex flex-col justify-between hidden">
+        <div class="flex justify-between items-start">
+          <span class="text-cyan-400 font-bold tracking-wider text-sm uppercase">Slide 08 / swap</span>
+          <span class="text-slate-500 text-sm">5차시: 포인터 기초</span>
+        </div>
+        <div class="my-auto">
+          <h3 class="text-2xl md:text-3xl font-bold text-white mb-4 border-b border-slate-800 pb-3">swap — 포인터의 대표 예제</h3>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <pre class="bg-slate-950 text-slate-200 p-4 rounded-xl text-[11px] leading-relaxed border border-slate-700"><code><span class="text-cyan-300">void</span> swap(<span class="text-cyan-300">int</span> *a, <span class="text-cyan-300">int</span> *b)
+{
+    <span class="text-cyan-300">int</span> tmp = *a;  <span class="text-slate-500">// a의 값 보관</span>
+    *a = *b;       <span class="text-slate-500">// b → a 자리</span>
+    *b = tmp;      <span class="text-slate-500">// 보관값 → b 자리</span>
+}
+
+<span class="text-cyan-300">int</span> main(<span class="text-cyan-300">void</span>)
+{
+    <span class="text-cyan-300">int</span> x = 3, y = 7;
+    swap(&amp;x, &amp;y);   <span class="text-slate-500">// 주소를 넘김</span>
+    printf(<span class="text-emerald-300">"%d %d\n"</span>, x, y);  <span class="text-slate-500">// 7 3</span>
+}</code></pre>
+            </div>
+            <div class="space-y-3">
+              <div class="bg-rose-950/20 p-4 rounded-xl border border-rose-500/20">
+                <p class="text-rose-400 text-xs font-semibold mb-2">값으로 넘기면 실패</p>
+                <p class="text-slate-400 text-[10px]"><code class="text-white">swap(x, y)</code>는 복사본만 바꿔 동작하지 않는다. 반드시 <code class="text-white">&amp;x, &amp;y</code>(주소)를 넘기고 <code class="text-white">int *</code>로 받는다.</p>
+              </div>
+              <div class="bg-slate-800/40 p-4 rounded-xl border border-slate-700">
+                <p class="text-amber-400 text-xs font-semibold mb-2">tmp가 필요한 이유</p>
+                <p class="text-slate-400 text-[10px]">먼저 <code class="text-white">*a = *b</code>를 하면 a의 원래 값이 사라진다. 그래서 tmp에 미리 보관한다.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="flex justify-between items-center text-xs text-slate-500 border-t border-slate-800/80 pt-4">
+          <span>swap Function</span><span>Session 5</span>
+        </div>
+      </div>
+
+      <!-- Slide 09: NULL과 안전 -->
+      <div id="slide9" class="bg-slate-900 w-full max-w-5xl aspect-[16/9] rounded-3xl p-8 md:p-12 shadow-2xl border border-slate-800 flex flex-col justify-between hidden">
+        <div class="flex justify-between items-start">
+          <span class="text-cyan-400 font-bold tracking-wider text-sm uppercase">Slide 09 / NULL &amp; Safety</span>
+          <span class="text-slate-500 text-sm">5차시: 포인터 기초</span>
+        </div>
+        <div class="my-auto">
+          <h3 class="text-2xl md:text-3xl font-bold text-white mb-4 border-b border-slate-800 pb-3">포인터 안전과 NULL</h3>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <span class="text-rose-400 text-xs font-bold uppercase block mb-2">위험: 초기화 안 한 포인터</span>
+              <pre class="bg-slate-950 text-slate-200 p-4 rounded-xl text-[11px] leading-relaxed border border-slate-700"><code><span class="text-cyan-300">int</span> *p;   <span class="text-slate-500">// 쓰레기 주소</span>
+*p = 5;   <span class="text-slate-500">// 위험! → 크래시</span>
+<span class="text-slate-500">// segmentation fault</span></code></pre>
+            </div>
+            <div>
+              <span class="text-emerald-400 text-xs font-bold uppercase block mb-2">안전: NULL로 초기화</span>
+              <pre class="bg-slate-950 text-slate-200 p-4 rounded-xl text-[11px] leading-relaxed border border-slate-700"><code><span class="text-cyan-300">int</span> *p = <span class="text-amber-300">NULL</span>;  <span class="text-slate-500">// 아무것도 안 가리킴</span>
+
+<span class="text-amber-300">if</span> (p != <span class="text-amber-300">NULL</span>)   <span class="text-slate-500">// 쓰기 전 확인</span>
+    *p = 5;</code></pre>
+              <div class="mt-3 bg-cyan-950/30 p-3 rounded-xl border border-cyan-500/20">
+                <p class="text-slate-400 text-[10px]">libsbs <code class="text-amber-300">malloc</code> 계열은 실패 시 <code class="text-white">NULL</code> 반환. NULL 체크는 10~11차시 메모리 함수의 필수 습관.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="flex justify-between items-center text-xs text-slate-500 border-t border-slate-800/80 pt-4">
+          <span>NULL &amp; Pointer Safety</span><span>Session 5</span>
+        </div>
+      </div>
+
+      <!-- Slide 10: 핵심 비교 -->
+      <div id="slide10" class="bg-slate-900 w-full max-w-5xl aspect-[16/9] rounded-3xl p-8 md:p-12 shadow-2xl border border-slate-800 flex flex-col justify-between hidden">
+        <div class="flex justify-between items-start">
+          <span class="text-cyan-400 font-bold tracking-wider text-sm uppercase">Slide 10 / Operator Recap</span>
+          <span class="text-slate-500 text-sm">5차시: 포인터 기초</span>
+        </div>
+        <div class="my-auto">
+          <h3 class="text-2xl md:text-3xl font-bold text-white mb-4 border-b border-slate-800 pb-3">&amp; vs * 한눈에 정리</h3>
+          <div class="bg-slate-950 rounded-xl border border-slate-700 overflow-hidden mb-4">
+            <table class="w-full text-xs">
+              <thead><tr class="border-b border-slate-700 bg-slate-800/60">
+                <th class="text-left px-4 py-2 text-cyan-400">표현</th>
+                <th class="text-left px-4 py-2 text-amber-400">읽는 법</th>
+                <th class="text-left px-4 py-2 text-amber-400">결과</th>
+              </tr></thead>
+              <tbody class="divide-y divide-slate-800">
+                <tr><td class="px-4 py-2"><code class="text-slate-300">n</code></td><td class="px-4 py-2 text-slate-400">변수 n</td><td class="px-4 py-2 text-emerald-300">값 (42)</td></tr>
+                <tr><td class="px-4 py-2"><code class="text-slate-300">&amp;n</code></td><td class="px-4 py-2 text-slate-400">n의 주소</td><td class="px-4 py-2 text-emerald-300">주소 (0x...)</td></tr>
+                <tr><td class="px-4 py-2"><code class="text-slate-300">p</code></td><td class="px-4 py-2 text-slate-400">포인터 p</td><td class="px-4 py-2 text-emerald-300">주소 (0x...)</td></tr>
+                <tr><td class="px-4 py-2"><code class="text-slate-300">*p</code></td><td class="px-4 py-2 text-slate-400">p가 가리키는 값</td><td class="px-4 py-2 text-emerald-300">값 (42)</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div class="bg-cyan-950/30 p-4 rounded-xl border border-cyan-500/20">
+              <p class="text-cyan-300 text-xs font-semibold mb-1">&amp;는 값 → 주소</p>
+              <p class="text-slate-400 text-[10px]">변수에서 주소를 꺼낸다</p>
+            </div>
+            <div class="bg-amber-950/20 p-4 rounded-xl border border-amber-500/20">
+              <p class="text-amber-400 text-xs font-semibold mb-1">*는 주소 → 값</p>
+              <p class="text-slate-400 text-[10px]">주소에서 값을 꺼낸다 (반대 방향)</p>
+            </div>
+          </div>
+        </div>
+        <div class="flex justify-between items-center text-xs text-slate-500 border-t border-slate-800/80 pt-4">
+          <span>Operator Recap</span><span>Session 5</span>
+        </div>
+      </div>
+
+      <!-- Slide 11: 실습 1 -->
+      <div id="slide11" class="bg-slate-900 w-full max-w-5xl aspect-[16/9] rounded-3xl p-8 md:p-12 shadow-2xl border border-slate-800 flex flex-col justify-between hidden">
+        <div class="flex justify-between items-start">
+          <span class="text-cyan-400 font-bold tracking-wider text-sm uppercase">Slide 11 / Practice 1</span>
+          <span class="text-slate-500 text-sm">5차시: 포인터 기초</span>
+        </div>
+        <div class="my-auto">
+          <h3 class="text-2xl md:text-3xl font-bold text-white mb-4 border-b border-slate-800 pb-3">실습 1 — 주소와 역참조 <span class="text-amber-400 text-base">pointer_basics.c</span></h3>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <pre class="bg-slate-950 text-slate-200 p-4 rounded-xl text-[11px] leading-relaxed border border-slate-700"><code><span class="text-cyan-300">int</span> n = 42;
+<span class="text-cyan-300">int</span> *p = &amp;n;
+
+printf(<span class="text-emerald-300">"n   값   = %d\n"</span>, n);
+printf(<span class="text-emerald-300">"n   주소 = %p\n"</span>,
+       (<span class="text-cyan-300">void</span> *)&amp;n);
+printf(<span class="text-emerald-300">"*p  값   = %d\n"</span>, *p);
+*p = 100;
+printf(<span class="text-emerald-300">"수정 후 n = %d\n"</span>, n);</code></pre>
+            </div>
+            <div class="space-y-3">
+              <div class="bg-slate-800/40 p-4 rounded-xl border border-slate-700">
+                <p class="text-amber-400 text-xs font-semibold mb-2">요구사항</p>
+                <ul class="space-y-1 text-[10px] text-slate-300">
+                  <li class="flex gap-2"><span class="text-emerald-400">✓</span><span>n의 값/주소, p의 값, *p의 값 출력</span></li>
+                  <li class="flex gap-2"><span class="text-emerald-400">✓</span><span><code class="text-cyan-300">*p = 100</code> 후 n이 바뀜 확인</span></li>
+                  <li class="flex gap-2"><span class="text-emerald-400">✓</span><span>주소는 <code class="text-cyan-300">(void *)</code> 캐스팅</span></li>
+                </ul>
+              </div>
+              <p class="text-slate-500 text-[10px]">제한 시간: 15분</p>
+            </div>
+          </div>
+        </div>
+        <div class="flex justify-between items-center text-xs text-slate-500 border-t border-slate-800/80 pt-4">
+          <span>Practice 1 — pointer_basics</span><span>Session 5</span>
+        </div>
+      </div>
+
+      <!-- Slide 12: 실습 2 -->
+      <div id="slide12" class="bg-slate-900 w-full max-w-5xl aspect-[16/9] rounded-3xl p-8 md:p-12 shadow-2xl border border-slate-800 flex flex-col justify-between hidden">
+        <div class="flex justify-between items-start">
+          <span class="text-cyan-400 font-bold tracking-wider text-sm uppercase">Slide 12 / Practice 2</span>
+          <span class="text-slate-500 text-sm">5차시: 포인터 기초</span>
+        </div>
+        <div class="my-auto">
+          <h3 class="text-2xl md:text-3xl font-bold text-white mb-4 border-b border-slate-800 pb-3">실습 2 — swap <span class="text-amber-400 text-base">swap.c</span></h3>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <pre class="bg-slate-950 text-slate-200 p-4 rounded-xl text-[11px] leading-relaxed border border-slate-700"><code><span class="text-cyan-300">void</span> swap(<span class="text-cyan-300">int</span> *a, <span class="text-cyan-300">int</span> *b)
+{
+    <span class="text-cyan-300">int</span> tmp = *a;
+    *a = *b;
+    *b = tmp;
+}
+
+<span class="text-slate-500">// 호출</span>
+swap(&amp;x, &amp;y);</code></pre>
+            </div>
+            <div class="space-y-3">
+              <div class="bg-slate-800/40 p-4 rounded-xl border border-slate-700">
+                <p class="text-amber-400 text-xs font-semibold mb-2">요구사항</p>
+                <p class="text-slate-300 text-[10px]">x=3, y=7을 만들고 swap 호출, 교환 전후 출력</p>
+              </div>
+              <div class="bg-slate-950 p-3 rounded-xl border border-slate-700">
+                <pre class="text-emerald-300 text-[10px]"><code>교환 전: x = 3, y = 7
+교환 후: x = 7, y = 3</code></pre>
+              </div>
+              <div class="bg-rose-950/20 p-3 rounded-xl border border-rose-500/20">
+                <p class="text-slate-400 text-[10px]"><span class="text-rose-300 font-semibold">함정:</span> 값을 넘기면 안 바뀐다. 반드시 <code class="text-white">&amp;</code></p>
+              </div>
+              <p class="text-slate-500 text-[10px]">제한 시간: 25분</p>
+            </div>
+          </div>
+        </div>
+        <div class="flex justify-between items-center text-xs text-slate-500 border-t border-slate-800/80 pt-4">
+          <span>Practice 2 — swap</span><span>Session 5</span>
+        </div>
+      </div>
+
+      <!-- Slide 13: 실습 3 -->
+      <div id="slide13" class="bg-slate-900 w-full max-w-5xl aspect-[16/9] rounded-3xl p-8 md:p-12 shadow-2xl border border-slate-800 flex flex-col justify-between hidden">
+        <div class="flex justify-between items-start">
+          <span class="text-cyan-400 font-bold tracking-wider text-sm uppercase">Slide 13 / Practice 3</span>
+          <span class="text-slate-500 text-sm">5차시: 포인터 기초</span>
+        </div>
+        <div class="my-auto">
+          <h3 class="text-2xl md:text-3xl font-bold text-white mb-4 border-b border-slate-800 pb-3">실습 3 — 원본 수정 <span class="text-amber-400 text-base">modify.c</span></h3>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <pre class="bg-slate-950 text-slate-200 p-4 rounded-xl text-[11px] leading-relaxed border border-slate-700"><code><span class="text-cyan-300">void</span> add_one(<span class="text-cyan-300">int</span> *p)
+{
+    *p = *p + 1;
+}
+
+<span class="text-cyan-300">void</span> set_to_ten(<span class="text-cyan-300">int</span> *p)
+{
+    *p = 10;
+}</code></pre>
+            </div>
+            <div class="space-y-3">
+              <div class="bg-slate-800/40 p-4 rounded-xl border border-slate-700">
+                <p class="text-amber-400 text-xs font-semibold mb-2">요구사항</p>
+                <ul class="space-y-1 text-[10px] text-slate-300">
+                  <li class="flex gap-2"><span class="text-emerald-400">✓</span><span><code class="text-cyan-300">add_one</code>, <code class="text-cyan-300">set_to_ten</code> 구현</span></li>
+                  <li class="flex gap-2"><span class="text-emerald-400">✓</span><span>a=5에서 시작, 각 호출 후 출력</span></li>
+                </ul>
+              </div>
+              <div class="bg-slate-950 p-3 rounded-xl border border-slate-700">
+                <pre class="text-emerald-300 text-[10px]"><code>시작: a = 5
+add_one 후: a = 6
+set_to_ten 후: a = 10</code></pre>
+              </div>
+              <p class="text-slate-500 text-[10px]">제한 시간: 25분 · 심화: <code class="text-amber-300">pointer_trace.c</code></p>
+            </div>
+          </div>
+        </div>
+        <div class="flex justify-between items-center text-xs text-slate-500 border-t border-slate-800/80 pt-4">
+          <span>Practice 3 — modify</span><span>Session 5</span>
+        </div>
+      </div>
+
+      <!-- Slide 14: 핵심 정리 -->
+      <div id="slide14" class="bg-slate-900 w-full max-w-5xl aspect-[16/9] rounded-3xl p-8 md:p-12 shadow-2xl border border-slate-800 flex flex-col justify-between hidden">
+        <div class="flex justify-between items-start">
+          <span class="text-cyan-400 font-bold tracking-wider text-sm uppercase">Slide 14 / Summary</span>
+          <span class="text-slate-500 text-sm">5차시: 포인터 기초</span>
+        </div>
+        <div class="my-auto">
+          <h3 class="text-2xl md:text-3xl font-bold text-white mb-5 border-b border-slate-800 pb-3">5차시 핵심 정리</h3>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+            <div class="space-y-2.5">
+              <div class="flex gap-3 items-start p-3 bg-slate-800/30 rounded-xl">
+                <span class="bg-cyan-600 text-white text-sm font-black w-7 h-7 rounded-full flex items-center justify-center shrink-0">1</span>
+                <div><p class="text-white text-sm font-semibold">모든 변수는 메모리에 주소를 가진다</p><p class="text-slate-400 text-xs mt-0.5">&amp;n = n의 주소</p></div>
+              </div>
+              <div class="flex gap-3 items-start p-3 bg-slate-800/30 rounded-xl">
+                <span class="bg-cyan-600 text-white text-sm font-black w-7 h-7 rounded-full flex items-center justify-center shrink-0">2</span>
+                <div><p class="text-white text-sm font-semibold">포인터는 주소를 담는 변수</p><p class="text-slate-400 text-xs mt-0.5"><code class="text-cyan-300">int *p = &amp;n;</code></p></div>
+              </div>
+              <div class="flex gap-3 items-start p-3 bg-slate-800/30 rounded-xl">
+                <span class="bg-cyan-600 text-white text-sm font-black w-7 h-7 rounded-full flex items-center justify-center shrink-0">3</span>
+                <div><p class="text-white text-sm font-semibold">*p로 원본을 읽고 쓴다</p><p class="text-slate-400 text-xs mt-0.5">*p와 n은 같은 메모리</p></div>
+              </div>
+            </div>
+            <div class="space-y-2.5">
+              <div class="flex gap-3 items-start p-3 bg-slate-800/30 rounded-xl">
+                <span class="bg-amber-500 text-white text-sm font-black w-7 h-7 rounded-full flex items-center justify-center shrink-0">4</span>
+                <div><p class="text-white text-sm font-semibold">주소를 넘기면 함수가 원본을 바꾼다</p><p class="text-slate-400 text-xs mt-0.5">swap이 대표 예제</p></div>
+              </div>
+              <div class="flex gap-3 items-start p-3 bg-slate-800/30 rounded-xl">
+                <span class="bg-amber-500 text-white text-sm font-black w-7 h-7 rounded-full flex items-center justify-center shrink-0">5</span>
+                <div><p class="text-white text-sm font-semibold">초기화 안 한 포인터 역참조 = 크래시</p><p class="text-slate-400 text-xs mt-0.5">NULL로 초기화하고 확인</p></div>
+              </div>
+              <div class="bg-cyan-950/30 p-3 rounded-xl border border-cyan-500/20">
+                <p class="text-cyan-300 text-xs font-semibold">다음 차시 예고</p>
+                <p class="text-slate-400 text-[10px] mt-1">6차시: 배열과 포인터 — 배열 이름 = 첫 원소 주소, 포인터 산술, 버블 정렬</p>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="flex justify-between items-center text-xs text-slate-500 border-t border-slate-800/80 pt-4">
+          <span>Session 5 — Key Takeaways</span><span>Session 5</span>
+        </div>
+      </div>
+
+      <!-- Slide 15: 실습 과제 -->
+      <div id="slide15" class="bg-slate-900 w-full max-w-5xl aspect-[16/9] rounded-3xl p-8 md:p-12 shadow-2xl border border-slate-800 flex flex-col justify-between hidden">
+        <div class="flex justify-between items-start">
+          <span class="text-cyan-400 font-bold tracking-wider text-sm uppercase">Slide 15 / Practice</span>
+          <span class="text-slate-500 text-sm">5차시: 포인터 기초</span>
+        </div>
+        <div class="my-auto">
+          <h3 class="text-2xl md:text-3xl font-bold text-white mb-4 border-b border-slate-800 pb-3">실습 과제</h3>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="space-y-3">
+              <div class="bg-slate-800/40 p-4 rounded-xl border border-slate-700">
+                <h4 class="font-bold text-amber-400 text-sm mb-3">4개 파일 작성</h4>
+                <ol class="space-y-2 text-xs text-slate-300">
+                  <li class="flex gap-2"><span class="text-emerald-400 font-bold shrink-0">①</span><span><code class="text-cyan-300">pointer_basics.c</code> — 주소/역참조 <span class="text-slate-500"></span></span></li>
+                  <li class="flex gap-2"><span class="text-emerald-400 font-bold shrink-0">②</span><span><code class="text-cyan-300">swap.c</code> — 포인터로 교환 <span class="text-slate-500"></span></span></li>
+                  <li class="flex gap-2"><span class="text-emerald-400 font-bold shrink-0">③</span><span><code class="text-cyan-300">modify.c</code> — 원본 수정 함수 2개 <span class="text-slate-500"></span></span></li>
+                  <li class="flex gap-2"><span class="text-amber-400 font-bold shrink-0">★</span><span><code class="text-cyan-300">pointer_trace.c</code> — 포인터 추적 <span class="text-slate-500">(심화)</span></span></li>
+                </ol>
+              </div>
+              <div class="bg-slate-800/40 p-3 rounded-xl border border-slate-700 text-[10px] text-slate-400">
+                모든 파일: <code class="text-amber-300">gcc -Wall -Wextra -Werror</code> 경고 없이 컴파일
+              </div>
+            </div>
+            <div class="space-y-3">
+              <div class="bg-rose-950/20 p-4 rounded-xl border border-rose-500/20">
+                <h4 class="font-bold text-rose-400 text-sm mb-2">자주 막히는 부분</h4>
+                <div class="space-y-1.5 text-[10px] text-slate-300">
+                  <div><p class="font-semibold text-slate-200">segmentation fault?</p><p class="text-slate-400">초기화 안 한/NULL 포인터 역참조</p></div>
+                  <div><p class="font-semibold text-slate-200">swap 후 값 그대로?</p><p class="text-slate-400">값 말고 주소(&amp;x)를 넘겼는지 확인</p></div>
+                  <div><p class="font-semibold text-slate-200">%p 경고?</p><p class="text-slate-400">(void *)로 캐스팅</p></div>
+                </div>
+              </div>
+              <div class="bg-cyan-950/30 p-3 rounded-xl border border-cyan-500/20 text-center">
+                <p class="text-cyan-300 text-sm font-bold">"포인터를 잡으면 C가 보입니다"</p>
+                <p class="text-slate-400 text-[10px] mt-1">6차시: 배열이 곧 포인터</p>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="flex justify-between items-center text-xs text-slate-500 border-t border-slate-800/80 pt-4">
+          <span>Session 5 Practice</span><span>Session 5</span>
+        </div>
+      </div>
+
+      <!-- Slide 16: Q&A -->
+      <div id="slide16" class="bg-slate-900 w-full max-w-5xl aspect-[16/9] rounded-3xl p-8 md:p-12 shadow-2xl border border-slate-800 flex flex-col justify-between hidden">
+        <div class="flex justify-between items-start">
+          <span class="text-cyan-400 font-bold tracking-wider text-sm uppercase">Slide 16 / Q&amp;A</span>
+          <span class="text-slate-500 text-sm">5차시: 포인터 기초</span>
+        </div>
+        <div class="my-auto text-center">
+          <div class="text-4xl mb-4 font-bold text-cyan-400">?</div>
+          <h3 class="text-3xl font-black text-white mb-4">Q&amp;A 및 실습 점검</h3>
+          <p class="text-slate-400 text-sm max-w-lg mx-auto mb-6">오늘 다룬 주소, 역참조, 포인터로 원본 수정에서 막히는 부분을 함께 해결합니다.</p>
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-4 max-w-2xl mx-auto">
+            <div class="bg-slate-800/50 px-4 py-3 rounded-xl border border-slate-700 text-xs text-slate-300">
+              <p class="font-bold text-slate-200 mb-1">&amp;와 *가 헷갈려요</p>
+              <p class="text-[10px]">&amp;는 값→주소, *는 주소→값. 반대 방향으로 기억</p>
+            </div>
+            <div class="bg-slate-800/50 px-4 py-3 rounded-xl border border-slate-700 text-xs text-slate-300">
+              <p class="font-bold text-slate-200 mb-1">왜 크래시가 나요?</p>
+              <p class="text-[10px]">가리키는 곳이 없는 포인터를 역참조했을 때. NULL 체크 습관</p>
+            </div>
+            <div class="bg-slate-800/50 px-4 py-3 rounded-xl border border-slate-700 text-xs text-slate-300">
+              <p class="font-bold text-slate-200 mb-1">선언의 *와 사용의 *는?</p>
+              <p class="text-[10px]">int *p는 선언, *p=5는 사용. 문법이 다르다</p>
+            </div>
+          </div>
+          <div class="mt-6 inline-block bg-slate-800/50 px-6 py-3 rounded-full border border-slate-700 text-xs text-cyan-300 font-medium">
+            "주소를 다루는 감각이 메모리 함수 구현의 시작입니다."
+          </div>
+        </div>
+        <div class="flex justify-between items-center text-xs text-slate-500 border-t border-slate-800/80 pt-4">
+          <span>Session 5 Completion</span><span>Session 5</span>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Bottom Nav -->
+    <div class="bg-slate-950 border-t border-slate-800 px-6 py-4 flex items-center justify-between">
+      <button id="prevBtn" onclick="prevSlide()" class="bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold px-4 py-2 rounded-lg transition-colors border border-slate-700">&larr; 이전 슬라이드</button>
+      <div class="hidden md:flex gap-1.5" id="dotsContainer"></div>
+      <button id="nextBtn" onclick="nextSlide()" class="bg-cyan-600 hover:bg-cyan-700 text-white text-xs font-semibold px-4 py-2 rounded-lg transition-colors">다음 슬라이드 &rarr;</button>
+    </div>
+
+    <script>
+      const totalSlides = 16;
+      let currentSlide = 1;
+
+      function updateSlideVisibility() {
+        for (let i = 1; i <= totalSlides; i++) {
+          const slide = document.getElementById("slide" + i);
+          if (i === currentSlide) slide.classList.remove("hidden");
+          else slide.classList.add("hidden");
+        }
+        document.getElementById("slideCounter").innerText = currentSlide + " / " + totalSlides;
+        updateDots();
+      }
+
+      function nextSlide() { if (currentSlide < totalSlides) { currentSlide++; updateSlideVisibility(); } }
+      function prevSlide() { if (currentSlide > 1) { currentSlide--; updateSlideVisibility(); } }
+      function jumpToSlide(index) { currentSlide = index; updateSlideVisibility(); }
+
+      function buildDots() {
+        const container = document.getElementById("dotsContainer");
+        container.innerHTML = "";
+        for (let i = 1; i <= totalSlides; i++) {
+          const dot = document.createElement("button");
+          dot.id = "dot" + i;
+          dot.onclick = () => jumpToSlide(i);
+          dot.className = "w-2 h-2 rounded-full transition-colors";
+          container.appendChild(dot);
+        }
+      }
+
+      function updateDots() {
+        for (let i = 1; i <= totalSlides; i++) {
+          const dot = document.getElementById("dot" + i);
+          if (!dot) continue;
+          dot.className = i === currentSlide
+            ? "w-2 h-2 rounded-full transition-colors bg-cyan-500"
+            : "w-2 h-2 rounded-full transition-colors bg-slate-700 hover:bg-slate-500";
+        }
+      }
+
+      document.addEventListener("keydown", function(e) {
+        if (e.key === "ArrowRight" || e.key === " ") nextSlide();
+        if (e.key === "ArrowLeft") prevSlide();
+      });
+
+      buildDots();
+      updateSlideVisibility();
+    </script>
+  </body>
+</html>

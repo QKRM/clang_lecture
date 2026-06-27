@@ -1,0 +1,579 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>7차시 · 문자열과 포인터 — C언어 입문 강의</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/styles/atom-one-dark.min.css" />
+    <link rel="stylesheet" href="../lesson.css" />
+  </head>
+  <body>
+    <div id="readbar" class="readbar"></div>
+    <nav class="topnav">
+      <a class="back" href="../index.html">← 강의 목록</a>
+      <span class="crumb">C언어 입문 강의 · 7 / 16</span>
+    </nav>
+    <header class="lesson-hero">
+      <div class="lesson-hero-inner">
+        <span class="badge">C 기초 · 7차시</span>
+        <h1>문자열과 포인터</h1>
+      </div>
+    </header>
+    <main class="wrap">
+      <article class="md">
+<h2>학습 목표</h2>
+<ol><li>C 문자열의 구조(<code>char</code> 배열 + null terminator)를 설명할 수 있다.</li><li><code>char</code> 배열과 <code>char</code> 포인터의 차이를 구분할 수 있다.</li><li>포인터로 문자열을 한 글자씩 순회할 수 있다.</li><li>문자열 리터럴이 읽기 전용임을 이해한다.</li><li>문자열을 뒤집고 변환하는 함수를 구현할 수 있다.</li></ol>
+<hr />
+<h2>1부: C 문자열의 정체</h2>
+<h3>1.1 문자열은 char 배열이다</h3>
+<p>C에는 <code>string</code> 타입이 없습니다. 문자열은 <strong><code>char</code>들의 배열</strong>이고, 끝에 <strong>null terminator(<code>\0</code>)</strong> 가 붙습니다.</p>
+<pre><code class="language-c">char s[6] = "hello";</code></pre>
+<pre><code class="nohighlight">인덱스   0    1    2    3    4    5
+값      'h'  'e'  'l'  'l'  'o'  '\0'</code></pre>
+<p><code>"hello"</code>는 글자 5개지만 메모리는 <strong>6칸</strong>입니다. 마지막 <code>\0</code>이 "여기서 끝"을 알립니다.</p>
+<h3>1.2 \0이 없으면?</h3>
+<p><code>\0</code>이 없으면 문자열이 어디서 끝나는지 알 수 없어, <code>printf</code>나 길이 계산이 메모리를 넘어 폭주합니다. 모든 C 문자열 함수는 <code>\0</code>을 기준으로 멈춥니다.</p>
+<pre><code class="language-c">char bad[3] = {'h', 'i', '!'};   // \0 없음 → 문자열로 쓰면 위험
+char ok[4]  = {'h', 'i', '!', '\0'};  // 안전</code></pre>
+<blockquote><code>\0</code>은 <strong>값이 0</strong>인 한 바이트입니다. 화면에 보이는 <strong>문자 <code>'0'</code>(값 48)</strong> 이나 공백(값 32)과는 전혀 다릅니다. <code>\0</code>은 "문자열의 끝" 표시일 뿐, 출력되는 글자가 아닙니다.</blockquote>
+<hr />
+<h2>2부: char 배열 vs char 포인터</h2>
+<h3>2.1 두 가지 선언</h3>
+<pre><code class="language-c">char  arr[] = "hello";    // 배열: 내용을 스택에 복사, 수정 가능
+char *ptr   = "hello";    // 포인터: 읽기 전용 리터럴을 가리킴</code></pre>
+<table><thead><tr><th>구분</th><th><code>char arr[]</code></th><th><code>char *ptr</code></th></tr></thead><tbody><tr><td>메모리</td><td>글자들을 복사해 가짐</td><td>리터럴 주소만 가리킴</td></tr><tr><td>수정</td><td><code>arr[0] = 'H'</code> 가능</td><td><code>ptr[0] = 'H'</code> <strong>위험</strong>(크래시)</td></tr><tr><td>용도</td><td>내용을 바꿀 때</td><td>읽기만 할 때</td></tr></tbody></table>
+<h3>2.2 리터럴은 읽기 전용</h3>
+<p><code>"hello"</code> 같은 문자열 리터럴은 읽기 전용 영역에 있습니다. 포인터로 가리켜 수정하려 하면 크래시합니다.</p>
+<pre><code class="language-c">char *ptr = "hello";
+ptr[0] = 'H';        // 위험! 읽기 전용 메모리 수정 시도
+
+char arr[] = "hello";
+arr[0] = 'H';        // OK — arr은 자기 복사본을 가짐 → "Hello"</code></pre>
+<blockquote>"내용을 바꿔야 하면 배열, 읽기만 하면 포인터"로 기억하세요.</blockquote>
+<hr />
+<h2>3부: 포인터로 문자열 순회</h2>
+<h3>3.1 \0까지 읽기</h3>
+<p>문자열 길이를 미리 모르므로 <code>\0</code>을 만날 때까지 돕니다. <code>while (*p)</code>는 "<code>*p</code>가 <code>\0</code>(0, 거짓)이 아닌 동안"을 뜻합니다.</p>
+<pre><code class="language-c">char *p = "hello";
+while (*p)          // *p가 \0이면 종료
+{
+    printf("%c", *p);
+    p++;            // 다음 글자로
+}
+// hello</code></pre>
+<h3>3.2 길이 직접 세기</h3>
+<pre><code class="language-c">int len = 0;
+char *p = s;
+while (*p)
+{
+    len++;
+    p++;
+}
+// len = \0 직전까지의 글자 수</code></pre>
+<p>이것이 12차시 <code>sbs_strlen</code>의 핵심 로직입니다. 6차시 포인터 순회(<code>p++</code>)가 그대로 쓰입니다.</p>
+<h3>3.3 인덱스 방식과 같다</h3>
+<pre><code class="language-c">int i = 0;
+while (s[i])        // s[i]가 \0이면 종료
+{
+    printf("%c", s[i]);
+    i++;
+}</code></pre>
+<p><code>s[i]</code>와 <code>*(s + i)</code>는 같습니다(6차시). 두 방식 다 익숙해지세요.</p>
+<hr />
+<h2>4부: 문자 다루기</h2>
+<h3>4.1 문자는 숫자다 (ASCII)</h3>
+<p><code>char</code>는 사실 작은 정수입니다. 각 글자는 ASCII 코드값을 가집니다.</p>
+<pre><code class="language-c">'A' == 65    'a' == 97    '0' == 48    ' ' == 32</code></pre>
+<pre><code class="language-c">char c = 'A';
+printf("%d\n", c);        // 65
+printf("%c\n", c + 1);    // B (66)</code></pre>
+<h3>4.2 대소문자 변환</h3>
+<p><code>'a'</code>와 <code>'A'</code>는 32 차이입니다. 더하고 빼서 변환합니다.</p>
+<pre><code class="language-c">char lower = 'a';
+char upper = lower - 32;   // 'A'  (소문자 - 32 = 대문자)
+
+char up = 'Z';
+char low = up + 32;        // 'z'  (대문자 + 32 = 소문자)</code></pre>
+<h3>4.3 범위 판별</h3>
+<pre><code class="language-c">if (c &gt;= 'a' &amp;&amp; c &lt;= 'z')   // 소문자인가?
+if (c &gt;= 'A' &amp;&amp; c &lt;= 'Z')   // 대문자인가?
+if (c &gt;= '0' &amp;&amp; c &lt;= '9')   // 숫자 문자인가?</code></pre>
+<blockquote>9차시 <code>sbs_isalpha</code>, <code>sbs_toupper</code> 등이 이 범위 판별과 ±32 변환을 그대로 구현합니다. 오늘이 그 토대입니다.</blockquote>
+<hr />
+<h2>5부: 문자열 뒤집기 (실습 미리보기)</h2>
+<p>양 끝에서 가운데로 좁히며 두 글자를 맞바꿉니다(5차시 swap 응용).</p>
+<pre><code class="language-c">void reverse(char *s)
+{
+    int left = 0;
+    int right = 0;
+    while (s[right])        // 길이 끝(\0 직전) 찾기
+        right++;
+    right--;                // 마지막 글자 인덱스
+    while (left &lt; right)
+    {
+        char tmp = s[left];
+        s[left] = s[right];
+        s[right] = tmp;
+        left++;
+        right--;
+    }
+}</code></pre>
+<p>배열(<code>char arr[]</code>)에만 써야 합니다. 리터럴 포인터에 쓰면 크래시합니다.</p>
+<hr />
+<h2>핵심 정리</h2>
+<ol><li>C 문자열 = <code>char</code> 배열 + 끝의 <code>\0</code>(null terminator)</li><li><code>"hello"</code>는 6바이트 (글자 5 + <code>\0</code> 1)</li><li><code>char arr[]</code>는 수정 가능, <code>char *ptr = "..."</code>는 읽기 전용</li><li><code>while (*p)</code>로 <code>\0</code>까지 순회 (길이를 몰라도 됨)</li><li>문자는 ASCII 정수 — 대소문자는 ±32로 변환</li><li>문자열 뒤집기는 양끝→가운데 swap (배열에만)</li></ol>
+<hr />
+<h2>다음 차시 예고</h2>
+<p>8차시에서는 구조체(struct)와 typedef를 학습합니다. 서로 다른 타입의 데이터를 하나로 묶는 구조체, 타입에 별칭을 다는 typedef, 그리고 구조체 포인터(<code>-&gt;</code>)를 다룹니다. 학생 정보 관리 프로그램을 구조체 배열로 만듭니다.</p>
+<div class="section-split"><h2>실습</h2><p>아래 문제를 직접 풀어본 뒤, 맨 아래 정답 코드로 확인하세요.</p></div>
+<h2>실습 목표</h2>
+<ul><li>포인터로 문자열을 순회하며 길이·복사·검색을 구현한다.</li><li>문자가 ASCII 정수임을 이용해 대소문자를 변환한다.</li><li>문자열을 뒤집고 글자를 세는 함수를 작성한다.</li></ul>
+<blockquote>이번 차시는 실습 분량이 평소의 2배입니다. 기본 과제(1~6)를 먼저 끝내고, 시간이 남으면 심화(7~8)로 갑니다.</blockquote>
+<hr />
+<h2>과제 1: 문자열 길이</h2>
+<p><code>str_length.c</code> 파일을 만들고 문자열 길이를 직접 세는 함수를 작성하세요. (<code>strlen</code> 사용 금지)</p>
+<p>요구사항:</p>
+<ul><li><code>int str_length(char *s)</code> — <code>\0</code>까지 글자 수를 셈</li><li><code>main</code>에서 여러 문자열로 테스트</li></ul>
+<p>출력 예시:</p>
+<pre><code class="nohighlight">"hello" → 5
+"" → 0
+"42 seoul" → 8</code></pre>
+<p>힌트:</p>
+<pre><code class="language-c">int str_length(char *s)
+{
+    int len = 0;
+    while (s[len])
+        len++;
+    return (len);
+}</code></pre>
+<blockquote>12차시 <code>sbs_strlen</code>의 원형입니다. <code>while (s[i])</code>로 <code>\0</code>까지 셉니다.</blockquote>
+<hr />
+<h2>과제 2: 문자열 출력 (포인터 순회)</h2>
+<p><code>str_print.c</code> 파일을 만들고 포인터를 직접 이동시키며 한 글자씩 출력하세요. (<code>printf("%s")</code> 금지, <code>%c</code>만)</p>
+<p>요구사항:</p>
+<ul><li><code>void str_print(char *s)</code> — <code>*p</code>로 한 글자씩, <code>p++</code>로 이동</li><li>끝에 줄바꿈</li></ul>
+<p>힌트:</p>
+<pre><code class="language-c">void str_print(char *s)
+{
+    char *p = s;
+    while (*p)
+    {
+        printf("%c", *p);
+        p++;
+    }
+    printf("\n");
+}</code></pre>
+<hr />
+<h2>과제 3: 대문자 변환</h2>
+<p><code>to_upper.c</code> 파일을 만들고 문자열의 소문자를 모두 대문자로 바꾸세요.</p>
+<p>요구사항:</p>
+<ul><li><code>void to_upper(char *s)</code> — 소문자만 <code>-32</code>, 나머지는 그대로</li><li>원본 배열을 직접 수정 (배열로 선언할 것)</li></ul>
+<p>출력 예시:</p>
+<pre><code class="nohighlight">"Hello, 42!" → "HELLO, 42!"</code></pre>
+<p>힌트:</p>
+<pre><code class="language-c">void to_upper(char *s)
+{
+    int i = 0;
+    while (s[i])
+    {
+        if (s[i] &gt;= 'a' &amp;&amp; s[i] &lt;= 'z')
+            s[i] = s[i] - 32;
+        i++;
+    }
+}</code></pre>
+<blockquote><code>char *s = "..."</code>가 아니라 <code>char s[] = "..."</code>로 만드세요. 리터럴은 수정 불가.</blockquote>
+<hr />
+<h2>과제 4: 문자열 복사</h2>
+<p><code>str_copy.c</code> 파일을 만들고 한 문자열을 다른 배열로 복사하세요. (<code>strcpy</code> 금지)</p>
+<p>요구사항:</p>
+<ul><li><code>void str_copy(char *dst, char *src)</code> — <code>src</code>를 <code>dst</code>로 <code>\0</code>까지 복사</li><li><code>\0</code>도 복사할 것</li><li><code>main</code>에서 충분히 큰 <code>dst</code> 배열 준비</li></ul>
+<p>출력 예시:</p>
+<pre><code class="nohighlight">복사 결과: hello world</code></pre>
+<p>힌트:</p>
+<pre><code class="language-c">void str_copy(char *dst, char *src)
+{
+    int i = 0;
+    while (src[i])
+    {
+        dst[i] = src[i];
+        i++;
+    }
+    dst[i] = '\0';   // 끝 표시 잊지 말 것
+}</code></pre>
+<blockquote><code>\0</code>을 복사하지 않으면 쓰레기가 붙습니다. 12차시 <code>sbs_strlcpy</code>의 기초.</blockquote>
+<hr />
+<h2>과제 5: 문자 개수 세기</h2>
+<p><code>count_char.c</code> 파일을 만들고 문자열에서 특정 문자가 몇 번 나오는지 세세요.</p>
+<p>요구사항:</p>
+<ul><li><code>int count_char(char *s, char target)</code> — <code>target</code>과 같은 글자 수 반환</li><li>여러 문자로 테스트</li></ul>
+<p>출력 예시:</p>
+<pre><code class="nohighlight">"banana"에서 'a' → 3
+"banana"에서 'n' → 2
+"banana"에서 'z' → 0</code></pre>
+<p>힌트:</p>
+<pre><code class="language-c">int count_char(char *s, char target)
+{
+    int count = 0;
+    int i = 0;
+    while (s[i])
+    {
+        if (s[i] == target)
+            count++;
+        i++;
+    }
+    return (count);
+}</code></pre>
+<hr />
+<h2>과제 6: 문자열 뒤집기</h2>
+<p><code>str_reverse.c</code> 파일을 만들고 문자열을 제자리에서 뒤집으세요.</p>
+<p>요구사항:</p>
+<ul><li><code>void str_reverse(char *s)</code> — 양끝에서 가운데로 swap</li><li>추가 배열 없이 제자리(in-place) 뒤집기</li><li>배열로 선언</li></ul>
+<p>출력 예시:</p>
+<pre><code class="nohighlight">"hello" → "olleh"
+"42seoul" → "luoes24"</code></pre>
+<p>힌트:</p>
+<pre><code class="language-c">void str_reverse(char *s)
+{
+    int left = 0;
+    int right = 0;
+    while (s[right])
+        right++;
+    right--;
+    while (left &lt; right)
+    {
+        char tmp = s[left];
+        s[left] = s[right];
+        s[right] = tmp;
+        left++;
+        right--;
+    }
+}</code></pre>
+<blockquote>5차시 swap을 문자열에 응용. <code>right</code>는 마지막 글자 인덱스(len-1)에서 시작.</blockquote>
+<hr />
+<h2>과제 7: 모음 개수 세기 (심화, 20분)</h2>
+<p><code>count_vowels.c</code> 파일을 만들고 문자열의 모음(a,e,i,o,u 대소문자 모두)을 세세요.</p>
+<p>요구사항:</p>
+<ul><li><code>int count_vowels(char *s)</code> — 모음 개수 반환</li><li>대문자·소문자 모음 모두 인정</li><li>보조 함수 <code>int is_vowel(char c)</code>를 만들어 사용</li></ul>
+<p>출력 예시:</p>
+<pre><code class="nohighlight">"Hello World" → 3
+"AEIOU" → 5
+"xyz" → 0</code></pre>
+<p>힌트:</p>
+<pre><code class="language-c">int is_vowel(char c)
+{
+    if (c &gt;= 'A' &amp;&amp; c &lt;= 'Z')
+        c = c + 32;   // 소문자로 통일
+    return (c == 'a' || c == 'e' || c == 'i'
+        || c == 'o' || c == 'u');
+}</code></pre>
+<blockquote>대소문자를 통일한 뒤 비교하면 조건이 간단해집니다.</blockquote>
+<hr />
+<h2>과제 8: 회문 판별 (심화, 25분)</h2>
+<p><code>palindrome.c</code> 파일을 만들고 문자열이 회문(앞뒤로 같음)인지 판별하세요.</p>
+<p>요구사항:</p>
+<ul><li><code>int is_palindrome(char *s)</code> — 회문이면 1, 아니면 0</li><li>양끝에서 좁혀가며 비교 (뒤집지 말고 직접 비교)</li><li>여러 문자열로 테스트</li></ul>
+<p>출력 예시:</p>
+<pre><code class="nohighlight">"level" → 회문
+"hello" → 회문 아님
+"42024" → 회문</code></pre>
+<p>힌트:</p>
+<pre><code class="language-c">int is_palindrome(char *s)
+{
+    int left = 0;
+    int right = 0;
+    while (s[right])
+        right++;
+    right--;
+    while (left &lt; right)
+    {
+        if (s[left] != s[right])
+            return (0);
+        left++;
+        right--;
+    }
+    return (1);
+}</code></pre>
+<p>생각해보기: 뒤집어서 비교하는 방법도 있지만, 양끝 비교가 왜 더 효율적일까? (절반만 비교하면 됨)</p>
+<hr />
+<h2>제출 확인 사항</h2>
+<p>기본 (6과제):</p>
+<ul><li>[ ] <code>str_length.c</code> - <code>\0</code>까지 길이 세기</li><li>[ ] <code>str_print.c</code> - 포인터 순회로 출력</li><li>[ ] <code>to_upper.c</code> - 소문자 → 대문자 (±32)</li><li>[ ] <code>str_copy.c</code> - <code>\0</code> 포함 복사</li><li>[ ] <code>count_char.c</code> - 특정 문자 세기</li><li>[ ] <code>str_reverse.c</code> - 제자리 뒤집기</li></ul>
+<p>심화 (2과제):</p>
+<ul><li>[ ] <code>count_vowels.c</code> - 모음 세기 (보조 함수)</li><li>[ ] <code>palindrome.c</code> - 회문 판별</li></ul>
+<ul><li>[ ] 모든 파일: <code>gcc -Wall -Wextra -Werror</code> 경고 없이 컴파일</li><li>[ ] 수정하는 문자열은 모두 <code>char arr[]</code>로 선언했는가?</li></ul>
+<div class="section-split"><h2>정답 코드</h2><p>각 항목의 "정답 보기"를 눌러 펼치세요. 먼저 직접 풀어본 뒤 확인하는 것을 권장합니다.</p></div>
+<div class="answer"><div class="answer-head"><span class="answer-name">📄 <span class="file">count_char.c</span></span><button class="answer-toggle">정답 보기</button></div><div class="answer-body"><pre><code class="language-c">#include &lt;stdio.h&gt;
+
+int	count_char(char *s, char target);
+
+int	main(void)
+{
+	char	s[] = "banana";
+
+	printf("\"banana\"에서 'a' → %d\n", count_char(s, 'a'));
+	printf("\"banana\"에서 'n' → %d\n", count_char(s, 'n'));
+	printf("\"banana\"에서 'z' → %d\n", count_char(s, 'z'));
+	return (0);
+}
+
+int	count_char(char *s, char target)
+{
+	int	count;
+	int	i;
+
+	count = 0;
+	i = 0;
+	while (s[i])
+	{
+		if (s[i] == target)
+			count++;
+		i++;
+	}
+	return (count);
+}</code></pre></div></div>
+<div class="answer"><div class="answer-head"><span class="answer-name">📄 <span class="file">count_vowels.c</span></span><button class="answer-toggle">정답 보기</button></div><div class="answer-body"><pre><code class="language-c">#include &lt;stdio.h&gt;
+
+int	is_vowel(char c);
+int	count_vowels(char *s);
+
+int	main(void)
+{
+	char	a[] = "Hello World";
+	char	b[] = "AEIOU";
+	char	c[] = "xyz";
+
+	printf("\"Hello World\" → %d\n", count_vowels(a));
+	printf("\"AEIOU\" → %d\n", count_vowels(b));
+	printf("\"xyz\" → %d\n", count_vowels(c));
+	return (0);
+}
+
+int	is_vowel(char c)
+{
+	if (c &gt;= 'A' &amp;&amp; c &lt;= 'Z')
+		c = c + 32;
+	if (c == 'a' || c == 'e' || c == 'i' || c == 'o' || c == 'u')
+		return (1);
+	return (0);
+}
+
+int	count_vowels(char *s)
+{
+	int	count;
+	int	i;
+
+	count = 0;
+	i = 0;
+	while (s[i])
+	{
+		if (is_vowel(s[i]))
+			count++;
+		i++;
+	}
+	return (count);
+}</code></pre></div></div>
+<div class="answer"><div class="answer-head"><span class="answer-name">📄 <span class="file">palindrome.c</span></span><button class="answer-toggle">정답 보기</button></div><div class="answer-body"><pre><code class="language-c">#include &lt;stdio.h&gt;
+
+int	is_palindrome(char *s);
+
+int	main(void)
+{
+	char	a[] = "level";
+	char	b[] = "hello";
+	char	c[] = "42024";
+
+	printf("\"level\" → %s\n", is_palindrome(a) ? "회문" : "회문 아님");
+	printf("\"hello\" → %s\n", is_palindrome(b) ? "회문" : "회문 아님");
+	printf("\"42024\" → %s\n", is_palindrome(c) ? "회문" : "회문 아님");
+	return (0);
+}
+
+int	is_palindrome(char *s)
+{
+	int	left;
+	int	right;
+
+	left = 0;
+	right = 0;
+	while (s[right])
+		right++;
+	right--;
+	while (left &lt; right)
+	{
+		if (s[left] != s[right])
+			return (0);
+		left++;
+		right--;
+	}
+	return (1);
+}</code></pre></div></div>
+<div class="answer"><div class="answer-head"><span class="answer-name">📄 <span class="file">str_copy.c</span></span><button class="answer-toggle">정답 보기</button></div><div class="answer-body"><pre><code class="language-c">#include &lt;stdio.h&gt;
+
+void	str_copy(char *dst, char *src);
+
+int	main(void)
+{
+	char	src[] = "hello world";
+	char	dst[32];
+
+	str_copy(dst, src);
+	printf("복사 결과: %s\n", dst);
+	return (0);
+}
+
+void	str_copy(char *dst, char *src)
+{
+	int	i;
+
+	i = 0;
+	while (src[i])
+	{
+		dst[i] = src[i];
+		i++;
+	}
+	dst[i] = '\0';
+}</code></pre></div></div>
+<div class="answer"><div class="answer-head"><span class="answer-name">📄 <span class="file">str_length.c</span></span><button class="answer-toggle">정답 보기</button></div><div class="answer-body"><pre><code class="language-c">#include &lt;stdio.h&gt;
+
+int	str_length(char *s);
+
+int	main(void)
+{
+	char	a[] = "hello";
+	char	b[] = "";
+	char	c[] = "42 seoul";
+
+	printf("\"hello\" → %d\n", str_length(a));
+	printf("\"\" → %d\n", str_length(b));
+	printf("\"42 seoul\" → %d\n", str_length(c));
+	return (0);
+}
+
+int	str_length(char *s)
+{
+	int	len;
+
+	len = 0;
+	while (s[len])
+		len++;
+	return (len);
+}</code></pre></div></div>
+<div class="answer"><div class="answer-head"><span class="answer-name">📄 <span class="file">str_print.c</span></span><button class="answer-toggle">정답 보기</button></div><div class="answer-body"><pre><code class="language-c">#include &lt;stdio.h&gt;
+
+void	str_print(char *s);
+
+int	main(void)
+{
+	char	msg[] = "hello world";
+
+	str_print(msg);
+	return (0);
+}
+
+void	str_print(char *s)
+{
+	char	*p;
+
+	p = s;
+	while (*p)
+	{
+		printf("%c", *p);
+		p++;
+	}
+	printf("\n");
+}</code></pre></div></div>
+<div class="answer"><div class="answer-head"><span class="answer-name">📄 <span class="file">str_reverse.c</span></span><button class="answer-toggle">정답 보기</button></div><div class="answer-body"><pre><code class="language-c">#include &lt;stdio.h&gt;
+
+void	str_reverse(char *s);
+
+int	main(void)
+{
+	char	a[] = "hello";
+	char	b[] = "42seoul";
+
+	str_reverse(a);
+	str_reverse(b);
+	printf("%s\n", a);
+	printf("%s\n", b);
+	return (0);
+}
+
+void	str_reverse(char *s)
+{
+	int		left;
+	int		right;
+	char	tmp;
+
+	left = 0;
+	right = 0;
+	while (s[right])
+		right++;
+	right--;
+	while (left &lt; right)
+	{
+		tmp = s[left];
+		s[left] = s[right];
+		s[right] = tmp;
+		left++;
+		right--;
+	}
+}</code></pre></div></div>
+<div class="answer"><div class="answer-head"><span class="answer-name">📄 <span class="file">to_upper.c</span></span><button class="answer-toggle">정답 보기</button></div><div class="answer-body"><pre><code class="language-c">#include &lt;stdio.h&gt;
+
+void	to_upper(char *s);
+
+int	main(void)
+{
+	char	s[] = "Hello, 42!";
+
+	to_upper(s);
+	printf("%s\n", s);
+	return (0);
+}
+
+void	to_upper(char *s)
+{
+	int	i;
+
+	i = 0;
+	while (s[i])
+	{
+		if (s[i] &gt;= 'a' &amp;&amp; s[i] &lt;= 'z')
+			s[i] = s[i] - 32;
+		i++;
+	}
+}</code></pre></div></div>
+
+      </article>
+    </main>
+    <button id="toTop" class="to-top" aria-label="맨 위로">↑</button>
+    <script>
+      document.querySelectorAll(".answer-head").forEach(function (h) {
+        h.addEventListener("click", function () {
+          var card = h.parentElement;
+          card.classList.toggle("open");
+          h.querySelector(".answer-toggle").textContent =
+            card.classList.contains("open") ? "정답 숨기기" : "정답 보기";
+        });
+      });
+      var bar = document.getElementById("readbar");
+      var toTopBtn = document.getElementById("toTop");
+      function onScroll() {
+        var y = window.scrollY || document.documentElement.scrollTop;
+        var dh = document.documentElement.scrollHeight - window.innerHeight;
+        var r = dh > 0 ? y / dh : 0;
+        bar.style.width = (Math.min(1, Math.max(0, r)) * 100) + "%";
+        toTopBtn.classList.toggle("show", y > 400);
+      }
+      window.addEventListener("scroll", onScroll, { passive: true });
+      toTopBtn.addEventListener("click", function () { window.scrollTo({ top: 0, behavior: "smooth" }); });
+      onScroll();
+    </script>
+    <script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/highlight.min.js"></script>
+    <script>
+      if (window.hljs) {
+        document.querySelectorAll("pre code:not(.nohighlight)").forEach(function (el) { hljs.highlightElement(el); });
+      }
+    </script>
+  </body>
+</html>

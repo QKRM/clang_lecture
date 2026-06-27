@@ -1,0 +1,441 @@
+<!--
+Palette: Cyan & Amber (same as C_01..C_14 — consistent course design)
+Plan Summary: 16-slide interactive presentation for C Language Session 15.
+Covers Makefile syntax (target/dependency/recipe, variables, pattern rules, automatic variables), ar static library, all/clean/fclean/re rules, and library linking. grade.sh workflow.
+NEITHER Mermaid JS NOR SVG were used anywhere in this output.
+-->
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>15차시 강의자료: Makefile과 라이브러리</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+      @import url("https://fonts.googleapis.com/css2?family=Pretendard:wght@400;500;600;700;800;900&display=swap");
+      body { font-family: "Pretendard", sans-serif; background-color: #0f172a; color: #f8fafc; overflow-x: hidden; }
+      pre, code { font-family: 'Courier New', Courier, monospace; }
+    </style>
+  </head>
+  <body class="min-h-screen flex flex-col justify-between">
+    <div class="bg-slate-900 border-b border-slate-800 px-6 py-4 flex flex-wrap items-center justify-between gap-4 sticky top-0 z-50">
+      <div class="flex items-center gap-3">
+        <span class="bg-cyan-600 text-white text-xs font-bold px-2.5 py-1 rounded-full uppercase tracking-wider">Session 15</span>
+        <h1 class="text-sm md:text-base font-bold text-slate-200">C언어 기초 — libsbs 구현 과정</h1>
+      </div>
+      <div class="flex items-center gap-4">
+        <div class="flex items-center gap-2 bg-slate-800 px-3 py-1.5 rounded-lg border border-slate-700">
+          <span class="text-xs text-slate-400">슬라이드:</span>
+          <span id="slideCounter" class="text-xs font-bold text-cyan-400">1 / 16</span>
+        </div>
+      </div>
+    </div>
+
+    <div id="deckContainer" class="flex-grow flex items-center justify-center p-4 md:p-8">
+
+      <!-- 01 -->
+      <div id="slide1" class="bg-gradient-to-br from-slate-900 via-cyan-950 to-slate-900 w-full max-w-5xl aspect-[16/9] rounded-3xl p-8 md:p-12 shadow-2xl border border-slate-800 flex flex-col justify-between">
+        <div class="flex justify-between items-start"><span class="text-cyan-400 font-bold tracking-wider text-sm uppercase">Slide 01 / Cover</span><span class="text-slate-500 text-sm">15차시: Makefile과 라이브러리</span></div>
+        <div class="my-auto">
+          <span class="inline-block bg-amber-500/20 text-amber-300 text-xs font-extrabold px-3 py-1.5 rounded-md mb-4 border border-amber-500/30">15차시 · 빌드 자동화 + 정적 라이브러리</span>
+          <h2 class="text-3xl md:text-5xl font-black text-white leading-tight mb-4">Makefile과<br /><span class="text-transparent bg-clip-text bg-gradient-to-r from-amber-400 to-orange-300">라이브러리 아카이브</span></h2>
+          <p class="text-slate-400 text-base md:text-lg max-w-2xl">손으로 치던 <code class="text-cyan-300">gcc</code>를 <code class="text-cyan-300">make</code> 하나로. <code class="text-cyan-300">ar</code>로 모든 함수를 <code class="text-cyan-300">libsbs.a</code>에 묶는다.</p>
+        </div>
+        <div class="flex justify-between items-center text-xs text-slate-500 border-t border-slate-800/80 pt-4"><span>C Language — libsbs Implementation Course</span><span>Time Frame: 3 Hours</span></div>
+      </div>
+
+      <!-- 02 -->
+      <div id="slide2" class="bg-slate-900 w-full max-w-5xl aspect-[16/9] rounded-3xl p-8 md:p-12 shadow-2xl border border-slate-800 flex flex-col justify-between hidden">
+        <div class="flex justify-between items-start"><span class="text-cyan-400 font-bold tracking-wider text-sm uppercase">Slide 02 / Goal</span><span class="text-slate-500 text-sm">15차시: Makefile과 라이브러리</span></div>
+        <div class="my-auto">
+          <h3 class="text-2xl md:text-3xl font-bold text-white mb-6 border-b border-slate-800 pb-3">오늘의 목표</h3>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <div class="space-y-3">
+              <div class="p-4 bg-slate-800/30 rounded-xl border-l-4 border-cyan-500"><h4 class="font-bold text-white text-sm mb-1">1부 — 강사 설명</h4><p class="text-slate-400 text-xs">Makefile 문법, ar, 링킹, 표준 규칙</p></div>
+              <div class="p-4 bg-slate-800/30 rounded-xl border-l-4 border-amber-500"><h4 class="font-bold text-white text-sm mb-1">2부 — 직접 작성</h4><p class="text-slate-400 text-xs">libsbs.a Makefile + 빌드 + 링크 테스트</p></div>
+            </div>
+            <div class="bg-slate-800/50 p-6 rounded-xl border border-slate-700">
+              <h4 class="font-bold text-amber-400 text-sm mb-3">오늘 수업이 끝나면</h4>
+              <ul class="space-y-2 text-xs text-slate-300">
+                <li class="flex items-start gap-2"><span class="text-emerald-400 font-bold mt-0.5">1</span><span>Makefile 문법을 안다</span></li>
+                <li class="flex items-start gap-2"><span class="text-emerald-400 font-bold mt-0.5">2</span><span>ar로 .a를 만든다</span></li>
+                <li class="flex items-start gap-2"><span class="text-emerald-400 font-bold mt-0.5">3</span><span>라이브러리를 링크한다</span></li>
+              </ul>
+              <div class="mt-4 bg-amber-950/40 p-3 rounded-lg border border-amber-500/20"><p class="text-amber-300 text-xs font-semibold">빌드 자동화</p><p class="text-slate-400 text-[10px] mt-1">16차시 종합 프로젝트의 빌드 토대</p></div>
+            </div>
+          </div>
+        </div>
+        <div class="flex justify-between items-center text-xs text-slate-500 border-t border-slate-800/80 pt-4"><span>Today's Goal</span><span>Session 15</span></div>
+      </div>
+
+      <!-- 03 why make -->
+      <div id="slide3" class="bg-slate-900 w-full max-w-5xl aspect-[16/9] rounded-3xl p-8 md:p-12 shadow-2xl border border-slate-800 flex flex-col justify-between hidden">
+        <div class="flex justify-between items-start"><span class="text-cyan-400 font-bold tracking-wider text-sm uppercase">Slide 03 / Why Make</span><span class="text-slate-500 text-sm">15차시: Makefile과 라이브러리</span></div>
+        <div class="my-auto">
+          <h3 class="text-2xl md:text-3xl font-bold text-white mb-4 border-b border-slate-800 pb-3">왜 Makefile인가</h3>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <span class="text-rose-400 text-xs font-bold block mb-2">손으로 매번</span>
+              <pre class="bg-slate-950 text-slate-200 p-3 rounded-xl text-[11px] leading-relaxed border border-slate-700"><code>cc -Wall ... sbs_isalpha.c
+cc -Wall ... sbs_toupper.c
+cc -Wall ... (23개...)
+ar rcs libsbs.a *.o</code></pre>
+            </div>
+            <div>
+              <span class="text-emerald-400 text-xs font-bold block mb-2">make 하나로</span>
+              <pre class="bg-slate-950 text-slate-200 p-3 rounded-xl text-[11px] leading-relaxed border border-slate-700"><code><span class="text-emerald-300">$</span> make
+<span class="text-slate-500"># 바뀐 파일만 재컴파일</span>
+<span class="text-slate-500"># libsbs.a 자동 생성</span></code></pre>
+              <div class="mt-3 bg-cyan-950/30 p-3 rounded-xl border border-cyan-500/20"><p class="text-slate-400 text-[10px]">규칙을 적어두면 <code class="text-white">make</code>가 의존성을 보고 필요한 것만 빌드한다.</p></div>
+            </div>
+          </div>
+        </div>
+        <div class="flex justify-between items-center text-xs text-slate-500 border-t border-slate-800/80 pt-4"><span>Why Make</span><span>Session 15</span></div>
+      </div>
+
+      <!-- 04 syntax -->
+      <div id="slide4" class="bg-slate-900 w-full max-w-5xl aspect-[16/9] rounded-3xl p-8 md:p-12 shadow-2xl border border-slate-800 flex flex-col justify-between hidden">
+        <div class="flex justify-between items-start"><span class="text-cyan-400 font-bold tracking-wider text-sm uppercase">Slide 04 / Syntax</span><span class="text-slate-500 text-sm">15차시: Makefile과 라이브러리</span></div>
+        <div class="my-auto">
+          <h3 class="text-2xl md:text-3xl font-bold text-white mb-4 border-b border-slate-800 pb-3">타겟 · 의존성 · 레시피</h3>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <pre class="bg-slate-950 text-slate-200 p-4 rounded-xl text-[11px] leading-relaxed border border-slate-700"><code><span class="text-cyan-300">타겟</span>: <span class="text-amber-300">의존성</span>
+<span class="text-rose-400">→</span>레시피  <span class="text-slate-500"># 탭!</span>
+
+hello: hello.c
+<span class="text-rose-400">→</span>cc -Wall hello.c -o hello</code></pre>
+              <p class="text-slate-500 text-[10px] mt-2"><span class="text-rose-400">→</span> = 탭(Tab). 스페이스면 에러.</p>
+            </div>
+            <div class="space-y-2">
+              <div class="bg-slate-800/40 p-3 rounded-xl border border-slate-700"><p class="text-cyan-400 text-xs font-semibold mb-1">타겟</p><p class="text-slate-400 text-[10px]">만들려는 것(파일/동작)</p></div>
+              <div class="bg-slate-800/40 p-3 rounded-xl border border-slate-700"><p class="text-amber-400 text-xs font-semibold mb-1">의존성</p><p class="text-slate-400 text-[10px]">필요한 것</p></div>
+              <div class="bg-rose-950/20 p-3 rounded-xl border border-rose-500/20"><p class="text-rose-400 text-xs font-semibold mb-1">레시피</p><p class="text-slate-400 text-[10px]">실행 명령 — <span class="text-white">반드시 탭</span></p></div>
+            </div>
+          </div>
+        </div>
+        <div class="flex justify-between items-center text-xs text-slate-500 border-t border-slate-800/80 pt-4"><span>Makefile Syntax</span><span>Session 15</span></div>
+      </div>
+
+      <!-- 05 variables -->
+      <div id="slide5" class="bg-slate-900 w-full max-w-5xl aspect-[16/9] rounded-3xl p-8 md:p-12 shadow-2xl border border-slate-800 flex flex-col justify-between hidden">
+        <div class="flex justify-between items-start"><span class="text-cyan-400 font-bold tracking-wider text-sm uppercase">Slide 05 / Variables</span><span class="text-slate-500 text-sm">15차시: Makefile과 라이브러리</span></div>
+        <div class="my-auto">
+          <h3 class="text-2xl md:text-3xl font-bold text-white mb-4 border-b border-slate-800 pb-3">변수와 치환</h3>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <pre class="bg-slate-950 text-slate-200 p-4 rounded-xl text-[11px] leading-relaxed border border-slate-700"><code>NAME   = libsbs.a
+CC     = cc
+CFLAGS = -Wall -Wextra -Werror
+
+SRCS   = sbs_isalpha.c \
+         sbs_strlen.c ...
+OBJS   = $(SRCS:.c=.o)</code></pre>
+            </div>
+            <div class="space-y-3">
+              <div class="bg-cyan-950/30 p-4 rounded-xl border border-cyan-500/20"><p class="text-cyan-300 text-xs font-semibold mb-2">$(SRCS:.c=.o)</p><p class="text-slate-400 text-[10px]">SRCS의 모든 <code class="text-white">.c</code>를 <code class="text-white">.o</code>로 바꾼 목록. 반복 제거.</p></div>
+              <div class="bg-slate-800/40 p-4 rounded-xl border border-slate-700"><p class="text-slate-400 text-[10px]">변수 참조는 <code class="text-white">$(이름)</code>. 한 곳만 고치면 전체 반영.</p></div>
+            </div>
+          </div>
+        </div>
+        <div class="flex justify-between items-center text-xs text-slate-500 border-t border-slate-800/80 pt-4"><span>Variables</span><span>Session 15</span></div>
+      </div>
+
+      <!-- 06 pattern -->
+      <div id="slide6" class="bg-slate-900 w-full max-w-5xl aspect-[16/9] rounded-3xl p-8 md:p-12 shadow-2xl border border-slate-800 flex flex-col justify-between hidden">
+        <div class="flex justify-between items-start"><span class="text-cyan-400 font-bold tracking-wider text-sm uppercase">Slide 06 / Pattern Rule</span><span class="text-slate-500 text-sm">15차시: Makefile과 라이브러리</span></div>
+        <div class="my-auto">
+          <h3 class="text-2xl md:text-3xl font-bold text-white mb-4 border-b border-slate-800 pb-3">패턴 규칙과 자동 변수</h3>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <pre class="bg-slate-950 text-slate-200 p-4 rounded-xl text-[11px] leading-relaxed border border-slate-700"><code>%.o: %.c libsbs.h
+	$(CC) $(CFLAGS) -c $&lt; -o $@</code></pre>
+            </div>
+            <div>
+              <div class="bg-slate-950 rounded-xl border border-slate-700 overflow-hidden">
+                <table class="w-full text-xs">
+                  <thead><tr class="border-b border-slate-700 bg-slate-800/60"><th class="text-left px-3 py-2 text-cyan-400">기호</th><th class="text-left px-3 py-2 text-amber-400">의미</th></tr></thead>
+                  <tbody class="divide-y divide-slate-800">
+                    <tr><td class="px-3 py-2"><code class="text-slate-300">%.o: %.c</code></td><td class="px-3 py-2 text-slate-400">모든 .o는 같은 이름 .c로</td></tr>
+                    <tr><td class="px-3 py-2"><code class="text-slate-300">$&lt;</code></td><td class="px-3 py-2 text-slate-400">첫 의존성(.c)</td></tr>
+                    <tr><td class="px-3 py-2"><code class="text-slate-300">$@</code></td><td class="px-3 py-2 text-slate-400">타겟(.o)</td></tr>
+                  </tbody>
+                </table>
+              </div>
+              <p class="text-slate-400 text-[10px] mt-3">규칙 하나로 모든 .c → .o 컴파일을 처리.</p>
+            </div>
+          </div>
+        </div>
+        <div class="flex justify-between items-center text-xs text-slate-500 border-t border-slate-800/80 pt-4"><span>Pattern Rule</span><span>Session 15</span></div>
+      </div>
+
+      <!-- 07 ar -->
+      <div id="slide7" class="bg-slate-900 w-full max-w-5xl aspect-[16/9] rounded-3xl p-8 md:p-12 shadow-2xl border border-slate-800 flex flex-col justify-between hidden">
+        <div class="flex justify-between items-start"><span class="text-cyan-400 font-bold tracking-wider text-sm uppercase">Slide 07 / ar</span><span class="text-slate-500 text-sm">15차시: Makefile과 라이브러리</span></div>
+        <div class="my-auto">
+          <h3 class="text-2xl md:text-3xl font-bold text-white mb-4 border-b border-slate-800 pb-3">ar — 정적 라이브러리 만들기</h3>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <pre class="bg-slate-950 text-slate-200 p-4 rounded-xl text-[11px] leading-relaxed border border-slate-700"><code>$(NAME): $(OBJS)
+	ar rcs $(NAME) $(OBJS)
+
+<span class="text-slate-500"># 여러 .o → 하나의 .a</span></code></pre>
+              <div class="mt-3 bg-slate-950 rounded-xl border border-slate-700 overflow-hidden">
+                <table class="w-full text-xs">
+                  <tbody class="divide-y divide-slate-800">
+                    <tr><td class="px-3 py-1.5"><code class="text-cyan-300">r</code></td><td class="px-3 py-1.5 text-slate-400">추가/교체</td></tr>
+                    <tr><td class="px-3 py-1.5"><code class="text-cyan-300">c</code></td><td class="px-3 py-1.5 text-slate-400">생성</td></tr>
+                    <tr><td class="px-3 py-1.5"><code class="text-cyan-300">s</code></td><td class="px-3 py-1.5 text-slate-400">심볼 인덱스</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+            <div class="bg-cyan-950/30 p-5 rounded-xl border border-cyan-500/20 self-center"><p class="text-cyan-300 text-sm font-bold mb-2">정적 라이브러리</p><p class="text-slate-400 text-xs">여러 오브젝트(.o)를 하나의 아카이브(.a)로 묶은 것. 다른 프로그램이 링크해 함수를 쓴다.</p><pre class="bg-slate-950 text-slate-200 p-2 rounded text-[10px] mt-2 border border-slate-700"><code>$ ar t libsbs.a  # 목록 확인</code></pre></div>
+          </div>
+        </div>
+        <div class="flex justify-between items-center text-xs text-slate-500 border-t border-slate-800/80 pt-4"><span>ar Archive</span><span>Session 15</span></div>
+      </div>
+
+      <!-- 08 standard rules -->
+      <div id="slide8" class="bg-slate-900 w-full max-w-5xl aspect-[16/9] rounded-3xl p-8 md:p-12 shadow-2xl border border-slate-800 flex flex-col justify-between hidden">
+        <div class="flex justify-between items-start"><span class="text-cyan-400 font-bold tracking-wider text-sm uppercase">Slide 08 / Rules</span><span class="text-slate-500 text-sm">15차시: Makefile과 라이브러리</span></div>
+        <div class="my-auto">
+          <h3 class="text-2xl md:text-3xl font-bold text-white mb-4 border-b border-slate-800 pb-3">표준 규칙 — all / clean / fclean / re</h3>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <pre class="bg-slate-950 text-slate-200 p-4 rounded-xl text-[11px] leading-relaxed border border-slate-700"><code>all: $(NAME)
+
+clean:
+	$(RM) $(OBJS)
+
+fclean: clean
+	$(RM) $(NAME)
+
+re: fclean all
+
+.PHONY: all clean fclean re</code></pre>
+            </div>
+            <div class="space-y-2 self-center">
+              <div class="bg-slate-800/40 p-3 rounded-xl border border-slate-700"><p class="text-slate-300 text-[10px]"><code class="text-cyan-300">all</code> 기본 빌드 · <code class="text-cyan-300">clean</code> .o 삭제</p></div>
+              <div class="bg-slate-800/40 p-3 rounded-xl border border-slate-700"><p class="text-slate-300 text-[10px]"><code class="text-cyan-300">fclean</code> .o+.a 삭제 · <code class="text-cyan-300">re</code> 재빌드</p></div>
+              <div class="bg-amber-950/20 p-3 rounded-xl border border-amber-500/20"><p class="text-amber-400 text-xs font-semibold mb-1">.PHONY</p><p class="text-slate-400 text-[10px]">"파일이 아니라 동작". 동명 파일이 있어도 항상 실행.</p></div>
+            </div>
+          </div>
+        </div>
+        <div class="flex justify-between items-center text-xs text-slate-500 border-t border-slate-800/80 pt-4"><span>Standard Rules</span><span>Session 15</span></div>
+      </div>
+
+      <!-- 09 link -->
+      <div id="slide9" class="bg-slate-900 w-full max-w-5xl aspect-[16/9] rounded-3xl p-8 md:p-12 shadow-2xl border border-slate-800 flex flex-col justify-between hidden">
+        <div class="flex justify-between items-start"><span class="text-cyan-400 font-bold tracking-wider text-sm uppercase">Slide 09 / Link</span><span class="text-slate-500 text-sm">15차시: Makefile과 라이브러리</span></div>
+        <div class="my-auto">
+          <h3 class="text-2xl md:text-3xl font-bold text-white mb-4 border-b border-slate-800 pb-3">라이브러리 링크</h3>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <pre class="bg-slate-950 text-slate-200 p-4 rounded-xl text-[11px] leading-relaxed border border-slate-700"><code>cc main.c -L. -lsbs -o prog
+                  ↑    ↑
+              현재폴더  libsbs.a</code></pre>
+            </div>
+            <div class="space-y-3">
+              <div class="bg-cyan-950/30 p-4 rounded-xl border border-cyan-500/20"><p class="text-cyan-300 text-xs font-semibold mb-2">-L. / -lsbs</p><p class="text-slate-400 text-[10px]"><code class="text-white">-L.</code> 현재 폴더에서 검색. <code class="text-white">-lsbs</code> = <code class="text-white">libsbs.a</code> (lib과 .a를 뺀 이름).</p></div>
+              <div class="bg-slate-800/40 p-4 rounded-xl border border-slate-700"><p class="text-slate-400 text-[10px]">링크하면 라이브러리의 sbs_* 함수를 main에서 호출할 수 있다.</p></div>
+            </div>
+          </div>
+        </div>
+        <div class="flex justify-between items-center text-xs text-slate-500 border-t border-slate-800/80 pt-4"><span>Linking</span><span>Session 15</span></div>
+      </div>
+
+      <!-- 10 grade -->
+      <div id="slide10" class="bg-slate-900 w-full max-w-5xl aspect-[16/9] rounded-3xl p-8 md:p-12 shadow-2xl border border-slate-800 flex flex-col justify-between hidden">
+        <div class="flex justify-between items-start"><span class="text-cyan-400 font-bold tracking-wider text-sm uppercase">Slide 10 / grade.sh</span><span class="text-slate-500 text-sm">15차시: Makefile과 라이브러리</span></div>
+        <div class="my-auto">
+          <h3 class="text-2xl md:text-3xl font-bold text-white mb-4 border-b border-slate-800 pb-3">채점 — 빌드 시스템 검증</h3>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <pre class="bg-slate-950 text-slate-200 p-4 rounded-xl text-[11px] leading-relaxed border border-slate-700"><code><span class="text-emerald-300">$</span> bash grade.sh
+=== 15차시 채점 (Makefile) ===
+<span class="text-emerald-300">✓ make → libsbs.a 생성</span>
+<span class="text-emerald-300">✓ ar 아카이브에 오브젝트</span>
+<span class="text-emerald-300">✓ libsbs.a 링크 + 동작</span>
+<span class="text-emerald-300">✓ clean/fclean/re 동작</span>
+결과: 4 / 4 통과</code></pre>
+            </div>
+            <div class="bg-slate-800/40 p-4 rounded-xl border border-slate-700 self-center"><p class="text-amber-400 text-xs font-semibold mb-2">4가지 검사</p><ol class="space-y-1 text-[10px] text-slate-300"><li>① make로 libsbs.a 생성</li><li>② ar에 .o 포함</li><li>③ -lsbs 링크 + 실행</li><li>④ clean/fclean/re 규칙</li></ol></div>
+          </div>
+        </div>
+        <div class="flex justify-between items-center text-xs text-slate-500 border-t border-slate-800/80 pt-4"><span>Auto Grader</span><span>Session 15</span></div>
+      </div>
+
+      <!-- 11 practice 1-2 -->
+      <div id="slide11" class="bg-slate-900 w-full max-w-5xl aspect-[16/9] rounded-3xl p-8 md:p-12 shadow-2xl border border-slate-800 flex flex-col justify-between hidden">
+        <div class="flex justify-between items-start"><span class="text-cyan-400 font-bold tracking-wider text-sm uppercase">Slide 11 / Practice 1-2</span><span class="text-slate-500 text-sm">15차시: Makefile과 라이브러리</span></div>
+        <div class="my-auto">
+          <h3 class="text-2xl md:text-3xl font-bold text-white mb-4 border-b border-slate-800 pb-3">실습 ①② — 변수 &amp; 빌드 규칙</h3>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div><span class="text-cyan-400 text-xs font-bold block mb-2">① 변수</span><pre class="bg-slate-950 text-slate-200 p-3 rounded-xl text-[11px] leading-relaxed border border-slate-700"><code>NAME = libsbs.a
+SRCS = ...
+OBJS = $(SRCS:.c=.o)</code></pre></div>
+            <div><span class="text-cyan-400 text-xs font-bold block mb-2">② 빌드</span><pre class="bg-slate-950 text-slate-200 p-3 rounded-xl text-[11px] leading-relaxed border border-slate-700"><code>$(NAME): $(OBJS)
+	ar rcs $(NAME) $(OBJS)
+%.o: %.c libsbs.h
+	$(CC) $(CFLAGS) -c $&lt; -o $@</code></pre></div>
+          </div>
+        </div>
+        <div class="flex justify-between items-center text-xs text-slate-500 border-t border-slate-800/80 pt-4"><span>Practice 1-2</span><span>Session 15</span></div>
+      </div>
+
+      <!-- 12 practice 3-4 -->
+      <div id="slide12" class="bg-slate-900 w-full max-w-5xl aspect-[16/9] rounded-3xl p-8 md:p-12 shadow-2xl border border-slate-800 flex flex-col justify-between hidden">
+        <div class="flex justify-between items-start"><span class="text-cyan-400 font-bold tracking-wider text-sm uppercase">Slide 12 / Practice 3-4</span><span class="text-slate-500 text-sm">15차시: Makefile과 라이브러리</span></div>
+        <div class="my-auto">
+          <h3 class="text-2xl md:text-3xl font-bold text-white mb-4 border-b border-slate-800 pb-3">실습 ③④ — 규칙 &amp; 링크</h3>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div><span class="text-cyan-400 text-xs font-bold block mb-2">③ clean/fclean/re</span><pre class="bg-slate-950 text-slate-200 p-3 rounded-xl text-[11px] leading-relaxed border border-slate-700"><code>clean:
+	$(RM) $(OBJS)
+fclean: clean
+	$(RM) $(NAME)
+re: fclean all
+.PHONY: all clean fclean re</code></pre></div>
+            <div><span class="text-cyan-400 text-xs font-bold block mb-2">④ 링크</span><pre class="bg-slate-950 text-slate-200 p-3 rounded-xl text-[11px] leading-relaxed border border-slate-700"><code>$ make
+$ cc tests/test_link.c \
+   -L. -lsbs -o run
+$ ./run
+LINK_OK</code></pre></div>
+          </div>
+        </div>
+        <div class="flex justify-between items-center text-xs text-slate-500 border-t border-slate-800/80 pt-4"><span>Practice 3-4</span><span>Session 15</span></div>
+      </div>
+
+      <!-- 13 pitfalls -->
+      <div id="slide13" class="bg-slate-900 w-full max-w-5xl aspect-[16/9] rounded-3xl p-8 md:p-12 shadow-2xl border border-slate-800 flex flex-col justify-between hidden">
+        <div class="flex justify-between items-start"><span class="text-cyan-400 font-bold tracking-wider text-sm uppercase">Slide 13 / Pitfalls</span><span class="text-slate-500 text-sm">15차시: Makefile과 라이브러리</span></div>
+        <div class="my-auto">
+          <h3 class="text-2xl md:text-3xl font-bold text-white mb-4 border-b border-slate-800 pb-3">자주 하는 실수</h3>
+          <div class="bg-slate-950 rounded-xl border border-slate-700 overflow-hidden">
+            <table class="w-full text-xs">
+              <thead><tr class="border-b border-slate-700 bg-slate-800/60"><th class="text-left px-4 py-2 text-rose-400">증상</th><th class="text-left px-4 py-2 text-emerald-400">원인 / 해결</th></tr></thead>
+              <tbody class="divide-y divide-slate-800">
+                <tr><td class="px-4 py-2 text-slate-300">missing separator</td><td class="px-4 py-2 text-slate-400">레시피를 탭으로 (스페이스 X)</td></tr>
+                <tr><td class="px-4 py-2 text-slate-300">undefined reference</td><td class="px-4 py-2 text-slate-400">-lsbs 빠짐 / ar에 .o 없음</td></tr>
+                <tr><td class="px-4 py-2 text-slate-300">clean이 안 됨</td><td class="px-4 py-2 text-slate-400">.PHONY 선언</td></tr>
+                <tr><td class="px-4 py-2 text-slate-300">-lsbs 못 찾음</td><td class="px-4 py-2 text-slate-400">-L. 추가, 이름 libsbs.a</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <div class="flex justify-between items-center text-xs text-slate-500 border-t border-slate-800/80 pt-4"><span>Common Pitfalls</span><span>Session 15</span></div>
+      </div>
+
+      <!-- 14 summary -->
+      <div id="slide14" class="bg-slate-900 w-full max-w-5xl aspect-[16/9] rounded-3xl p-8 md:p-12 shadow-2xl border border-slate-800 flex flex-col justify-between hidden">
+        <div class="flex justify-between items-start"><span class="text-cyan-400 font-bold tracking-wider text-sm uppercase">Slide 14 / Summary</span><span class="text-slate-500 text-sm">15차시: Makefile과 라이브러리</span></div>
+        <div class="my-auto">
+          <h3 class="text-2xl md:text-3xl font-bold text-white mb-5 border-b border-slate-800 pb-3">15차시 핵심 정리</h3>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+            <div class="space-y-2.5">
+              <div class="flex gap-3 items-start p-3 bg-slate-800/30 rounded-xl"><span class="bg-cyan-600 text-white text-sm font-black w-7 h-7 rounded-full flex items-center justify-center shrink-0">1</span><div><p class="text-white text-sm font-semibold">타겟:의존성 + 탭 레시피</p></div></div>
+              <div class="flex gap-3 items-start p-3 bg-slate-800/30 rounded-xl"><span class="bg-cyan-600 text-white text-sm font-black w-7 h-7 rounded-full flex items-center justify-center shrink-0">2</span><div><p class="text-white text-sm font-semibold">변수 + $(SRCS:.c=.o) 치환</p></div></div>
+              <div class="flex gap-3 items-start p-3 bg-slate-800/30 rounded-xl"><span class="bg-cyan-600 text-white text-sm font-black w-7 h-7 rounded-full flex items-center justify-center shrink-0">3</span><div><p class="text-white text-sm font-semibold">%.o: %.c, $&lt; 소스 $@ 타겟</p></div></div>
+            </div>
+            <div class="space-y-2.5">
+              <div class="flex gap-3 items-start p-3 bg-slate-800/30 rounded-xl"><span class="bg-amber-500 text-white text-sm font-black w-7 h-7 rounded-full flex items-center justify-center shrink-0">4</span><div><p class="text-white text-sm font-semibold">ar rcs libsbs.a *.o</p></div></div>
+              <div class="flex gap-3 items-start p-3 bg-slate-800/30 rounded-xl"><span class="bg-amber-500 text-white text-sm font-black w-7 h-7 rounded-full flex items-center justify-center shrink-0">5</span><div><p class="text-white text-sm font-semibold">all/clean/fclean/re + .PHONY, -L. -lsbs</p></div></div>
+              <div class="bg-amber-950/30 p-3 rounded-xl border border-amber-500/20"><p class="text-amber-300 text-xs font-semibold">다음 차시 예고</p><p class="text-slate-400 text-[10px] mt-1">16차시: 전체 함수 통합 + 코드 리뷰 (최종)</p></div>
+            </div>
+          </div>
+        </div>
+        <div class="flex justify-between items-center text-xs text-slate-500 border-t border-slate-800/80 pt-4"><span>Session 15 — Key Takeaways</span><span>Session 15</span></div>
+      </div>
+
+      <!-- 15 checklist -->
+      <div id="slide15" class="bg-slate-900 w-full max-w-5xl aspect-[16/9] rounded-3xl p-8 md:p-12 shadow-2xl border border-slate-800 flex flex-col justify-between hidden">
+        <div class="flex justify-between items-start"><span class="text-cyan-400 font-bold tracking-wider text-sm uppercase">Slide 15 / Checklist</span><span class="text-slate-500 text-sm">15차시: Makefile과 라이브러리</span></div>
+        <div class="my-auto">
+          <h3 class="text-2xl md:text-3xl font-bold text-white mb-4 border-b border-slate-800 pb-3">제출 확인</h3>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="bg-slate-800/40 p-4 rounded-xl border border-slate-700">
+              <h4 class="font-bold text-amber-400 text-sm mb-3">Makefile 구성</h4>
+              <ul class="space-y-1 text-[10px] text-slate-300">
+                <li class="flex gap-2"><span class="text-emerald-400">✓</span>변수(NAME, CC, CFLAGS, SRCS, OBJS)</li>
+                <li class="flex gap-2"><span class="text-emerald-400">✓</span>all, $(NAME), %.o 패턴</li>
+                <li class="flex gap-2"><span class="text-emerald-400">✓</span>clean, fclean, re, .PHONY</li>
+                <li class="flex gap-2"><span class="text-amber-400">★</span><code class="text-amber-300">bash grade.sh</code> → 4 / 4</li>
+              </ul>
+            </div>
+            <div class="bg-rose-950/20 p-4 rounded-xl border border-rose-500/20">
+              <h4 class="font-bold text-rose-400 text-sm mb-2">자주 막히는 부분</h4>
+              <div class="space-y-1.5 text-[10px] text-slate-300">
+                <div><p class="font-semibold text-slate-200">missing separator?</p><p class="text-slate-400">탭 들여쓰기</p></div>
+                <div><p class="font-semibold text-slate-200">링크 실패?</p><p class="text-slate-400">-L. -lsbs</p></div>
+                <div><p class="font-semibold text-slate-200">clean 무시?</p><p class="text-slate-400">.PHONY</p></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="flex justify-between items-center text-xs text-slate-500 border-t border-slate-800/80 pt-4"><span>Session 15 Checklist</span><span>Session 15</span></div>
+      </div>
+
+      <!-- 16 Q&A -->
+      <div id="slide16" class="bg-slate-900 w-full max-w-5xl aspect-[16/9] rounded-3xl p-8 md:p-12 shadow-2xl border border-slate-800 flex flex-col justify-between hidden">
+        <div class="flex justify-between items-start"><span class="text-cyan-400 font-bold tracking-wider text-sm uppercase">Slide 16 / Q&amp;A</span><span class="text-slate-500 text-sm">15차시: Makefile과 라이브러리</span></div>
+        <div class="my-auto text-center">
+          <div class="text-4xl mb-4 font-bold text-cyan-400">?</div>
+          <h3 class="text-3xl font-black text-white mb-4">Q&amp;A 및 실습 점검</h3>
+          <p class="text-slate-400 text-sm max-w-lg mx-auto mb-6">Makefile 문법, ar, 링크에서 막히는 부분을 함께 해결합니다.</p>
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-4 max-w-2xl mx-auto">
+            <div class="bg-slate-800/50 px-4 py-3 rounded-xl border border-slate-700 text-xs text-slate-300"><p class="font-bold text-slate-200 mb-1">왜 탭이어야?</p><p class="text-[10px]">make 문법 규칙. 스페이스는 에러</p></div>
+            <div class="bg-slate-800/50 px-4 py-3 rounded-xl border border-slate-700 text-xs text-slate-300"><p class="font-bold text-slate-200 mb-1">.a가 뭐예요?</p><p class="text-[10px]">여러 .o를 묶은 정적 라이브러리</p></div>
+            <div class="bg-slate-800/50 px-4 py-3 rounded-xl border border-slate-700 text-xs text-slate-300"><p class="font-bold text-slate-200 mb-1">-lsbs?</p><p class="text-[10px]">libsbs.a에서 lib/.a 뺀 이름</p></div>
+          </div>
+          <div class="mt-6 inline-block bg-slate-800/50 px-6 py-3 rounded-full border border-slate-700 text-xs text-amber-300 font-medium">"빌드 자동화는 프로 개발의 기본기."</div>
+        </div>
+        <div class="flex justify-between items-center text-xs text-slate-500 border-t border-slate-800/80 pt-4"><span>Session 15 Completion</span><span>Session 15</span></div>
+      </div>
+
+    </div>
+
+    <div class="bg-slate-950 border-t border-slate-800 px-6 py-4 flex items-center justify-between">
+      <button id="prevBtn" onclick="prevSlide()" class="bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold px-4 py-2 rounded-lg transition-colors border border-slate-700">&larr; 이전 슬라이드</button>
+      <div class="hidden md:flex gap-1.5" id="dotsContainer"></div>
+      <button id="nextBtn" onclick="nextSlide()" class="bg-cyan-600 hover:bg-cyan-700 text-white text-xs font-semibold px-4 py-2 rounded-lg transition-colors">다음 슬라이드 &rarr;</button>
+    </div>
+
+    <script>
+      const totalSlides = 16;
+      let currentSlide = 1;
+      function updateSlideVisibility() {
+        for (let i = 1; i <= totalSlides; i++) {
+          const slide = document.getElementById("slide" + i);
+          if (i === currentSlide) slide.classList.remove("hidden");
+          else slide.classList.add("hidden");
+        }
+        document.getElementById("slideCounter").innerText = currentSlide + " / " + totalSlides;
+        updateDots();
+      }
+      function nextSlide() { if (currentSlide < totalSlides) { currentSlide++; updateSlideVisibility(); } }
+      function prevSlide() { if (currentSlide > 1) { currentSlide--; updateSlideVisibility(); } }
+      function jumpToSlide(index) { currentSlide = index; updateSlideVisibility(); }
+      function buildDots() {
+        const container = document.getElementById("dotsContainer");
+        container.innerHTML = "";
+        for (let i = 1; i <= totalSlides; i++) {
+          const dot = document.createElement("button");
+          dot.id = "dot" + i;
+          dot.onclick = () => jumpToSlide(i);
+          dot.className = "w-2 h-2 rounded-full transition-colors";
+          container.appendChild(dot);
+        }
+      }
+      function updateDots() {
+        for (let i = 1; i <= totalSlides; i++) {
+          const dot = document.getElementById("dot" + i);
+          if (!dot) continue;
+          dot.className = i === currentSlide ? "w-2 h-2 rounded-full transition-colors bg-cyan-500" : "w-2 h-2 rounded-full transition-colors bg-slate-700 hover:bg-slate-500";
+        }
+      }
+      document.addEventListener("keydown", function(e) { if (e.key === "ArrowRight" || e.key === " ") nextSlide(); if (e.key === "ArrowLeft") prevSlide(); });
+      buildDots();
+      updateSlideVisibility();
+    </script>
+  </body>
+</html>

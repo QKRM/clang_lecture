@@ -1,0 +1,953 @@
+<!--
+Palette: Cyan & Amber (Slate-900 dark bg, Cyan-500 primary, Amber-400 accent, Emerald-400 success)
+Plan Summary: 14-slide interactive presentation for C Language Session 1.
+Covers GitHub Codespaces setup + C language basics (Hello World, compile, run, printf).
+NEITHER Mermaid JS NOR SVG were used anywhere in this output.
+-->
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>1차시 강의자료: GitHub Codespaces 세팅 + C언어 첫걸음</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+      @import url("https://fonts.googleapis.com/css2?family=Pretendard:wght@400;500;600;700;800;900&display=swap");
+      body {
+        font-family: "Pretendard", sans-serif;
+        background-color: #0f172a;
+        color: #f8fafc;
+        overflow-x: hidden;
+      }
+      .slide-container {
+        transition: all 0.25s ease-in-out;
+      }
+      pre, code {
+        font-family: 'Courier New', Courier, monospace;
+      }
+    </style>
+  </head>
+  <body class="min-h-screen flex flex-col justify-between">
+    <!-- Top Nav -->
+    <div class="bg-slate-900 border-b border-slate-800 px-6 py-4 flex flex-wrap items-center justify-between gap-4 sticky top-0 z-50">
+      <div class="flex items-center gap-3">
+        <span class="bg-cyan-600 text-white text-xs font-bold px-2.5 py-1 rounded-full uppercase tracking-wider">Session 1</span>
+        <h1 class="text-sm md:text-base font-bold text-slate-200">C언어 기초 — libsbs 구현 과정</h1>
+      </div>
+      <div class="flex items-center gap-4">
+        <div class="flex items-center gap-2 bg-slate-800 px-3 py-1.5 rounded-lg border border-slate-700">
+          <span class="text-xs text-slate-400">슬라이드:</span>
+          <span id="slideCounter" class="text-xs font-bold text-cyan-400">1 / 16</span>
+        </div>
+      </div>
+    </div>
+
+    <div id="deckContainer" class="flex-grow flex items-center justify-center p-4 md:p-8">
+
+      <!-- Slide 01: Cover -->
+      <div id="slide1" class="bg-gradient-to-br from-slate-900 via-cyan-950 to-slate-900 w-full max-w-5xl aspect-[16/9] rounded-3xl p-8 md:p-12 shadow-2xl border border-slate-800 flex flex-col justify-between">
+        <div class="flex justify-between items-start">
+          <span class="text-cyan-400 font-bold tracking-wider text-sm uppercase">Slide 01 / Cover</span>
+          <span class="text-slate-500 text-sm">1차시: Codespaces 세팅 + C언어 첫걸음</span>
+        </div>
+        <div class="my-auto">
+          <span class="inline-block bg-cyan-500/20 text-cyan-300 text-xs font-extrabold px-3 py-1.5 rounded-md mb-4 border border-cyan-500/30">1차시 · 3시간 · GitHub Codespaces + Hello World</span>
+          <h2 class="text-3xl md:text-5xl font-black text-white leading-tight mb-4">
+            C언어<br /><span class="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-emerald-300">첫걸음</span>
+          </h2>
+          <p class="text-slate-400 text-base md:text-lg max-w-2xl">
+            개발 환경을 세팅하고, 첫 번째 C 프로그램을 손으로 직접 컴파일합니다. 오늘부터 libsbs 구현의 여정이 시작됩니다.
+          </p>
+        </div>
+        <div class="flex justify-between items-center text-xs text-slate-500 border-t border-slate-800/80 pt-4">
+          <span>C Language — libsbs Implementation Course</span>
+          <span>Time Frame: 3 Hours</span>
+        </div>
+      </div>
+
+      <!-- Slide 02: 오늘의 목표 -->
+      <div id="slide2" class="bg-slate-900 w-full max-w-5xl aspect-[16/9] rounded-3xl p-8 md:p-12 shadow-2xl border border-slate-800 flex flex-col justify-between hidden">
+        <div class="flex justify-between items-start">
+          <span class="text-cyan-400 font-bold tracking-wider text-sm uppercase">Slide 02 / Goal</span>
+          <span class="text-slate-500 text-sm">1차시: Codespaces 세팅 + C언어 첫걸음</span>
+        </div>
+        <div class="my-auto">
+          <h3 class="text-2xl md:text-3xl font-bold text-white mb-6 border-b border-slate-800 pb-3">오늘의 목표 — 개발 환경 구축 + Hello World</h3>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <div class="space-y-4">
+              <div class="p-4 bg-slate-800/30 rounded-xl border-l-4 border-cyan-500">
+                <h4 class="font-bold text-white text-sm mb-1">1부 — 강사 설명</h4>
+                <p class="text-slate-400 text-xs">Codespaces 세팅 방법, 터미널 명령어, C언어 기초, gcc 컴파일, printf 활용</p>
+              </div>
+              <div class="p-4 bg-slate-800/30 rounded-xl border-l-4 border-amber-500">
+                <h4 class="font-bold text-white text-sm mb-1">2부 — 직접 구현</h4>
+                <p class="text-slate-400 text-xs">Codespaces 직접 세팅 + Hello World 작성 + printf 변형 실습</p>
+              </div>
+            </div>
+            <div class="bg-slate-800/50 p-6 rounded-xl border border-slate-700">
+              <h4 class="font-bold text-amber-400 text-sm mb-3">오늘 수업이 끝나면</h4>
+              <ul class="space-y-2.5 text-xs text-slate-300">
+                <li class="flex items-start gap-2">
+                  <span class="text-emerald-400 font-bold mt-0.5">1</span>
+                  <span>GitHub Codespaces를 직접 생성하고 gcc가 동작함을 확인할 수 있다</span>
+                </li>
+                <li class="flex items-start gap-2">
+                  <span class="text-emerald-400 font-bold mt-0.5">2</span>
+                  <span><code class="text-cyan-300 bg-slate-950 px-1 rounded">gcc -Wall -Wextra -Werror</code>로 컴파일하고 실행할 수 있다</span>
+                </li>
+                <li class="flex items-start gap-2">
+                  <span class="text-emerald-400 font-bold mt-0.5">3</span>
+                  <span>C 소스 파일의 기본 구조(<code class="text-cyan-300 bg-slate-950 px-1 rounded">#include</code>, <code class="text-cyan-300 bg-slate-950 px-1 rounded">main</code>, <code class="text-cyan-300 bg-slate-950 px-1 rounded">return</code>)를 설명할 수 있다</span>
+                </li>
+                <li class="flex items-start gap-2">
+                  <span class="text-emerald-400 font-bold mt-0.5">4</span>
+                  <span><code class="text-cyan-300 bg-slate-950 px-1 rounded">printf</code>로 다양한 형식의 출력을 작성할 수 있다</span>
+                </li>
+              </ul>
+              <div class="mt-4 bg-cyan-950/40 p-3 rounded-lg border border-cyan-500/20">
+                <p class="text-cyan-300 text-xs font-semibold">이 강의의 최종 목표</p>
+                <p class="text-slate-400 text-[10px] mt-1">표준 C 라이브러리 함수(memset, strlen 등 24개)를 <span class="text-amber-300 font-bold">직접 구현</span>하는 libsbs 라이브러리 완성</p>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="flex justify-between items-center text-xs text-slate-500 border-t border-slate-800/80 pt-4">
+          <span>Today's Goal</span>
+          <span>Session 1</span>
+        </div>
+      </div>
+
+      <!-- Slide 03: GitHub Codespaces란? -->
+      <div id="slide3" class="bg-slate-900 w-full max-w-5xl aspect-[16/9] rounded-3xl p-8 md:p-12 shadow-2xl border border-slate-800 flex flex-col justify-between hidden">
+        <div class="flex justify-between items-start">
+          <span class="text-cyan-400 font-bold tracking-wider text-sm uppercase">Slide 03 / Codespaces</span>
+          <span class="text-slate-500 text-sm">1차시: Codespaces 세팅 + C언어 첫걸음</span>
+        </div>
+        <div class="my-auto">
+          <h3 class="text-2xl md:text-3xl font-bold text-white mb-4 border-b border-slate-800 pb-3">GitHub Codespaces란?</h3>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <div class="space-y-4">
+              <div class="bg-slate-800/40 p-5 rounded-xl border border-slate-700">
+                <h4 class="font-bold text-cyan-400 text-sm mb-3">한 줄 정의</h4>
+                <p class="text-white text-base font-semibold mb-2">브라우저에서 바로 실행되는 클라우드 개발 환경</p>
+                <p class="text-slate-400 text-xs">내 PC에 아무것도 설치하지 않아도 VS Code와 <span class="text-amber-300 font-bold">동일한 환경</span>에서 코딩 가능</p>
+              </div>
+              <div class="bg-emerald-950/30 p-4 rounded-xl border border-emerald-500/20">
+                <h4 class="font-bold text-emerald-400 text-sm mb-2">우리 강의에서 쓰는 이유</h4>
+                <ul class="space-y-1.5 text-xs text-slate-300">
+                  <li class="flex gap-2"><span class="text-emerald-400">✓</span><span>gcc 컴파일러가 기본 설치된 <span class="text-white font-semibold">Linux 환경</span> 즉시 사용</span></li>
+                  <li class="flex gap-2"><span class="text-emerald-400">✓</span><span>Windows/Mac 관계없이 <span class="text-white font-semibold">동일한 환경</span> 보장</span></li>
+                  <li class="flex gap-2"><span class="text-emerald-400">✓</span><span>설치 문제로 수업 시간 낭비 없음</span></li>
+                </ul>
+              </div>
+            </div>
+            <div class="space-y-3">
+              <div class="bg-slate-800/30 p-4 rounded-xl border border-slate-700">
+                <h4 class="font-bold text-amber-400 text-xs uppercase mb-3">Codespaces 주요 특징</h4>
+                <div class="space-y-2">
+                  <div class="flex items-start gap-3">
+                    <span class="bg-cyan-600 text-white text-[10px] font-bold px-2 py-0.5 rounded mt-0.5 shrink-0">무료</span>
+                    <p class="text-slate-300 text-xs">개인 계정 기준 월 60시간 무료 (강의 분량 충분)</p>
+                  </div>
+                  <div class="flex items-start gap-3">
+                    <span class="bg-emerald-600 text-white text-[10px] font-bold px-2 py-0.5 rounded mt-0.5 shrink-0">저장</span>
+                    <p class="text-slate-300 text-xs">코드는 자동으로 GitHub 리포지토리에 저장됨</p>
+                  </div>
+                  <div class="flex items-start gap-3">
+                    <span class="bg-amber-600 text-white text-[10px] font-bold px-2 py-0.5 rounded mt-0.5 shrink-0">접속</span>
+                    <p class="text-slate-300 text-xs">PC, 태블릿, 어느 기기에서든 동일한 환경 접속</p>
+                  </div>
+                </div>
+              </div>
+              <div class="bg-rose-950/20 p-3 rounded-xl border border-rose-500/20">
+                <p class="text-rose-400 text-xs font-semibold mb-1">주의</p>
+                <p class="text-slate-400 text-[10px]">30분 이상 아무 활동이 없으면 자동 정지됩니다. 코드는 유지되며, 재접속하면 즉시 다시 시작됩니다.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="flex justify-between items-center text-xs text-slate-500 border-t border-slate-800/80 pt-4">
+          <span>GitHub Codespaces Overview</span>
+          <span>Session 1</span>
+        </div>
+      </div>
+
+      <!-- Slide 04: Codespaces 생성 Step 1~2 -->
+      <div id="slide4" class="bg-slate-900 w-full max-w-5xl aspect-[16/9] rounded-3xl p-8 md:p-12 shadow-2xl border border-slate-800 flex flex-col justify-between hidden">
+        <div class="flex justify-between items-start">
+          <span class="text-cyan-400 font-bold tracking-wider text-sm uppercase">Slide 04 / Setup Step 1-2</span>
+          <span class="text-slate-500 text-sm">1차시: Codespaces 세팅 + C언어 첫걸음</span>
+        </div>
+        <div class="my-auto">
+          <h3 class="text-2xl md:text-3xl font-bold text-white mb-4 border-b border-slate-800 pb-3">Codespaces 생성 — Step 1 &amp; 2</h3>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="bg-slate-800/40 p-5 rounded-xl border border-slate-700">
+              <div class="flex items-center gap-3 mb-4">
+                <span class="bg-cyan-600 text-white text-sm font-black w-8 h-8 rounded-full flex items-center justify-center shrink-0">1</span>
+                <h4 class="font-bold text-white text-sm">GitHub 계정 준비</h4>
+              </div>
+              <ol class="space-y-2 text-xs text-slate-300">
+                <li class="flex gap-2"><span class="text-cyan-400 font-bold shrink-0">①</span><span><code class="text-amber-300 bg-slate-950 px-1 rounded">github.com</code> 에 접속한다</span></li>
+                <li class="flex gap-2"><span class="text-cyan-400 font-bold shrink-0">②</span><span>계정이 없다면 <span class="text-white font-semibold">Sign up</span> 클릭 → 계정 생성</span></li>
+                <li class="flex gap-2"><span class="text-cyan-400 font-bold shrink-0">③</span><span>이미 있다면 <span class="text-white font-semibold">Sign in</span> 으로 로그인</span></li>
+              </ol>
+              <div class="mt-4 bg-cyan-950/30 p-3 rounded-lg border border-cyan-500/20">
+                <p class="text-cyan-300 text-[10px] font-semibold">학교/직장 이메일 사용 추천</p>
+                <p class="text-slate-400 text-[10px] mt-1">GitHub Education 혜택(무제한 Codespaces 등)을 받을 수 있습니다.</p>
+              </div>
+            </div>
+            <div class="bg-slate-800/40 p-5 rounded-xl border border-slate-700">
+              <div class="flex items-center gap-3 mb-4">
+                <span class="bg-cyan-600 text-white text-sm font-black w-8 h-8 rounded-full flex items-center justify-center shrink-0">2</span>
+                <h4 class="font-bold text-white text-sm">새 Repository 생성</h4>
+              </div>
+              <ol class="space-y-2 text-xs text-slate-300">
+                <li class="flex gap-2"><span class="text-cyan-400 font-bold shrink-0">①</span><span>우측 상단 <span class="text-white font-semibold">+</span> 버튼 클릭 → <span class="text-white font-semibold">New repository</span></span></li>
+                <li class="flex gap-2"><span class="text-cyan-400 font-bold shrink-0">②</span><span>Repository name: <code class="text-amber-300 bg-slate-950 px-1 rounded">libsbs</code></span></li>
+                <li class="flex gap-2"><span class="text-cyan-400 font-bold shrink-0">③</span><span><span class="text-white font-semibold">Public</span> 또는 <span class="text-white font-semibold">Private</span> 선택 (무방)</span></li>
+                <li class="flex gap-2"><span class="text-cyan-400 font-bold shrink-0">④</span><span><span class="text-emerald-400 font-bold">✓</span> <span class="text-white font-semibold">Add a README file</span> 체크</span></li>
+                <li class="flex gap-2"><span class="text-cyan-400 font-bold shrink-0">⑤</span><span><span class="text-white font-semibold">Create repository</span> 클릭</span></li>
+              </ol>
+              <div class="mt-3 bg-amber-950/20 p-2 rounded border border-amber-500/20">
+                <p class="text-amber-300 text-[10px]">⚠ README 체크가 없으면 Codespace 생성이 안 됩니다!</p>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="flex justify-between items-center text-xs text-slate-500 border-t border-slate-800/80 pt-4">
+          <span>GitHub Account + Repository Setup</span>
+          <span>Session 1</span>
+        </div>
+      </div>
+
+      <!-- Slide 05: Codespaces 생성 Step 3~4 -->
+      <div id="slide5" class="bg-slate-900 w-full max-w-5xl aspect-[16/9] rounded-3xl p-8 md:p-12 shadow-2xl border border-slate-800 flex flex-col justify-between hidden">
+        <div class="flex justify-between items-start">
+          <span class="text-cyan-400 font-bold tracking-wider text-sm uppercase">Slide 05 / Setup Step 3-4</span>
+          <span class="text-slate-500 text-sm">1차시: Codespaces 세팅 + C언어 첫걸음</span>
+        </div>
+        <div class="my-auto">
+          <h3 class="text-2xl md:text-3xl font-bold text-white mb-4 border-b border-slate-800 pb-3">Codespaces 생성 — Step 3 &amp; 4</h3>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="bg-slate-800/40 p-5 rounded-xl border border-slate-700">
+              <div class="flex items-center gap-3 mb-4">
+                <span class="bg-emerald-600 text-white text-sm font-black w-8 h-8 rounded-full flex items-center justify-center shrink-0">3</span>
+                <h4 class="font-bold text-white text-sm">Codespace 생성</h4>
+              </div>
+              <ol class="space-y-2 text-xs text-slate-300">
+                <li class="flex gap-2"><span class="text-emerald-400 font-bold shrink-0">①</span><span>리포지토리 페이지에서 초록색 <code class="text-amber-300 bg-slate-950 px-1 rounded">&lt;&gt; Code</code> 버튼 클릭</span></li>
+                <li class="flex gap-2"><span class="text-emerald-400 font-bold shrink-0">②</span><span><span class="text-white font-semibold">Codespaces</span> 탭 클릭</span></li>
+                <li class="flex gap-2"><span class="text-emerald-400 font-bold shrink-0">③</span><span><span class="text-white font-semibold">Create codespace on main</span> 클릭</span></li>
+                <li class="flex gap-2"><span class="text-emerald-400 font-bold shrink-0">④</span><span>약 <span class="text-amber-300 font-bold">1~2분</span> 대기 (브라우저에 VS Code가 열립니다)</span></li>
+              </ol>
+            </div>
+            <div class="bg-slate-800/40 p-5 rounded-xl border border-slate-700">
+              <div class="flex items-center gap-3 mb-4">
+                <span class="bg-emerald-600 text-white text-sm font-black w-8 h-8 rounded-full flex items-center justify-center shrink-0">4</span>
+                <h4 class="font-bold text-white text-sm">환경 확인 — gcc 동작 여부</h4>
+              </div>
+              <p class="text-slate-400 text-xs mb-3">Codespace가 열리면 하단 <span class="text-white font-semibold">터미널</span>에서 입력:</p>
+              <pre class="bg-slate-950 text-emerald-300 p-3 rounded-xl text-[12px] leading-relaxed border border-slate-700 mb-3"><code>$ gcc --version</code></pre>
+              <p class="text-slate-400 text-xs mb-2">출력 예시:</p>
+              <pre class="bg-slate-950 text-slate-200 p-3 rounded-xl text-[11px] leading-relaxed border border-slate-700"><code>gcc (Ubuntu 11.4.0-1ubuntu1~22.04) 11.4.0
+Copyright (C) 2021 Free Software Foundation, Inc.</code></pre>
+              <div class="mt-3 bg-emerald-950/30 p-2 rounded border border-emerald-500/20">
+                <p class="text-emerald-400 text-[10px] font-semibold">버전이 출력되면 환경 세팅 완료!</p>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="flex justify-between items-center text-xs text-slate-500 border-t border-slate-800/80 pt-4">
+          <span>Codespace Creation + gcc Verification</span>
+          <span>Session 1</span>
+        </div>
+      </div>
+
+      <!-- Slide 06: 터미널 기본 명령어 -->
+      <div id="slide6" class="bg-slate-900 w-full max-w-5xl aspect-[16/9] rounded-3xl p-8 md:p-12 shadow-2xl border border-slate-800 flex flex-col justify-between hidden">
+        <div class="flex justify-between items-start">
+          <span class="text-cyan-400 font-bold tracking-wider text-sm uppercase">Slide 06 / Terminal</span>
+          <span class="text-slate-500 text-sm">1차시: Codespaces 세팅 + C언어 첫걸음</span>
+        </div>
+        <div class="my-auto">
+          <h3 class="text-2xl md:text-3xl font-bold text-white mb-4 border-b border-slate-800 pb-3">터미널 기본 명령어</h3>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <span class="text-slate-400 text-xs font-bold uppercase block mb-2">필수 명령어</span>
+              <div class="bg-slate-950 rounded-xl border border-slate-700 overflow-hidden">
+                <table class="w-full text-xs">
+                  <thead>
+                    <tr class="border-b border-slate-700">
+                      <th class="text-left px-4 py-2 text-cyan-400 font-bold">명령어</th>
+                      <th class="text-left px-4 py-2 text-slate-400 font-bold">설명</th>
+                    </tr>
+                  </thead>
+                  <tbody class="divide-y divide-slate-800">
+                    <tr><td class="px-4 py-2"><code class="text-amber-300">pwd</code></td><td class="px-4 py-2 text-slate-300">현재 디렉토리 경로 확인</td></tr>
+                    <tr><td class="px-4 py-2"><code class="text-amber-300">ls</code></td><td class="px-4 py-2 text-slate-300">파일 목록 출력</td></tr>
+                    <tr><td class="px-4 py-2"><code class="text-amber-300">ls -la</code></td><td class="px-4 py-2 text-slate-300">숨김 파일 포함, 상세 정보</td></tr>
+                    <tr><td class="px-4 py-2"><code class="text-amber-300">mkdir 폴더명</code></td><td class="px-4 py-2 text-slate-300">폴더 생성</td></tr>
+                    <tr><td class="px-4 py-2"><code class="text-amber-300">cd 폴더명</code></td><td class="px-4 py-2 text-slate-300">폴더 이동</td></tr>
+                    <tr><td class="px-4 py-2"><code class="text-amber-300">cd ..</code></td><td class="px-4 py-2 text-slate-300">상위 폴더로 이동</td></tr>
+                    <tr><td class="px-4 py-2"><code class="text-amber-300">touch 파일명</code></td><td class="px-4 py-2 text-slate-300">빈 파일 생성</td></tr>
+                    <tr><td class="px-4 py-2"><code class="text-amber-300">clear</code></td><td class="px-4 py-2 text-slate-300">터미널 화면 지우기</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+            <div class="space-y-4">
+              <div>
+                <span class="text-slate-400 text-xs font-bold uppercase block mb-2">연습 — 따라 입력해보기</span>
+                <pre class="bg-slate-950 text-emerald-300 p-4 rounded-xl text-[11px] leading-relaxed border border-slate-700"><code>$ mkdir test_folder
+$ cd test_folder
+$ touch hello.c
+$ ls
+hello.c
+$ cd ..
+$ pwd
+/workspaces/libsbs</code></pre>
+              </div>
+              <div class="bg-cyan-950/30 p-4 rounded-xl border border-cyan-500/20">
+                <p class="text-cyan-300 text-xs font-semibold mb-1">Tab 자동완성</p>
+                <p class="text-slate-400 text-[10px]">폴더명이나 파일명을 입력하다가 <span class="text-white font-bold">Tab</span>키를 누르면 자동 완성됩니다. 오타를 줄이는 가장 중요한 습관입니다.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="flex justify-between items-center text-xs text-slate-500 border-t border-slate-800/80 pt-4">
+          <span>Basic Terminal Commands</span>
+          <span>Session 1</span>
+        </div>
+      </div>
+
+      <!-- Slide 07: C언어란? -->
+      <div id="slide7" class="bg-slate-900 w-full max-w-5xl aspect-[16/9] rounded-3xl p-8 md:p-12 shadow-2xl border border-slate-800 flex flex-col justify-between hidden">
+        <div class="flex justify-between items-start">
+          <span class="text-cyan-400 font-bold tracking-wider text-sm uppercase">Slide 07 / What is C</span>
+          <span class="text-slate-500 text-sm">1차시: Codespaces 세팅 + C언어 첫걸음</span>
+        </div>
+        <div class="my-auto">
+          <h3 class="text-2xl md:text-3xl font-bold text-white mb-4 border-b border-slate-800 pb-3">C언어란?</h3>
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
+            <div class="bg-slate-800/40 p-5 rounded-xl border border-slate-700">
+              <div class="text-3xl font-black text-cyan-400 mb-2">1972</div>
+              <h4 class="font-bold text-white text-sm mb-2">역사</h4>
+              <p class="text-slate-400 text-xs">Dennis Ritchie가 Bell Labs에서 개발. UNIX 운영체제를 만들기 위해 탄생했습니다.</p>
+            </div>
+            <div class="bg-slate-800/40 p-5 rounded-xl border border-slate-700">
+              <h4 class="font-bold text-amber-400 text-sm mb-3">특징</h4>
+              <ul class="space-y-2 text-xs text-slate-300">
+                <li class="flex gap-2"><span class="text-amber-400">→</span><span>하드웨어에 가까운 <span class="text-white font-semibold">저수준 제어</span></span></li>
+                <li class="flex gap-2"><span class="text-amber-400">→</span><span>매우 <span class="text-white font-semibold">빠른 실행 속도</span></span></li>
+                <li class="flex gap-2"><span class="text-amber-400">→</span><span><span class="text-white font-semibold">포인터</span>로 메모리 직접 접근</span></li>
+                <li class="flex gap-2"><span class="text-amber-400">→</span><span>컴파일 언어 (실행 전 빌드 필요)</span></li>
+              </ul>
+            </div>
+            <div class="bg-slate-800/40 p-5 rounded-xl border border-slate-700">
+              <h4 class="font-bold text-emerald-400 text-sm mb-3">사용처</h4>
+              <ul class="space-y-2 text-xs text-slate-300">
+                <li class="flex gap-2"><span class="text-emerald-400">✓</span><span>운영체제 (Linux, Windows 커널)</span></li>
+                <li class="flex gap-2"><span class="text-emerald-400">✓</span><span>임베디드 시스템, 펌웨어</span></li>
+                <li class="flex gap-2"><span class="text-emerald-400">✓</span><span>데이터베이스 (SQLite, PostgreSQL)</span></li>
+                <li class="flex gap-2"><span class="text-emerald-400">✓</span><span>다른 언어의 인터프리터(Python 등)</span></li>
+              </ul>
+            </div>
+          </div>
+          <div class="mt-5 bg-cyan-950/30 p-4 rounded-xl border border-cyan-500/20">
+            <p class="text-cyan-300 text-sm font-bold mb-1">이 강의에서 C언어를 배우는 이유</p>
+            <p class="text-slate-400 text-xs">포인터와 메모리를 이해하면 모든 프로그래밍 언어의 동작 원리가 보입니다. libsbs를 직접 구현하면서 "표준 라이브러리가 어떻게 만들어졌는지" 처음부터 파악합니다.</p>
+          </div>
+        </div>
+        <div class="flex justify-between items-center text-xs text-slate-500 border-t border-slate-800/80 pt-4">
+          <span>What is C Language</span>
+          <span>Session 1</span>
+        </div>
+      </div>
+
+      <!-- Slide 08: C언어 역사 — 리누스 토르발즈, Linux, Git -->
+      <div id="slide8" class="bg-slate-900 w-full max-w-5xl aspect-[16/9] rounded-3xl p-8 md:p-12 shadow-2xl border border-slate-800 flex flex-col justify-between hidden">
+        <div class="flex justify-between items-start">
+          <span class="text-cyan-400 font-bold tracking-wider text-sm uppercase">Slide 08 / History</span>
+          <span class="text-slate-500 text-sm">1차시: Codespaces 세팅 + C언어 첫걸음</span>
+        </div>
+        <div class="my-auto">
+          <h3 class="text-2xl md:text-3xl font-bold text-white mb-4 border-b border-slate-800 pb-3">C언어의 역사 — Linux와 Git까지</h3>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="space-y-2.5">
+              <div class="flex gap-3 items-start p-3 bg-slate-800/30 rounded-xl border-l-4 border-slate-600">
+                <span class="text-slate-400 font-black text-sm w-12 shrink-0">1969</span>
+                <div>
+                  <p class="text-white text-xs font-semibold">UNIX 탄생 (Bell Labs)</p>
+                  <p class="text-slate-400 text-[10px]">Ken Thompson + Dennis Ritchie. 처음엔 어셈블리어로 작성</p>
+                </div>
+              </div>
+              <div class="flex gap-3 items-start p-3 bg-amber-950/20 rounded-xl border-l-4 border-amber-500">
+                <span class="text-amber-400 font-black text-sm w-12 shrink-0">1972</span>
+                <div>
+                  <p class="text-white text-xs font-semibold">C언어 탄생 — Dennis Ritchie</p>
+                  <p class="text-slate-400 text-[10px]">UNIX를 다시 C언어로 재작성. "C는 UNIX의 언어"라 불림</p>
+                </div>
+              </div>
+              <div class="flex gap-3 items-start p-3 bg-cyan-950/20 rounded-xl border-l-4 border-cyan-500">
+                <span class="text-cyan-400 font-black text-sm w-12 shrink-0">1991</span>
+                <div>
+                  <p class="text-white text-xs font-semibold">Linux 커널 — Linus Torvalds (21세, 핀란드)</p>
+                  <p class="text-slate-400 text-[10px]">대학생이 취미로 시작. 전부 C언어로 작성. 현재 전 세계 서버의 96%가 Linux</p>
+                </div>
+              </div>
+              <div class="flex gap-3 items-start p-3 bg-emerald-950/20 rounded-xl border-l-4 border-emerald-500">
+                <span class="text-emerald-400 font-black text-sm w-12 shrink-0">2005</span>
+                <div>
+                  <p class="text-white text-xs font-semibold">Git 탄생 — 역시 Linus Torvalds</p>
+                  <p class="text-slate-400 text-[10px]">Linux 소스 관리 도구(BitKeeper)가 유료화되자 <span class="text-white font-bold">2주 만에 직접 만듦</span>. 역시 C언어로 작성</p>
+                </div>
+              </div>
+            </div>
+            <div class="space-y-4">
+              <div class="bg-slate-800/40 p-4 rounded-xl border border-slate-700">
+                <h4 class="font-bold text-amber-400 text-xs uppercase mb-3">C언어로 만들어진 것들</h4>
+                <div class="grid grid-cols-2 gap-2 text-[10px]">
+                  <div class="bg-slate-800 px-3 py-2 rounded-lg"><span class="text-cyan-300 font-bold">Linux 커널</span><br/><span class="text-slate-400">운영체제 핵심</span></div>
+                  <div class="bg-slate-800 px-3 py-2 rounded-lg"><span class="text-emerald-300 font-bold">Git</span><br/><span class="text-slate-400">버전 관리 시스템</span></div>
+                  <div class="bg-slate-800 px-3 py-2 rounded-lg"><span class="text-amber-300 font-bold">Python</span><br/><span class="text-slate-400">CPython 인터프리터</span></div>
+                  <div class="bg-slate-800 px-3 py-2 rounded-lg"><span class="text-indigo-300 font-bold">nginx / Redis</span><br/><span class="text-slate-400">웹서버 / DB</span></div>
+                </div>
+              </div>
+              <div class="bg-cyan-950/30 p-4 rounded-xl border border-cyan-500/20">
+                <p class="text-cyan-300 text-xs font-semibold mb-1">왜 지금도 C언어인가?</p>
+                <p class="text-slate-400 text-[10px]">메모리를 직접 제어할 수 있는 언어는 C가 사실상 유일합니다. 성능이 극도로 중요한 곳 — OS, 드라이버, 임베디드 — 에서는 여전히 C가 필수입니다.</p>
+              </div>
+              <div class="bg-slate-800/40 p-3 rounded-xl border border-slate-700 text-[10px] text-slate-400">
+                <span class="text-white font-semibold">Codespaces도 Linux!</span> 우리가 방금 만든 개발 환경 자체가 Linux 서버 위에서 돌아갑니다. C언어가 만든 세계에서 C언어를 배우는 것입니다.
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="flex justify-between items-center text-xs text-slate-500 border-t border-slate-800/80 pt-4">
+          <span>C Language History — Linus Torvalds, Linux, Git</span>
+          <span>Session 1</span>
+        </div>
+      </div>
+
+      <!-- Slide 09: 첫 번째 C 프로그램 -->
+      <div id="slide9" class="bg-slate-900 w-full max-w-5xl aspect-[16/9] rounded-3xl p-8 md:p-12 shadow-2xl border border-slate-800 flex flex-col justify-between hidden">
+        <div class="flex justify-between items-start">
+          <span class="text-cyan-400 font-bold tracking-wider text-sm uppercase">Slide 09 / Hello World</span>
+          <span class="text-slate-500 text-sm">1차시: Codespaces 세팅 + C언어 첫걸음</span>
+        </div>
+        <div class="my-auto">
+          <h3 class="text-2xl md:text-3xl font-bold text-white mb-4 border-b border-slate-800 pb-3">첫 번째 C 프로그램</h3>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <span class="text-slate-400 text-xs font-bold uppercase block mb-2">hello.c — 전체 코드</span>
+              <pre class="bg-slate-950 text-slate-200 p-5 rounded-xl text-[13px] leading-relaxed border border-slate-700"><code><span class="text-amber-300">#include</span> <span class="text-emerald-300">&lt;stdio.h&gt;</span>
+
+<span class="text-cyan-300">int</span> <span class="text-white font-bold">main</span>(<span class="text-cyan-300">void</span>)
+{
+    <span class="text-white">printf</span>(<span class="text-emerald-300">"Hello, World!\n"</span>);
+    <span class="text-amber-300">return</span> (<span class="text-cyan-300">0</span>);
+}</code></pre>
+            </div>
+            <div class="space-y-3">
+              <div class="bg-slate-800/40 p-4 rounded-xl border border-slate-700">
+                <span class="text-slate-400 text-xs font-bold uppercase block mb-2">파일 생성 & 실행 순서</span>
+                <pre class="bg-slate-950 text-emerald-300 p-3 rounded-lg text-[11px] leading-relaxed border border-slate-700"><code>$ touch hello.c
+# VS Code에서 파일 열어 코드 입력
+$ gcc hello.c -o hello
+$ ./hello
+Hello, World!</code></pre>
+              </div>
+              <div class="bg-amber-950/20 p-4 rounded-xl border border-amber-500/20">
+                <p class="text-amber-400 text-xs font-semibold mb-2">권장 코드 스타일 규칙</p>
+                <ul class="space-y-1 text-[10px] text-slate-300">
+                  <li class="flex gap-2"><span class="text-amber-400">→</span><span>여는 중괄호 <code class="text-white">{</code> 는 <span class="text-white font-semibold">새 줄</span>에 작성</span></li>
+                  <li class="flex gap-2"><span class="text-amber-400">→</span><span><code class="text-white">return (0);</code> 처럼 반환값에 <span class="text-white font-semibold">괄호</span> 사용</span></li>
+                  <li class="flex gap-2"><span class="text-amber-400">→</span><span>매개변수 없을 때 <code class="text-white">void</code> 명시</span></li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="flex justify-between items-center text-xs text-slate-500 border-t border-slate-800/80 pt-4">
+          <span>First C Program — Hello World</span>
+          <span>Session 1</span>
+        </div>
+      </div>
+
+      <!-- Slide 10: 코드 한 줄씩 분석 -->
+      <div id="slide10" class="bg-slate-900 w-full max-w-5xl aspect-[16/9] rounded-3xl p-8 md:p-12 shadow-2xl border border-slate-800 flex flex-col justify-between hidden">
+        <div class="flex justify-between items-start">
+          <span class="text-cyan-400 font-bold tracking-wider text-sm uppercase">Slide 10 / Code Analysis</span>
+          <span class="text-slate-500 text-sm">1차시: Codespaces 세팅 + C언어 첫걸음</span>
+        </div>
+        <div class="my-auto">
+          <h3 class="text-2xl md:text-3xl font-bold text-white mb-4 border-b border-slate-800 pb-3">코드 한 줄씩 분석</h3>
+          <div class="space-y-3">
+            <div class="flex gap-4 items-start p-3 bg-slate-800/30 rounded-xl border-l-4 border-amber-500">
+              <code class="text-amber-300 text-sm font-bold shrink-0 w-40">#include &lt;stdio.h&gt;</code>
+              <div>
+                <p class="text-white text-xs font-semibold mb-0.5">전처리기 지시문 — 헤더 파일 포함</p>
+                <p class="text-slate-400 text-[10px]"><code class="text-amber-300">stdio.h</code>(Standard I/O)는 <code class="text-cyan-300">printf</code>, <code class="text-cyan-300">scanf</code> 등 입출력 함수가 정의된 헤더. 이것 없이 printf를 쓰면 컴파일 에러가 납니다.</p>
+              </div>
+            </div>
+            <div class="flex gap-4 items-start p-3 bg-slate-800/30 rounded-xl border-l-4 border-cyan-500">
+              <code class="text-cyan-300 text-sm font-bold shrink-0 w-40">int main(void)</code>
+              <div>
+                <p class="text-white text-xs font-semibold mb-0.5">프로그램의 진입점(Entry Point)</p>
+                <p class="text-slate-400 text-[10px]"><code class="text-cyan-300">int</code>: 정수를 반환하는 함수 / <code class="text-white">main</code>: C 프로그램은 항상 main에서 시작 / <code class="text-cyan-300">void</code>: 인자 없음</p>
+              </div>
+            </div>
+            <div class="flex gap-4 items-start p-3 bg-slate-800/30 rounded-xl border-l-4 border-emerald-500">
+              <code class="text-emerald-300 text-sm font-bold shrink-0 w-40">printf("...\n");</code>
+              <div>
+                <p class="text-white text-xs font-semibold mb-0.5">화면에 출력하는 함수</p>
+                <p class="text-slate-400 text-[10px]">stdio.h에 정의된 함수. <code class="text-emerald-300">\n</code>은 줄바꿈(개행). 문장 끝에 반드시 <code class="text-white">;</code> 세미콜론이 붙어야 합니다.</p>
+              </div>
+            </div>
+            <div class="flex gap-4 items-start p-3 bg-slate-800/30 rounded-xl border-l-4 border-indigo-500">
+              <code class="text-indigo-300 text-sm font-bold shrink-0 w-40">return (0);</code>
+              <div>
+                <p class="text-white text-xs font-semibold mb-0.5">프로그램 종료 신호</p>
+                <p class="text-slate-400 text-[10px]"><code class="text-indigo-300">0</code>은 <span class="text-emerald-400 font-bold">정상 종료</span>를 의미. 운영체제가 이 값을 받아 프로그램 성공/실패를 판단. 1 이상이면 에러로 처리.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="flex justify-between items-center text-xs text-slate-500 border-t border-slate-800/80 pt-4">
+          <span>Code Breakdown</span>
+          <span>Session 1</span>
+        </div>
+      </div>
+
+      <!-- Slide 11: 컴파일과 실행 -->
+      <div id="slide11" class="bg-slate-900 w-full max-w-5xl aspect-[16/9] rounded-3xl p-8 md:p-12 shadow-2xl border border-slate-800 flex flex-col justify-between hidden">
+        <div class="flex justify-between items-start">
+          <span class="text-cyan-400 font-bold tracking-wider text-sm uppercase">Slide 11 / Compile</span>
+          <span class="text-slate-500 text-sm">1차시: Codespaces 세팅 + C언어 첫걸음</span>
+        </div>
+        <div class="my-auto">
+          <h3 class="text-2xl md:text-3xl font-bold text-white mb-4 border-b border-slate-800 pb-3">컴파일과 실행 — 소스 코드 → 실행 파일</h3>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="space-y-4">
+              <div class="bg-slate-800/40 p-4 rounded-xl border border-slate-700">
+                <h4 class="font-bold text-cyan-400 text-xs uppercase mb-3">컴파일 과정</h4>
+                <div class="flex items-center gap-2 text-xs flex-wrap">
+                  <span class="bg-amber-500/20 text-amber-300 px-2 py-1 rounded border border-amber-500/30 font-mono">hello.c</span>
+                  <span class="text-slate-500">→ 전처리 →</span>
+                  <span class="bg-slate-700 text-slate-300 px-2 py-1 rounded font-mono">.i</span>
+                  <span class="text-slate-500">→ 컴파일 →</span>
+                  <span class="bg-slate-700 text-slate-300 px-2 py-1 rounded font-mono">.s</span>
+                  <span class="text-slate-500">→ 어셈블 →</span>
+                  <span class="bg-slate-700 text-slate-300 px-2 py-1 rounded font-mono">.o</span>
+                  <span class="text-slate-500">→ 링킹 →</span>
+                  <span class="bg-emerald-500/20 text-emerald-300 px-2 py-1 rounded border border-emerald-500/30 font-mono">hello</span>
+                </div>
+                <p class="text-slate-500 text-[10px] mt-2">gcc는 이 4단계를 한 번에 처리합니다</p>
+              </div>
+              <div class="bg-slate-800/40 p-4 rounded-xl border border-slate-700">
+                <span class="text-slate-400 text-xs font-bold uppercase block mb-2">기본 컴파일 명령어</span>
+                <pre class="bg-slate-950 text-emerald-300 p-3 rounded-lg text-[12px] border border-slate-700"><code>$ gcc hello.c -o hello</code></pre>
+                <div class="mt-3 space-y-1.5 text-[10px] text-slate-300">
+                  <div class="flex gap-3"><code class="text-amber-300 w-20 shrink-0">gcc</code><span>GNU C Compiler 프로그램</span></div>
+                  <div class="flex gap-3"><code class="text-amber-300 w-20 shrink-0">hello.c</code><span>컴파일할 소스 파일</span></div>
+                  <div class="flex gap-3"><code class="text-amber-300 w-20 shrink-0">-o hello</code><span>출력 파일 이름을 hello로 지정</span></div>
+                </div>
+              </div>
+            </div>
+            <div class="space-y-4">
+              <div class="bg-slate-800/40 p-4 rounded-xl border border-slate-700">
+                <span class="text-slate-400 text-xs font-bold uppercase block mb-2">실행</span>
+                <pre class="bg-slate-950 text-emerald-300 p-3 rounded-lg text-[12px] border border-slate-700 mb-2"><code>$ ./hello
+Hello, World!</code></pre>
+                <p class="text-slate-400 text-[10px]"><code class="text-amber-300">./</code>는 현재 디렉토리에서 실행. Linux에서는 실행 파일을 경로 없이 실행하면 시스템 PATH에서만 찾으므로 <code class="text-amber-300">./</code>를 붙입니다.</p>
+              </div>
+              <div class="bg-rose-950/20 p-4 rounded-xl border border-rose-500/20">
+                <p class="text-rose-400 text-xs font-semibold mb-2">컴파일 에러가 나면?</p>
+                <ul class="space-y-1 text-[10px] text-slate-300">
+                  <li class="flex gap-2"><span class="text-rose-400">→</span><span>세미콜론 <code class="text-white">;</code> 누락 여부 확인</span></li>
+                  <li class="flex gap-2"><span class="text-rose-400">→</span><span><code class="text-white">#include &lt;stdio.h&gt;</code> 첫 줄에 있는지 확인</span></li>
+                  <li class="flex gap-2"><span class="text-rose-400">→</span><span>파일명 오타 확인 (<code class="text-white">ls</code>로 파일 목록 체크)</span></li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="flex justify-between items-center text-xs text-slate-500 border-t border-slate-800/80 pt-4">
+          <span>Compilation &amp; Execution</span>
+          <span>Session 1</span>
+        </div>
+      </div>
+
+      <!-- Slide 12: 컴파일 옵션 -->
+      <div id="slide12" class="bg-slate-900 w-full max-w-5xl aspect-[16/9] rounded-3xl p-8 md:p-12 shadow-2xl border border-slate-800 flex flex-col justify-between hidden">
+        <div class="flex justify-between items-start">
+          <span class="text-cyan-400 font-bold tracking-wider text-sm uppercase">Slide 12 / Compiler Flags</span>
+          <span class="text-slate-500 text-sm">1차시: Codespaces 세팅 + C언어 첫걸음</span>
+        </div>
+        <div class="my-auto">
+          <h3 class="text-2xl md:text-3xl font-bold text-white mb-4 border-b border-slate-800 pb-3">컴파일 옵션 — 이 강의에서 항상 사용하는 설정</h3>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="space-y-4">
+              <div class="bg-slate-800/40 p-5 rounded-xl border border-slate-700">
+                <span class="text-slate-400 text-xs font-bold uppercase block mb-3">표준 컴파일 명령어</span>
+                <pre class="bg-slate-950 text-emerald-300 p-4 rounded-lg text-[12px] border border-slate-700 leading-relaxed"><code>$ gcc <span class="text-amber-300">-Wall -Wextra -Werror</span> hello.c -o hello</code></pre>
+              </div>
+              <div class="bg-slate-800/30 rounded-xl border border-slate-700 overflow-hidden">
+                <table class="w-full text-xs">
+                  <thead>
+                    <tr class="border-b border-slate-700 bg-slate-800/60">
+                      <th class="text-left px-4 py-2 text-amber-400 font-bold">옵션</th>
+                      <th class="text-left px-4 py-2 text-slate-400 font-bold">의미</th>
+                    </tr>
+                  </thead>
+                  <tbody class="divide-y divide-slate-800">
+                    <tr><td class="px-4 py-2.5"><code class="text-amber-300">-Wall</code></td><td class="px-4 py-2.5 text-slate-300">대부분의 경고(warning) 표시</td></tr>
+                    <tr><td class="px-4 py-2.5"><code class="text-amber-300">-Wextra</code></td><td class="px-4 py-2.5 text-slate-300">추가적인 경고 표시</td></tr>
+                    <tr><td class="px-4 py-2.5"><code class="text-amber-300">-Werror</code></td><td class="px-4 py-2.5 text-slate-300">경고를 에러로 처리 (경고 → 컴파일 실패)</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+            <div class="space-y-4">
+              <div class="bg-cyan-950/30 p-5 rounded-xl border border-cyan-500/20">
+                <h4 class="text-cyan-300 text-sm font-bold mb-3">왜 이렇게 까다롭게 쓰나요?</h4>
+                <ul class="space-y-2.5 text-xs text-slate-300">
+                  <li class="flex gap-2">
+                    <span class="text-emerald-400 font-bold shrink-0">①</span>
+                    <span><span class="text-white font-semibold">libsbs 과정 libsbs 프로젝트 요구사항</span>입니다. 경고가 하나라도 있으면 평가에서 탈락합니다.</span>
+                  </li>
+                  <li class="flex gap-2">
+                    <span class="text-emerald-400 font-bold shrink-0">②</span>
+                    <span>경고는 <span class="text-white font-semibold">잠재적 버그 신호</span>입니다. 무시하면 나중에 찾기 어려운 버그가 됩니다.</span>
+                  </li>
+                  <li class="flex gap-2">
+                    <span class="text-emerald-400 font-bold shrink-0">③</span>
+                    <span>처음부터 <span class="text-white font-semibold">깨끗한 코드 작성 습관</span>을 기릅니다.</span>
+                  </li>
+                </ul>
+              </div>
+              <div class="bg-amber-950/20 p-4 rounded-xl border border-amber-500/20">
+                <p class="text-amber-400 text-xs font-semibold mb-1">경고 예시</p>
+                <pre class="text-slate-300 text-[10px]"><code>hello.c:5:5: warning: unused variable 'x'
+  [-Wunused-variable]
+    int x = 1;
+        ^</code></pre>
+                <p class="text-slate-400 text-[10px] mt-2">-Werror이면 이것만으로 컴파일 실패</p>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="flex justify-between items-center text-xs text-slate-500 border-t border-slate-800/80 pt-4">
+          <span>Compiler Flags — -Wall -Wextra -Werror</span>
+          <span>Session 1</span>
+        </div>
+      </div>
+
+      <!-- Slide 13: printf 서식 지정자 -->
+      <div id="slide13" class="bg-slate-900 w-full max-w-5xl aspect-[16/9] rounded-3xl p-8 md:p-12 shadow-2xl border border-slate-800 flex flex-col justify-between hidden">
+        <div class="flex justify-between items-start">
+          <span class="text-cyan-400 font-bold tracking-wider text-sm uppercase">Slide 13 / printf</span>
+          <span class="text-slate-500 text-sm">1차시: Codespaces 세팅 + C언어 첫걸음</span>
+        </div>
+        <div class="my-auto">
+          <h3 class="text-2xl md:text-3xl font-bold text-white mb-4 border-b border-slate-800 pb-3">printf — 서식 지정자와 이스케이프 문자</h3>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <span class="text-slate-400 text-xs font-bold uppercase block mb-2">코드 예시</span>
+              <pre class="bg-slate-950 text-slate-200 p-4 rounded-xl text-[11px] leading-relaxed border border-slate-700"><code><span class="text-amber-300">#include</span> <span class="text-emerald-300">&lt;stdio.h&gt;</span>
+
+<span class="text-cyan-300">int</span> main(<span class="text-cyan-300">void</span>)
+{
+    <span class="text-cyan-300">int</span>   age    = <span class="text-indigo-300">25</span>;
+    <span class="text-cyan-300">float</span> height = <span class="text-indigo-300">175.5</span>;
+    <span class="text-cyan-300">char</span>  ch     = <span class="text-emerald-300">'K'</span>;
+
+    printf(<span class="text-emerald-300">"나이: %d\n"</span>, age);
+    printf(<span class="text-emerald-300">"키: %.1f\n"</span>, height);
+    printf(<span class="text-emerald-300">"문자: %c\n"</span>, ch);
+    printf(<span class="text-emerald-300">"주소: %p\n"</span>, &age);
+    <span class="text-amber-300">return</span> (<span class="text-indigo-300">0</span>);
+}</code></pre>
+            </div>
+            <div class="space-y-3">
+              <div>
+                <span class="text-slate-400 text-xs font-bold uppercase block mb-2">서식 지정자</span>
+                <div class="bg-slate-950 rounded-xl border border-slate-700 overflow-hidden">
+                  <table class="w-full text-xs">
+                    <tbody class="divide-y divide-slate-800">
+                      <tr><td class="px-3 py-2"><code class="text-amber-300">%d</code></td><td class="px-3 py-2 text-slate-300">정수 (int)</td></tr>
+                      <tr><td class="px-3 py-2"><code class="text-amber-300">%f</code></td><td class="px-3 py-2 text-slate-300">실수 (float, double)</td></tr>
+                      <tr><td class="px-3 py-2"><code class="text-amber-300">%c</code></td><td class="px-3 py-2 text-slate-300">문자 (char)</td></tr>
+                      <tr><td class="px-3 py-2"><code class="text-amber-300">%s</code></td><td class="px-3 py-2 text-slate-300">문자열 (char 배열)</td></tr>
+                      <tr><td class="px-3 py-2"><code class="text-amber-300">%p</code></td><td class="px-3 py-2 text-slate-300">포인터 주소 (16진수)</td></tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+              <div>
+                <span class="text-slate-400 text-xs font-bold uppercase block mb-2">이스케이프 문자</span>
+                <div class="bg-slate-950 rounded-xl border border-slate-700 overflow-hidden">
+                  <table class="w-full text-xs">
+                    <tbody class="divide-y divide-slate-800">
+                      <tr><td class="px-3 py-2"><code class="text-emerald-300">\n</code></td><td class="px-3 py-2 text-slate-300">줄바꿈 (개행)</td></tr>
+                      <tr><td class="px-3 py-2"><code class="text-emerald-300">\t</code></td><td class="px-3 py-2 text-slate-300">탭 (들여쓰기)</td></tr>
+                      <tr><td class="px-3 py-2"><code class="text-emerald-300">\\</code></td><td class="px-3 py-2 text-slate-300">백슬래시 자체</td></tr>
+                      <tr><td class="px-3 py-2"><code class="text-emerald-300">\0</code></td><td class="px-3 py-2 text-slate-300">null 문자 (문자열 끝) ← 매우 중요!</td></tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="flex justify-between items-center text-xs text-slate-500 border-t border-slate-800/80 pt-4">
+          <span>printf — Format Specifiers &amp; Escape Characters</span>
+          <span>Session 1</span>
+        </div>
+      </div>
+
+      <!-- Slide 14: bash에서 표준 함수 정의 확인 -->
+      <div id="slide14" class="bg-slate-900 w-full max-w-5xl aspect-[16/9] rounded-3xl p-8 md:p-12 shadow-2xl border border-slate-800 flex flex-col justify-between hidden">
+        <div class="flex justify-between items-start">
+          <span class="text-cyan-400 font-bold tracking-wider text-sm uppercase">Slide 14 / man page</span>
+          <span class="text-slate-500 text-sm">1차시: Codespaces 세팅 + C언어 첫걸음</span>
+        </div>
+        <div class="my-auto">
+          <h3 class="text-2xl md:text-3xl font-bold text-white mb-4 border-b border-slate-800 pb-3">bash에서 표준 함수 정의 확인하기</h3>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="space-y-3">
+              <div class="bg-slate-800/40 p-4 rounded-xl border border-slate-700">
+                <span class="text-slate-400 text-xs font-bold uppercase block mb-2">man 명령어 — 함수 공식 명세 확인</span>
+                <pre class="bg-slate-950 text-emerald-300 p-3 rounded-lg text-[12px] border border-slate-700 mb-2"><code>$ man 3 strlen</code></pre>
+                <p class="text-slate-400 text-[10px]"><code class="text-amber-300">3</code>은 Section 3 (C Library Functions). man page에서 함수의 공식 명세를 바로 확인할 수 있습니다.</p>
+              </div>
+              <div class="bg-slate-800/40 p-4 rounded-xl border border-slate-700">
+                <span class="text-slate-400 text-xs font-bold uppercase block mb-2">man page 구조</span>
+                <div class="space-y-1.5 text-[10px] text-slate-300">
+                  <div class="flex gap-3"><code class="text-amber-300 w-28 shrink-0">NAME</code><span>함수 이름과 한 줄 설명</span></div>
+                  <div class="flex gap-3"><code class="text-amber-300 w-28 shrink-0">SYNOPSIS</code><span>함수 원형 — 헤더, 반환형, 매개변수</span></div>
+                  <div class="flex gap-3"><code class="text-amber-300 w-28 shrink-0">DESCRIPTION</code><span>상세 동작 설명</span></div>
+                  <div class="flex gap-3"><code class="text-amber-300 w-28 shrink-0">RETURN VALUE</code><span>반환값 설명 ← <span class="text-white font-semibold">구현할 때 가장 중요!</span></span></div>
+                </div>
+              </div>
+            </div>
+            <div class="space-y-3">
+              <div class="bg-slate-800/40 p-4 rounded-xl border border-slate-700">
+                <span class="text-slate-400 text-xs font-bold uppercase block mb-2">헤더 파일에서 직접 선언 확인</span>
+                <pre class="bg-slate-950 text-emerald-300 p-3 rounded-lg text-[11px] border border-slate-700"><code>$ grep "strlen" /usr/include/string.h
+
+extern size_t strlen (const char *__s)
+     __THROW __attribute_pure__ __nonnull ((1));</code></pre>
+                <p class="text-slate-400 text-[10px] mt-2">표준 라이브러리 함수가 실제로 어떻게 선언되어 있는지 헤더에서 직접 확인 가능</p>
+              </div>
+              <div class="bg-cyan-950/30 p-4 rounded-xl border border-cyan-500/20">
+                <p class="text-cyan-300 text-xs font-semibold mb-2">우리가 앞으로 할 것</p>
+                <p class="text-slate-400 text-[10px]">man page의 SYNOPSIS와 RETURN VALUE를 읽고 함수를 <span class="text-white font-semibold">직접 구현</span>합니다. 표준 라이브러리가 "어떻게 만들어졌는지" 파악하는 게 libsbs의 목표입니다.</p>
+                <pre class="bg-slate-950 text-slate-300 p-2 rounded-lg text-[10px] border border-slate-700 mt-2"><code>$ man 3 memset
+$ man 3 strchr
+$ man 3 atoi</code></pre>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="flex justify-between items-center text-xs text-slate-500 border-t border-slate-800/80 pt-4">
+          <span>Checking Function Specs — man &amp; grep</span>
+          <span>Session 1</span>
+        </div>
+      </div>
+
+      <!-- Slide 15: 핵심 정리 -->
+      <div id="slide15" class="bg-slate-900 w-full max-w-5xl aspect-[16/9] rounded-3xl p-8 md:p-12 shadow-2xl border border-slate-800 flex flex-col justify-between hidden">
+        <div class="flex justify-between items-start">
+          <span class="text-cyan-400 font-bold tracking-wider text-sm uppercase">Slide 15 / Summary</span>
+          <span class="text-slate-500 text-sm">1차시: Codespaces 세팅 + C언어 첫걸음</span>
+        </div>
+        <div class="my-auto">
+          <h3 class="text-2xl md:text-3xl font-bold text-white mb-6 border-b border-slate-800 pb-3">1차시 핵심 정리</h3>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="space-y-3">
+              <div class="flex gap-4 items-start p-3 bg-slate-800/30 rounded-xl">
+                <span class="bg-cyan-600 text-white text-sm font-black w-7 h-7 rounded-full flex items-center justify-center shrink-0">1</span>
+                <div>
+                  <p class="text-white text-sm font-semibold">Codespaces = 설치 없는 C 개발 환경</p>
+                  <p class="text-slate-400 text-xs mt-0.5">브라우저에서 gcc가 내장된 Linux 환경을 즉시 사용 가능</p>
+                </div>
+              </div>
+              <div class="flex gap-4 items-start p-3 bg-slate-800/30 rounded-xl">
+                <span class="bg-cyan-600 text-white text-sm font-black w-7 h-7 rounded-full flex items-center justify-center shrink-0">2</span>
+                <div>
+                  <p class="text-white text-sm font-semibold">C 프로그램은 main에서 시작한다</p>
+                  <p class="text-slate-400 text-xs mt-0.5">모든 C 프로그램의 진입점은 <code class="text-cyan-300">int main(void)</code></p>
+                </div>
+              </div>
+              <div class="flex gap-4 items-start p-3 bg-slate-800/30 rounded-xl">
+                <span class="bg-cyan-600 text-white text-sm font-black w-7 h-7 rounded-full flex items-center justify-center shrink-0">3</span>
+                <div>
+                  <p class="text-white text-sm font-semibold">컴파일: gcc 파일.c -o 실행파일</p>
+                  <p class="text-slate-400 text-xs mt-0.5">소스 코드를 기계어로 변환해야 실행 가능</p>
+                </div>
+              </div>
+            </div>
+            <div class="space-y-3">
+              <div class="flex gap-4 items-start p-3 bg-slate-800/30 rounded-xl">
+                <span class="bg-amber-500 text-white text-sm font-black w-7 h-7 rounded-full flex items-center justify-center shrink-0">4</span>
+                <div>
+                  <p class="text-white text-sm font-semibold">-Wall -Wextra -Werror 항상 붙이기</p>
+                  <p class="text-slate-400 text-xs mt-0.5">libsbs 과정 요구사항이자 좋은 코드 습관의 시작</p>
+                </div>
+              </div>
+              <div class="flex gap-4 items-start p-3 bg-slate-800/30 rounded-xl">
+                <span class="bg-amber-500 text-white text-sm font-black w-7 h-7 rounded-full flex items-center justify-center shrink-0">5</span>
+                <div>
+                  <p class="text-white text-sm font-semibold">printf로 다양한 형식 출력 가능</p>
+                  <p class="text-slate-400 text-xs mt-0.5"><code class="text-amber-300">%d %f %c %s %p</code>와 <code class="text-emerald-300">\n \t \0</code> 기억하기</p>
+                </div>
+              </div>
+              <div class="bg-cyan-950/30 p-3 rounded-xl border border-cyan-500/20">
+                <p class="text-cyan-300 text-xs font-semibold">다음 차시 예고</p>
+                <p class="text-slate-400 text-[10px] mt-1">2차시: 변수, 자료형(int, char, float), 연산자, sizeof 실험</p>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="flex justify-between items-center text-xs text-slate-500 border-t border-slate-800/80 pt-4">
+          <span>Session 1 — Key Takeaways</span>
+          <span>Session 1</span>
+        </div>
+      </div>
+
+      <!-- Slide 16: 실습 과제 & Q&A -->
+      <div id="slide16" class="bg-slate-900 w-full max-w-5xl aspect-[16/9] rounded-3xl p-8 md:p-12 shadow-2xl border border-slate-800 flex flex-col justify-between hidden">
+        <div class="flex justify-between items-start">
+          <span class="text-cyan-400 font-bold tracking-wider text-sm uppercase">Slide 16 / Practice &amp; Q&amp;A</span>
+          <span class="text-slate-500 text-sm">1차시: Codespaces 세팅 + C언어 첫걸음</span>
+        </div>
+        <div class="my-auto">
+          <h3 class="text-2xl md:text-3xl font-bold text-white mb-5 border-b border-slate-800 pb-3">실습 과제 &amp; Q&amp;A</h3>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="space-y-3">
+              <div class="bg-slate-800/40 p-4 rounded-xl border border-slate-700">
+                <h4 class="font-bold text-amber-400 text-sm mb-3">실습 과제</h4>
+                <ol class="space-y-2 text-xs text-slate-300">
+                  <li class="flex gap-2"><span class="text-emerald-400 font-bold shrink-0">①</span><span>GitHub 계정 생성 + <code class="text-cyan-300">libsbs</code> 리포지토리 만들기</span></li>
+                  <li class="flex gap-2"><span class="text-emerald-400 font-bold shrink-0">②</span><span>Codespace 생성 + <code class="text-cyan-300">gcc --version</code> 확인</span></li>
+                  <li class="flex gap-2"><span class="text-emerald-400 font-bold shrink-0">③</span><span><code class="text-cyan-300">hello.c</code> 작성 → <code class="text-cyan-300">gcc -Wall -Wextra -Werror</code>로 컴파일</span></li>
+                  <li class="flex gap-2"><span class="text-emerald-400 font-bold shrink-0">④</span><span>printf에 본인 이름, 나이, 좋아하는 숫자 출력해보기</span></li>
+                  <li class="flex gap-2"><span class="text-amber-400 font-bold shrink-0">★</span><span><span class="text-white font-semibold">도전</span>: 경고가 나는 코드를 일부러 작성해보고 -Werror가 어떻게 반응하는지 확인</span></li>
+                </ol>
+              </div>
+            </div>
+            <div class="space-y-3">
+              <div class="bg-rose-950/20 p-4 rounded-xl border border-rose-500/20">
+                <h4 class="font-bold text-rose-400 text-sm mb-3">자주 막히는 부분</h4>
+                <div class="space-y-2 text-[10px] text-slate-300">
+                  <div>
+                    <p class="font-semibold text-slate-200">Codespace가 안 열린다면?</p>
+                    <p class="text-slate-400">README 체크 여부 확인. 브라우저 팝업 차단 해제</p>
+                  </div>
+                  <div>
+                    <p class="font-semibold text-slate-200">gcc: command not found?</p>
+                    <p class="text-slate-400">Codespace가 완전히 로딩되지 않은 것. 잠시 대기 후 재시도</p>
+                  </div>
+                  <div>
+                    <p class="font-semibold text-slate-200">컴파일했는데 아무 반응이 없다면?</p>
+                    <p class="text-slate-400">정상입니다. 에러 없으면 아무 메시지 없이 실행 파일이 생성됨</p>
+                  </div>
+                </div>
+              </div>
+              <div class="bg-cyan-950/30 p-3 rounded-xl border border-cyan-500/20 text-center">
+                <p class="text-cyan-300 text-sm font-bold">"오늘 hello.c 하나로 C언어 여정이 시작됐습니다"</p>
+                <p class="text-slate-400 text-[10px] mt-1">2차시부터 변수와 자료형으로 들어갑니다</p>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="flex justify-between items-center text-xs text-slate-500 border-t border-slate-800/80 pt-4">
+          <span>Session 1 Completion</span>
+          <span>Session 1</span>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Bottom Nav -->
+    <div class="bg-slate-950 border-t border-slate-800 px-6 py-4 flex items-center justify-between">
+      <button id="prevBtn" onclick="prevSlide()" class="bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold px-4 py-2 rounded-lg transition-colors border border-slate-700">
+        &larr; 이전 슬라이드
+      </button>
+      <div class="hidden md:flex gap-1.5" id="dotsContainer"></div>
+      <button id="nextBtn" onclick="nextSlide()" class="bg-cyan-600 hover:bg-cyan-700 text-white text-xs font-semibold px-4 py-2 rounded-lg transition-colors">
+        다음 슬라이드 &rarr;
+      </button>
+    </div>
+
+    <script>
+      const totalSlides = 16;
+      let currentSlide = 1;
+
+      function updateSlideVisibility() {
+        for (let i = 1; i <= totalSlides; i++) {
+          const slide = document.getElementById("slide" + i);
+          if (i === currentSlide) {
+            slide.classList.remove("hidden");
+          } else {
+            slide.classList.add("hidden");
+          }
+        }
+        document.getElementById("slideCounter").innerText = currentSlide + " / " + totalSlides;
+        updateDots();
+      }
+
+      function nextSlide() {
+        if (currentSlide < totalSlides) {
+          currentSlide++;
+          updateSlideVisibility();
+        }
+      }
+
+      function prevSlide() {
+        if (currentSlide > 1) {
+          currentSlide--;
+          updateSlideVisibility();
+        }
+      }
+
+      function jumpToSlide(index) {
+        currentSlide = index;
+        updateSlideVisibility();
+      }
+
+      function buildDots() {
+        const container = document.getElementById("dotsContainer");
+        container.innerHTML = "";
+        for (let i = 1; i <= totalSlides; i++) {
+          const dot = document.createElement("button");
+          dot.id = "dot" + i;
+          dot.onclick = () => jumpToSlide(i);
+          dot.className = "w-2 h-2 rounded-full transition-colors";
+          container.appendChild(dot);
+        }
+      }
+
+      function updateDots() {
+        for (let i = 1; i <= totalSlides; i++) {
+          const dot = document.getElementById("dot" + i);
+          if (!dot) continue;
+          if (i === currentSlide) {
+            dot.className = "w-2 h-2 rounded-full transition-colors bg-cyan-500";
+          } else {
+            dot.className = "w-2 h-2 rounded-full transition-colors bg-slate-700 hover:bg-slate-500";
+          }
+        }
+      }
+
+      document.addEventListener("keydown", function (e) {
+        if (e.key === "ArrowRight" || e.key === " ") nextSlide();
+        if (e.key === "ArrowLeft") prevSlide();
+      });
+
+      buildDots();
+      updateSlideVisibility();
+    </script>
+  </body>
+</html>

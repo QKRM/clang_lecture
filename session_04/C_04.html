@@ -1,0 +1,757 @@
+<!--
+Palette: Cyan & Amber (same as C_01/C_02/C_03 — consistent course design)
+Plan Summary: 16-slide interactive presentation for C Language Session 4.
+Covers functions (prototype/definition/call), pass by value, stack frames, recursion, iteration vs recursion.
+NEITHER Mermaid JS NOR SVG were used anywhere in this output.
+-->
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>4차시 강의자료: 함수와 재귀</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+      @import url("https://fonts.googleapis.com/css2?family=Pretendard:wght@400;500;600;700;800;900&display=swap");
+      body {
+        font-family: "Pretendard", sans-serif;
+        background-color: #0f172a;
+        color: #f8fafc;
+        overflow-x: hidden;
+      }
+      pre, code { font-family: 'Courier New', Courier, monospace; }
+    </style>
+  </head>
+  <body class="min-h-screen flex flex-col justify-between">
+
+    <!-- Top Nav -->
+    <div class="bg-slate-900 border-b border-slate-800 px-6 py-4 flex flex-wrap items-center justify-between gap-4 sticky top-0 z-50">
+      <div class="flex items-center gap-3">
+        <span class="bg-cyan-600 text-white text-xs font-bold px-2.5 py-1 rounded-full uppercase tracking-wider">Session 4</span>
+        <h1 class="text-sm md:text-base font-bold text-slate-200">C언어 기초 — libsbs 구현 과정</h1>
+      </div>
+      <div class="flex items-center gap-4">
+        <div class="flex items-center gap-2 bg-slate-800 px-3 py-1.5 rounded-lg border border-slate-700">
+          <span class="text-xs text-slate-400">슬라이드:</span>
+          <span id="slideCounter" class="text-xs font-bold text-cyan-400">1 / 16</span>
+        </div>
+      </div>
+    </div>
+
+    <div id="deckContainer" class="flex-grow flex items-center justify-center p-4 md:p-8">
+
+      <!-- Slide 01: Cover -->
+      <div id="slide1" class="bg-gradient-to-br from-slate-900 via-cyan-950 to-slate-900 w-full max-w-5xl aspect-[16/9] rounded-3xl p-8 md:p-12 shadow-2xl border border-slate-800 flex flex-col justify-between">
+        <div class="flex justify-between items-start">
+          <span class="text-cyan-400 font-bold tracking-wider text-sm uppercase">Slide 01 / Cover</span>
+          <span class="text-slate-500 text-sm">4차시: 함수와 재귀</span>
+        </div>
+        <div class="my-auto">
+          <span class="inline-block bg-cyan-500/20 text-cyan-300 text-xs font-extrabold px-3 py-1.5 rounded-md mb-4 border border-cyan-500/30">4차시 · 3시간 · 함수 + 값 전달 + 재귀</span>
+          <h2 class="text-3xl md:text-5xl font-black text-white leading-tight mb-4">
+            함수와<br /><span class="text-transparent bg-clip-text bg-gradient-to-r from-amber-400 to-orange-300">재귀</span>
+          </h2>
+          <p class="text-slate-400 text-base md:text-lg max-w-2xl">
+            코드를 의미 단위로 나누는 함수, 그리고 자기 자신을 부르는 재귀. <code class="text-cyan-300">pass by value</code>의 한계를 이해하면 5차시 포인터가 보입니다.
+          </p>
+        </div>
+        <div class="flex justify-between items-center text-xs text-slate-500 border-t border-slate-800/80 pt-4">
+          <span>C Language — libsbs Implementation Course</span>
+          <span>Time Frame: 3 Hours</span>
+        </div>
+      </div>
+
+      <!-- Slide 02: 오늘의 목표 -->
+      <div id="slide2" class="bg-slate-900 w-full max-w-5xl aspect-[16/9] rounded-3xl p-8 md:p-12 shadow-2xl border border-slate-800 flex flex-col justify-between hidden">
+        <div class="flex justify-between items-start">
+          <span class="text-cyan-400 font-bold tracking-wider text-sm uppercase">Slide 02 / Goal</span>
+          <span class="text-slate-500 text-sm">4차시: 함수와 재귀</span>
+        </div>
+        <div class="my-auto">
+          <h3 class="text-2xl md:text-3xl font-bold text-white mb-6 border-b border-slate-800 pb-3">오늘의 목표</h3>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <div class="space-y-3">
+              <div class="p-4 bg-slate-800/30 rounded-xl border-l-4 border-cyan-500">
+                <h4 class="font-bold text-white text-sm mb-1">1부 — 강사 설명</h4>
+                <p class="text-slate-400 text-xs">함수 구조, 프로토타입, 값에 의한 전달, 스택 프레임, 재귀</p>
+              </div>
+              <div class="p-4 bg-slate-800/30 rounded-xl border-l-4 border-amber-500">
+                <h4 class="font-bold text-white text-sm mb-1">2부 — 직접 구현</h4>
+                <p class="text-slate-400 text-xs">사칙연산 함수 + 팩토리얼/피보나치(반복 vs 재귀) + 값 전달 확인</p>
+              </div>
+            </div>
+            <div class="bg-slate-800/50 p-6 rounded-xl border border-slate-700">
+              <h4 class="font-bold text-amber-400 text-sm mb-3">오늘 수업이 끝나면</h4>
+              <ul class="space-y-2 text-xs text-slate-300">
+                <li class="flex items-start gap-2"><span class="text-emerald-400 font-bold mt-0.5">1</span><span>함수를 선언·정의·호출할 수 있다</span></li>
+                <li class="flex items-start gap-2"><span class="text-emerald-400 font-bold mt-0.5">2</span><span><code class="text-cyan-300 bg-slate-950 px-1 rounded">pass by value</code>를 이해한다</span></li>
+                <li class="flex items-start gap-2"><span class="text-emerald-400 font-bold mt-0.5">3</span><span>스택 프레임으로 호출 과정을 설명한다</span></li>
+                <li class="flex items-start gap-2"><span class="text-emerald-400 font-bold mt-0.5">4</span><span>재귀를 종료 조건과 함께 구현한다</span></li>
+              </ul>
+              <div class="mt-4 bg-cyan-950/40 p-3 rounded-lg border border-cyan-500/20">
+                <p class="text-cyan-300 text-xs font-semibold">libsbs와의 연결</p>
+                <p class="text-slate-400 text-[10px] mt-1">모든 <code class="text-amber-300">ft_*</code> 함수가 곧 함수다. 값 전달의 한계 → 포인터 동기</p>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="flex justify-between items-center text-xs text-slate-500 border-t border-slate-800/80 pt-4">
+          <span>Today's Goal</span><span>Session 4</span>
+        </div>
+      </div>
+
+      <!-- Slide 03: 함수란? -->
+      <div id="slide3" class="bg-slate-900 w-full max-w-5xl aspect-[16/9] rounded-3xl p-8 md:p-12 shadow-2xl border border-slate-800 flex flex-col justify-between hidden">
+        <div class="flex justify-between items-start">
+          <span class="text-cyan-400 font-bold tracking-wider text-sm uppercase">Slide 03 / What is a Function</span>
+          <span class="text-slate-500 text-sm">4차시: 함수와 재귀</span>
+        </div>
+        <div class="my-auto">
+          <h3 class="text-2xl md:text-3xl font-bold text-white mb-4 border-b border-slate-800 pb-3">함수(Function)란?</h3>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="space-y-4">
+              <div class="bg-slate-800/40 p-5 rounded-xl border border-slate-700">
+                <h4 class="font-bold text-cyan-400 text-sm mb-3">한 줄 정의</h4>
+                <p class="text-white text-base font-semibold mb-2">입력을 받아 일을 하고 결과를 돌려주는 코드 묶음</p>
+                <p class="text-slate-400 text-xs">반복을 줄이고, 코드를 의미 단위로 나눠 읽기 쉽게 만듭니다.</p>
+              </div>
+              <div class="bg-amber-950/20 p-4 rounded-xl border border-amber-500/20">
+                <p class="text-amber-400 text-xs font-semibold mb-2">main도 함수다</p>
+                <p class="text-slate-400 text-[10px]">지금까지 쓴 <code class="text-white">main</code>도 함수. <code class="text-white">int</code> 반환, <code class="text-white">return (0)</code>은 정상 종료를 뜻함.</p>
+              </div>
+            </div>
+            <div>
+              <span class="text-slate-400 text-xs font-bold uppercase block mb-2">함수의 구조</span>
+              <pre class="bg-slate-950 text-slate-200 p-4 rounded-xl text-[11px] leading-relaxed border border-slate-700"><code><span class="text-slate-500">// 반환타입  이름(매개변수)</span>
+<span class="text-cyan-300">int</span> add(<span class="text-cyan-300">int</span> a, <span class="text-cyan-300">int</span> b)
+{
+    <span class="text-amber-300">return</span> (a + b);  <span class="text-slate-500">// 반환값</span>
+}</code></pre>
+              <div class="mt-3 bg-slate-950 rounded-xl border border-slate-700 overflow-hidden">
+                <table class="w-full text-xs">
+                  <tbody class="divide-y divide-slate-800">
+                    <tr><td class="px-3 py-1.5"><code class="text-cyan-300">int</code></td><td class="px-3 py-1.5 text-slate-400">반환 타입</td></tr>
+                    <tr><td class="px-3 py-1.5"><code class="text-amber-300">add</code></td><td class="px-3 py-1.5 text-slate-400">함수 이름</td></tr>
+                    <tr><td class="px-3 py-1.5"><code class="text-slate-300">a, b</code></td><td class="px-3 py-1.5 text-slate-400">매개변수 (입력)</td></tr>
+                    <tr><td class="px-3 py-1.5"><code class="text-amber-300">return</code></td><td class="px-3 py-1.5 text-slate-400">반환값 + 함수 종료</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="flex justify-between items-center text-xs text-slate-500 border-t border-slate-800/80 pt-4">
+          <span>What is a Function</span><span>Session 4</span>
+        </div>
+      </div>
+
+      <!-- Slide 04: 선언·정의·호출 -->
+      <div id="slide4" class="bg-slate-900 w-full max-w-5xl aspect-[16/9] rounded-3xl p-8 md:p-12 shadow-2xl border border-slate-800 flex flex-col justify-between hidden">
+        <div class="flex justify-between items-start">
+          <span class="text-cyan-400 font-bold tracking-wider text-sm uppercase">Slide 04 / Declare-Define-Call</span>
+          <span class="text-slate-500 text-sm">4차시: 함수와 재귀</span>
+        </div>
+        <div class="my-auto">
+          <h3 class="text-2xl md:text-3xl font-bold text-white mb-4 border-b border-slate-800 pb-3">선언 · 정의 · 호출</h3>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <pre class="bg-slate-950 text-slate-200 p-4 rounded-xl text-[11px] leading-relaxed border border-slate-700"><code><span class="text-amber-300">#include</span> <span class="text-emerald-300">&lt;stdio.h&gt;</span>
+
+<span class="text-slate-500">/* 1. 선언(프로토타입) */</span>
+<span class="text-cyan-300">int</span> add(<span class="text-cyan-300">int</span> a, <span class="text-cyan-300">int</span> b);
+
+<span class="text-cyan-300">int</span> main(<span class="text-cyan-300">void</span>)
+{
+    <span class="text-slate-500">/* 3. 호출 */</span>
+    <span class="text-cyan-300">int</span> r = add(3, 5);
+    printf(<span class="text-emerald-300">"%d\n"</span>, r);  <span class="text-slate-500">// 8</span>
+    <span class="text-amber-300">return</span> (0);
+}
+
+<span class="text-slate-500">/* 2. 정의 */</span>
+<span class="text-cyan-300">int</span> add(<span class="text-cyan-300">int</span> a, <span class="text-cyan-300">int</span> b)
+{
+    <span class="text-amber-300">return</span> (a + b);
+}</code></pre>
+            </div>
+            <div class="space-y-3">
+              <div class="bg-cyan-950/30 p-4 rounded-xl border border-cyan-500/20">
+                <p class="text-cyan-300 text-xs font-semibold mb-2">왜 프로토타입?</p>
+                <p class="text-slate-400 text-[10px]">C는 위에서 아래로 읽습니다. <code class="text-amber-300">main</code> 아래 정의한 함수를 호출하려면, 미리 "이런 함수가 있다"고 선언해야 합니다.</p>
+              </div>
+              <div class="bg-slate-800/40 p-4 rounded-xl border border-slate-700">
+                <p class="text-amber-400 text-xs font-semibold mb-2">프로토타입 규칙</p>
+                <ul class="space-y-1 text-[10px] text-slate-300">
+                  <li class="flex gap-2"><span class="text-emerald-400">✓</span><span>세미콜론으로 끝남 (본문 없음)</span></li>
+                  <li class="flex gap-2"><span class="text-emerald-400">✓</span><span>매개변수 이름 생략 가능: <code class="text-white">int add(int, int);</code></span></li>
+                  <li class="flex gap-2"><span class="text-rose-400">✗</span><span>없으면 <code class="text-white">implicit declaration</code> 경고</span></li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="flex justify-between items-center text-xs text-slate-500 border-t border-slate-800/80 pt-4">
+          <span>Declare / Define / Call</span><span>Session 4</span>
+        </div>
+      </div>
+
+      <!-- Slide 05: void 활용 -->
+      <div id="slide5" class="bg-slate-900 w-full max-w-5xl aspect-[16/9] rounded-3xl p-8 md:p-12 shadow-2xl border border-slate-800 flex flex-col justify-between hidden">
+        <div class="flex justify-between items-start">
+          <span class="text-cyan-400 font-bold tracking-wider text-sm uppercase">Slide 05 / void</span>
+          <span class="text-slate-500 text-sm">4차시: 함수와 재귀</span>
+        </div>
+        <div class="my-auto">
+          <h3 class="text-2xl md:text-3xl font-bold text-white mb-4 border-b border-slate-800 pb-3">반환값과 매개변수 — void 활용</h3>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <pre class="bg-slate-950 text-slate-200 p-4 rounded-xl text-[11px] leading-relaxed border border-slate-700"><code><span class="text-slate-500">/* 반환값 없음 */</span>
+<span class="text-cyan-300">void</span> print_line(<span class="text-cyan-300">void</span>)
+{
+    printf(<span class="text-emerald-300">"----------\n"</span>);
+}
+
+<span class="text-slate-500">/* 매개변수 없음, 반환값 있음 */</span>
+<span class="text-cyan-300">int</span> get_answer(<span class="text-cyan-300">void</span>)
+{
+    <span class="text-amber-300">return</span> (42);
+}</code></pre>
+            </div>
+            <div class="space-y-3">
+              <div class="bg-slate-800/40 p-4 rounded-xl border border-slate-700">
+                <p class="text-amber-400 text-xs font-semibold mb-2">void의 두 가지 의미</p>
+                <ul class="space-y-1.5 text-[10px] text-slate-300">
+                  <li class="flex gap-2"><span class="text-cyan-400">→</span><span>반환 타입 <code class="text-white">void</code>: 돌려줄 값 없음</span></li>
+                  <li class="flex gap-2"><span class="text-cyan-400">→</span><span>매개변수 <code class="text-white">(void)</code>: 받을 입력 없음</span></li>
+                </ul>
+              </div>
+              <div class="bg-cyan-950/30 p-4 rounded-xl border border-cyan-500/20">
+                <p class="text-cyan-300 text-xs font-semibold mb-1">return; 단독 사용</p>
+                <p class="text-slate-400 text-[10px]"><code class="text-amber-300">void</code> 함수에서 <code class="text-amber-300">return;</code>만 쓰면 값 없이 즉시 종료. 조건에 따라 일찍 빠져나갈 때 유용.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="flex justify-between items-center text-xs text-slate-500 border-t border-slate-800/80 pt-4">
+          <span>Return &amp; Parameters — void</span><span>Session 4</span>
+        </div>
+      </div>
+
+      <!-- Slide 06: 값에 의한 전달 -->
+      <div id="slide6" class="bg-slate-900 w-full max-w-5xl aspect-[16/9] rounded-3xl p-8 md:p-12 shadow-2xl border border-slate-800 flex flex-col justify-between hidden">
+        <div class="flex justify-between items-start">
+          <span class="text-cyan-400 font-bold tracking-wider text-sm uppercase">Slide 06 / Pass by Value</span>
+          <span class="text-slate-500 text-sm">4차시: 함수와 재귀</span>
+        </div>
+        <div class="my-auto">
+          <h3 class="text-2xl md:text-3xl font-bold text-white mb-4 border-b border-slate-800 pb-3">값에 의한 전달 (Pass by Value)</h3>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <p class="text-slate-400 text-xs mb-3">인자를 넘기면 <span class="text-white font-semibold">값이 복사</span>됩니다. 함수 안에서 바꿔도 원본은 그대로.</p>
+              <pre class="bg-slate-950 text-slate-200 p-4 rounded-xl text-[11px] leading-relaxed border border-slate-700"><code><span class="text-cyan-300">void</span> try_change(<span class="text-cyan-300">int</span> x)
+{
+    x = 100;  <span class="text-slate-500">// 복사본만 변경</span>
+}
+
+<span class="text-cyan-300">int</span> main(<span class="text-cyan-300">void</span>)
+{
+    <span class="text-cyan-300">int</span> a = 5;
+    try_change(a);
+    printf(<span class="text-emerald-300">"%d\n"</span>, a);  <span class="text-slate-500">// 5 (안 바뀜!)</span>
+}</code></pre>
+            </div>
+            <div class="bg-cyan-950/30 p-5 rounded-xl border border-cyan-500/20">
+              <h4 class="text-cyan-300 text-sm font-bold mb-3">그럼 원본은 어떻게 바꾸나?</h4>
+              <p class="text-slate-400 text-xs mb-3">주소를 넘기면 됩니다. 이것이 <span class="text-white font-semibold">포인터</span> — 5차시의 핵심:</p>
+              <pre class="bg-slate-950 text-slate-200 p-3 rounded-lg text-[11px] border border-slate-700"><code><span class="text-slate-500">/* 미리보기 — 5차시 상세 */</span>
+<span class="text-cyan-300">void</span> swap(<span class="text-cyan-300">int</span> *a, <span class="text-cyan-300">int</span> *b)
+{
+    <span class="text-cyan-300">int</span> tmp = *a;
+    *a = *b;
+    *b = tmp;
+}</code></pre>
+              <p class="text-slate-400 text-[10px] mt-3">지금은 "기본 전달은 복사다"만 확실히 기억하세요.</p>
+            </div>
+          </div>
+        </div>
+        <div class="flex justify-between items-center text-xs text-slate-500 border-t border-slate-800/80 pt-4">
+          <span>Pass by Value</span><span>Session 4</span>
+        </div>
+      </div>
+
+      <!-- Slide 07: 스택 프레임 -->
+      <div id="slide7" class="bg-slate-900 w-full max-w-5xl aspect-[16/9] rounded-3xl p-8 md:p-12 shadow-2xl border border-slate-800 flex flex-col justify-between hidden">
+        <div class="flex justify-between items-start">
+          <span class="text-cyan-400 font-bold tracking-wider text-sm uppercase">Slide 07 / Stack Frame</span>
+          <span class="text-slate-500 text-sm">4차시: 함수와 재귀</span>
+        </div>
+        <div class="my-auto">
+          <h3 class="text-2xl md:text-3xl font-bold text-white mb-4 border-b border-slate-800 pb-3">스택 프레임 (Stack Frame)</h3>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <p class="text-slate-400 text-xs mb-3">함수를 호출할 때마다 스택에 프레임이 쌓이고, <code class="text-amber-300">return</code> 시 제거됩니다.</p>
+              <pre class="bg-slate-950 text-slate-200 p-4 rounded-xl text-[11px] leading-relaxed border border-slate-700"><code>main() 호출  → [main]
+ add() 호출  → [main][add]
+ add() 반환  → [main]
+main() 반환  → (비어 있음)</code></pre>
+              <p class="text-slate-500 text-[10px] mt-2">프레임 = 그 함수의 지역 변수 + 매개변수</p>
+            </div>
+            <div class="space-y-3">
+              <div class="bg-slate-800/40 p-4 rounded-xl border border-slate-700">
+                <p class="text-amber-400 text-xs font-semibold mb-2">지역 변수의 수명</p>
+                <pre class="bg-slate-950 text-slate-200 p-3 rounded-lg text-[11px] border border-slate-700"><code><span class="text-cyan-300">int</span> make(<span class="text-cyan-300">void</span>)
+{
+    <span class="text-cyan-300">int</span> local = 10;
+    <span class="text-amber-300">return</span> (local);
+    <span class="text-slate-500">// 값은 복사 반환 (안전)</span>
+}</code></pre>
+                <p class="text-slate-400 text-[10px] mt-2">함수가 끝나면 지역 변수는 사라진다. <span class="text-rose-300">주소를 반환하면 위험</span> (사라진 메모리).</p>
+              </div>
+              <div class="bg-cyan-950/30 p-3 rounded-xl border border-cyan-500/20">
+                <p class="text-slate-400 text-[10px]">스택은 한정된 공간. 재귀가 너무 깊으면 넘침(스택 오버플로) → 다음 슬라이드.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="flex justify-between items-center text-xs text-slate-500 border-t border-slate-800/80 pt-4">
+          <span>Stack Frame</span><span>Session 4</span>
+        </div>
+      </div>
+
+      <!-- Slide 08: 재귀 개념 -->
+      <div id="slide8" class="bg-slate-900 w-full max-w-5xl aspect-[16/9] rounded-3xl p-8 md:p-12 shadow-2xl border border-slate-800 flex flex-col justify-between hidden">
+        <div class="flex justify-between items-start">
+          <span class="text-cyan-400 font-bold tracking-wider text-sm uppercase">Slide 08 / Recursion</span>
+          <span class="text-slate-500 text-sm">4차시: 함수와 재귀</span>
+        </div>
+        <div class="my-auto">
+          <h3 class="text-2xl md:text-3xl font-bold text-white mb-4 border-b border-slate-800 pb-3">재귀 — 자기 자신을 호출</h3>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <span class="text-slate-400 text-xs font-bold uppercase block mb-2">반드시 두 가지가 필요</span>
+              <pre class="bg-slate-950 text-slate-200 p-4 rounded-xl text-[11px] leading-relaxed border border-slate-700"><code><span class="text-cyan-300">int</span> factorial(<span class="text-cyan-300">int</span> n)
+{
+    <span class="text-amber-300">if</span> (n &lt;= 1)
+        <span class="text-amber-300">return</span> (1);
+        <span class="text-slate-500">// ↑ 종료 조건 (base case)</span>
+
+    <span class="text-amber-300">return</span> (n * factorial(n - 1));
+        <span class="text-slate-500">// ↑ 재귀 호출 (더 작은 문제)</span>
+}</code></pre>
+            </div>
+            <div class="space-y-3">
+              <div class="bg-slate-800/40 p-4 rounded-xl border border-slate-700">
+                <p class="text-amber-400 text-xs font-semibold mb-2">두 요소</p>
+                <ul class="space-y-1.5 text-[10px] text-slate-300">
+                  <li class="flex gap-2"><span class="bg-emerald-600 text-white text-[9px] font-bold w-4 h-4 rounded-full flex items-center justify-center shrink-0">1</span><span><span class="text-white">종료 조건</span> — 재귀를 멈추는 지점</span></li>
+                  <li class="flex gap-2"><span class="bg-cyan-600 text-white text-[9px] font-bold w-4 h-4 rounded-full flex items-center justify-center shrink-0">2</span><span><span class="text-white">재귀 호출</span> — 자신을 더 작게 호출</span></li>
+                </ul>
+              </div>
+              <div class="bg-rose-950/20 p-4 rounded-xl border border-rose-500/20">
+                <p class="text-rose-400 text-xs font-semibold mb-2">종료 조건이 없으면?</p>
+                <pre class="bg-slate-950 text-slate-200 p-2 rounded text-[10px] border border-slate-700"><code><span class="text-cyan-300">int</span> bad(<span class="text-cyan-300">int</span> n)
+{
+    <span class="text-amber-300">return</span> (bad(n - 1));
+}  <span class="text-slate-500">// 무한 재귀 → 크래시</span></code></pre>
+                <p class="text-slate-400 text-[10px] mt-2"><span class="text-rose-300 font-semibold">스택 오버플로</span>로 프로그램이 죽는다.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="flex justify-between items-center text-xs text-slate-500 border-t border-slate-800/80 pt-4">
+          <span>Recursion Concept</span><span>Session 4</span>
+        </div>
+      </div>
+
+      <!-- Slide 09: 재귀 동작 추적 -->
+      <div id="slide9" class="bg-slate-900 w-full max-w-5xl aspect-[16/9] rounded-3xl p-8 md:p-12 shadow-2xl border border-slate-800 flex flex-col justify-between hidden">
+        <div class="flex justify-between items-start">
+          <span class="text-cyan-400 font-bold tracking-wider text-sm uppercase">Slide 09 / Trace</span>
+          <span class="text-slate-500 text-sm">4차시: 함수와 재귀</span>
+        </div>
+        <div class="my-auto">
+          <h3 class="text-2xl md:text-3xl font-bold text-white mb-4 border-b border-slate-800 pb-3">재귀 동작 추적 — factorial(4)</h3>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <span class="text-slate-400 text-xs font-bold uppercase block mb-2">펼쳐지는 과정 (호출)</span>
+              <pre class="bg-slate-950 text-slate-200 p-4 rounded-xl text-[11px] leading-relaxed border border-slate-700"><code>factorial(4)
+= 4 * factorial(3)
+= 4 * (3 * factorial(2))
+= 4 * (3 * (2 * factorial(1)))
+= 4 * (3 * (2 * <span class="text-emerald-300">1</span>))
+<span class="text-slate-500">         ↑ 종료 조건 도달</span></code></pre>
+            </div>
+            <div>
+              <span class="text-slate-400 text-xs font-bold uppercase block mb-2">접히는 과정 (반환)</span>
+              <pre class="bg-slate-950 text-slate-200 p-4 rounded-xl text-[11px] leading-relaxed border border-slate-700"><code>= 4 * (3 * (2 * 1))
+= 4 * (3 * <span class="text-amber-300">2</span>)
+= 4 * <span class="text-amber-300">6</span>
+= <span class="text-emerald-300">24</span></code></pre>
+              <div class="mt-3 bg-cyan-950/30 p-3 rounded-xl border border-cyan-500/20">
+                <p class="text-slate-400 text-[10px]">각 호출이 <span class="text-white">스택 프레임</span>을 쌓고, 종료 조건에 닿으면 거꾸로 계산되며 프레임이 풀립니다.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="flex justify-between items-center text-xs text-slate-500 border-t border-slate-800/80 pt-4">
+          <span>Recursion Trace</span><span>Session 4</span>
+        </div>
+      </div>
+
+      <!-- Slide 10: 반복 vs 재귀 -->
+      <div id="slide10" class="bg-slate-900 w-full max-w-5xl aspect-[16/9] rounded-3xl p-8 md:p-12 shadow-2xl border border-slate-800 flex flex-col justify-between hidden">
+        <div class="flex justify-between items-start">
+          <span class="text-cyan-400 font-bold tracking-wider text-sm uppercase">Slide 10 / Loop vs Recursion</span>
+          <span class="text-slate-500 text-sm">4차시: 함수와 재귀</span>
+        </div>
+        <div class="my-auto">
+          <h3 class="text-2xl md:text-3xl font-bold text-white mb-4 border-b border-slate-800 pb-3">반복 vs 재귀</h3>
+          <div class="bg-slate-950 rounded-xl border border-slate-700 overflow-hidden mb-4">
+            <table class="w-full text-xs">
+              <thead><tr class="border-b border-slate-700 bg-slate-800/60">
+                <th class="text-left px-4 py-2 text-cyan-400">기준</th>
+                <th class="text-left px-4 py-2 text-amber-400">반복 (for/while)</th>
+                <th class="text-left px-4 py-2 text-amber-400">재귀</th>
+              </tr></thead>
+              <tbody class="divide-y divide-slate-800">
+                <tr><td class="px-4 py-2 text-slate-300">속도/메모리</td><td class="px-4 py-2 text-emerald-300">효율적</td><td class="px-4 py-2 text-slate-400">함수 호출 비용 + 스택</td></tr>
+                <tr><td class="px-4 py-2 text-slate-300">가독성</td><td class="px-4 py-2 text-slate-400">단순 반복에 적합</td><td class="px-4 py-2 text-slate-400">분할 구조(트리)에 명료</td></tr>
+                <tr><td class="px-4 py-2 text-slate-300">위험</td><td class="px-4 py-2 text-rose-400">무한 루프</td><td class="px-4 py-2 text-rose-400">스택 오버플로</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div class="bg-amber-950/20 p-4 rounded-xl border border-amber-500/20">
+              <p class="text-amber-400 text-xs font-semibold mb-1">피보나치 재귀의 함정</p>
+              <p class="text-slate-400 text-[10px]"><code class="text-white">fib_rec(40)</code>은 같은 값을 수없이 다시 계산해 매우 느립니다. 반복 버전은 즉시 끝납니다.</p>
+            </div>
+            <div class="bg-cyan-950/30 p-4 rounded-xl border border-cyan-500/20">
+              <p class="text-cyan-300 text-xs font-semibold mb-1">핵심</p>
+              <p class="text-slate-400 text-[10px]">같은 문제를 <span class="text-white">두 방식 모두로</span> 풀 수 있어야 합니다. 실습에서 직접 비교합니다.</p>
+            </div>
+          </div>
+        </div>
+        <div class="flex justify-between items-center text-xs text-slate-500 border-t border-slate-800/80 pt-4">
+          <span>Loop vs Recursion</span><span>Session 4</span>
+        </div>
+      </div>
+
+      <!-- Slide 11: 실습 1 - 사칙연산 함수 -->
+      <div id="slide11" class="bg-slate-900 w-full max-w-5xl aspect-[16/9] rounded-3xl p-8 md:p-12 shadow-2xl border border-slate-800 flex flex-col justify-between hidden">
+        <div class="flex justify-between items-start">
+          <span class="text-cyan-400 font-bold tracking-wider text-sm uppercase">Slide 11 / Practice 1</span>
+          <span class="text-slate-500 text-sm">4차시: 함수와 재귀</span>
+        </div>
+        <div class="my-auto">
+          <h3 class="text-2xl md:text-3xl font-bold text-white mb-4 border-b border-slate-800 pb-3">실습 1 — 사칙연산 함수 <span class="text-amber-400 text-base">functions.c</span></h3>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <pre class="bg-slate-950 text-slate-200 p-4 rounded-xl text-[11px] leading-relaxed border border-slate-700"><code><span class="text-cyan-300">int</span> add(<span class="text-cyan-300">int</span> a, <span class="text-cyan-300">int</span> b);  <span class="text-slate-500">// 프로토타입</span>
+
+<span class="text-cyan-300">int</span> main(<span class="text-cyan-300">void</span>)
+{
+    <span class="text-cyan-300">int</span> a = 12, b = 4;
+    printf(<span class="text-emerald-300">"add: %d\n"</span>, add(a, b));
+    <span class="text-slate-500">/* sub, mul, divide ... */</span>
+    <span class="text-amber-300">return</span> (0);
+}
+
+<span class="text-cyan-300">int</span> add(<span class="text-cyan-300">int</span> a, <span class="text-cyan-300">int</span> b)
+{
+    <span class="text-amber-300">return</span> (a + b);
+}</code></pre>
+            </div>
+            <div class="space-y-3">
+              <div class="bg-slate-800/40 p-4 rounded-xl border border-slate-700">
+                <p class="text-amber-400 text-xs font-semibold mb-2">요구사항</p>
+                <ul class="space-y-1 text-[10px] text-slate-300">
+                  <li class="flex gap-2"><span class="text-emerald-400">✓</span><span><code class="text-cyan-300">add / sub / mul / divide</code> 4개</span></li>
+                  <li class="flex gap-2"><span class="text-emerald-400">✓</span><span>프로토타입은 main 위, 정의는 아래</span></li>
+                  <li class="flex gap-2"><span class="text-emerald-400">✓</span><span>0 나누기 방어 처리</span></li>
+                </ul>
+              </div>
+              <div class="bg-slate-950 p-3 rounded-xl border border-slate-700">
+                <pre class="text-emerald-300 text-[10px]"><code>add: 16
+sub: 8
+mul: 48
+divide: 3</code></pre>
+              </div>
+              <p class="text-slate-500 text-[10px]">제한 시간: 15분</p>
+            </div>
+          </div>
+        </div>
+        <div class="flex justify-between items-center text-xs text-slate-500 border-t border-slate-800/80 pt-4">
+          <span>Practice 1 — functions</span><span>Session 4</span>
+        </div>
+      </div>
+
+      <!-- Slide 12: 실습 2 - 팩토리얼 -->
+      <div id="slide12" class="bg-slate-900 w-full max-w-5xl aspect-[16/9] rounded-3xl p-8 md:p-12 shadow-2xl border border-slate-800 flex flex-col justify-between hidden">
+        <div class="flex justify-between items-start">
+          <span class="text-cyan-400 font-bold tracking-wider text-sm uppercase">Slide 12 / Practice 2</span>
+          <span class="text-slate-500 text-sm">4차시: 함수와 재귀</span>
+        </div>
+        <div class="my-auto">
+          <h3 class="text-2xl md:text-3xl font-bold text-white mb-4 border-b border-slate-800 pb-3">실습 2 — 팩토리얼 <span class="text-amber-400 text-base">factorial.c</span></h3>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <span class="text-slate-400 text-xs font-bold uppercase block mb-2">두 버전을 모두 구현</span>
+              <pre class="bg-slate-950 text-slate-200 p-4 rounded-xl text-[11px] leading-relaxed border border-slate-700"><code><span class="text-slate-500">/* 반복 */</span>
+<span class="text-cyan-300">int</span> fact_loop(<span class="text-cyan-300">int</span> n)
+{
+    <span class="text-cyan-300">int</span> result = 1;
+    <span class="text-amber-300">for</span> (<span class="text-cyan-300">int</span> i = 2; i &lt;= n; i++)
+        result *= i;
+    <span class="text-amber-300">return</span> (result);
+}
+
+<span class="text-slate-500">/* 재귀 */</span>
+<span class="text-cyan-300">int</span> fact_rec(<span class="text-cyan-300">int</span> n)
+{
+    <span class="text-amber-300">if</span> (n &lt;= 1)
+        <span class="text-amber-300">return</span> (1);
+    <span class="text-amber-300">return</span> (n * fact_rec(n - 1));
+}</code></pre>
+            </div>
+            <div class="space-y-3">
+              <div class="bg-slate-800/40 p-4 rounded-xl border border-slate-700">
+                <p class="text-amber-400 text-xs font-semibold mb-2">요구사항</p>
+                <p class="text-slate-300 text-[10px]">1~5에 대해 두 함수 결과가 같은지 출력</p>
+              </div>
+              <div class="bg-slate-950 p-3 rounded-xl border border-slate-700">
+                <pre class="text-emerald-300 text-[10px]"><code>n=1  loop=1   rec=1
+n=2  loop=2   rec=2
+n=3  loop=6   rec=6
+n=4  loop=24  rec=24
+n=5  loop=120 rec=120</code></pre>
+              </div>
+              <p class="text-slate-500 text-[10px]">제한 시간: 25분</p>
+            </div>
+          </div>
+        </div>
+        <div class="flex justify-between items-center text-xs text-slate-500 border-t border-slate-800/80 pt-4">
+          <span>Practice 2 — factorial</span><span>Session 4</span>
+        </div>
+      </div>
+
+      <!-- Slide 13: 실습 3 - 피보나치 -->
+      <div id="slide13" class="bg-slate-900 w-full max-w-5xl aspect-[16/9] rounded-3xl p-8 md:p-12 shadow-2xl border border-slate-800 flex flex-col justify-between hidden">
+        <div class="flex justify-between items-start">
+          <span class="text-cyan-400 font-bold tracking-wider text-sm uppercase">Slide 13 / Practice 3</span>
+          <span class="text-slate-500 text-sm">4차시: 함수와 재귀</span>
+        </div>
+        <div class="my-auto">
+          <h3 class="text-2xl md:text-3xl font-bold text-white mb-4 border-b border-slate-800 pb-3">실습 3 — 피보나치 <span class="text-amber-400 text-base">fibonacci.c</span></h3>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <p class="text-slate-400 text-[11px] mb-2"><code class="text-cyan-300">fib(0)=0, fib(1)=1, fib(n)=fib(n-1)+fib(n-2)</code></p>
+              <pre class="bg-slate-950 text-slate-200 p-4 rounded-xl text-[11px] leading-relaxed border border-slate-700"><code><span class="text-slate-500">/* 재귀 */</span>
+<span class="text-cyan-300">int</span> fib_rec(<span class="text-cyan-300">int</span> n)
+{
+    <span class="text-amber-300">if</span> (n &lt; 2)
+        <span class="text-amber-300">return</span> (n);
+    <span class="text-amber-300">return</span> (fib_rec(n - 1)
+          + fib_rec(n - 2));
+}</code></pre>
+            </div>
+            <div class="space-y-3">
+              <div class="bg-slate-800/40 p-4 rounded-xl border border-slate-700">
+                <p class="text-amber-400 text-xs font-semibold mb-2">요구사항</p>
+                <ul class="space-y-1 text-[10px] text-slate-300">
+                  <li class="flex gap-2"><span class="text-emerald-400">✓</span><span><code class="text-cyan-300">fib_loop</code>(반복) + <code class="text-cyan-300">fib_rec</code>(재귀)</span></li>
+                  <li class="flex gap-2"><span class="text-emerald-400">✓</span><span>0~10 출력</span></li>
+                </ul>
+              </div>
+              <div class="bg-rose-950/20 p-3 rounded-xl border border-rose-500/20">
+                <p class="text-rose-400 text-xs font-semibold mb-1">생각해보기</p>
+                <p class="text-slate-400 text-[10px]"><code class="text-white">fib_rec(40)</code>은 왜 느릴까? 같은 값을 몇 번 다시 계산하는지 추적해보세요.</p>
+              </div>
+              <p class="text-slate-500 text-[10px]">제한 시간: 25분</p>
+            </div>
+          </div>
+        </div>
+        <div class="flex justify-between items-center text-xs text-slate-500 border-t border-slate-800/80 pt-4">
+          <span>Practice 3 — fibonacci</span><span>Session 4</span>
+        </div>
+      </div>
+
+      <!-- Slide 14: 핵심 정리 -->
+      <div id="slide14" class="bg-slate-900 w-full max-w-5xl aspect-[16/9] rounded-3xl p-8 md:p-12 shadow-2xl border border-slate-800 flex flex-col justify-between hidden">
+        <div class="flex justify-between items-start">
+          <span class="text-cyan-400 font-bold tracking-wider text-sm uppercase">Slide 14 / Summary</span>
+          <span class="text-slate-500 text-sm">4차시: 함수와 재귀</span>
+        </div>
+        <div class="my-auto">
+          <h3 class="text-2xl md:text-3xl font-bold text-white mb-5 border-b border-slate-800 pb-3">4차시 핵심 정리</h3>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+            <div class="space-y-2.5">
+              <div class="flex gap-3 items-start p-3 bg-slate-800/30 rounded-xl">
+                <span class="bg-cyan-600 text-white text-sm font-black w-7 h-7 rounded-full flex items-center justify-center shrink-0">1</span>
+                <div><p class="text-white text-sm font-semibold">함수 = 반환타입 + 이름 + 매개변수 + 본문</p><p class="text-slate-400 text-xs mt-0.5">main도 함수다</p></div>
+              </div>
+              <div class="flex gap-3 items-start p-3 bg-slate-800/30 rounded-xl">
+                <span class="bg-cyan-600 text-white text-sm font-black w-7 h-7 rounded-full flex items-center justify-center shrink-0">2</span>
+                <div><p class="text-white text-sm font-semibold">main 아래 정의하면 프로토타입 선언</p><p class="text-slate-400 text-xs mt-0.5">없으면 implicit declaration 경고</p></div>
+              </div>
+              <div class="flex gap-3 items-start p-3 bg-slate-800/30 rounded-xl">
+                <span class="bg-cyan-600 text-white text-sm font-black w-7 h-7 rounded-full flex items-center justify-center shrink-0">3</span>
+                <div><p class="text-white text-sm font-semibold">인자는 값으로 복사 — 원본 안 바뀜</p><p class="text-slate-400 text-xs mt-0.5">원본 변경엔 포인터 필요 (5차시)</p></div>
+              </div>
+            </div>
+            <div class="space-y-2.5">
+              <div class="flex gap-3 items-start p-3 bg-slate-800/30 rounded-xl">
+                <span class="bg-amber-500 text-white text-sm font-black w-7 h-7 rounded-full flex items-center justify-center shrink-0">4</span>
+                <div><p class="text-white text-sm font-semibold">호출마다 스택 프레임이 쌓이고 반환 시 제거</p><p class="text-slate-400 text-xs mt-0.5">지역 변수는 함수가 사는 동안만</p></div>
+              </div>
+              <div class="flex gap-3 items-start p-3 bg-slate-800/30 rounded-xl">
+                <span class="bg-amber-500 text-white text-sm font-black w-7 h-7 rounded-full flex items-center justify-center shrink-0">5</span>
+                <div><p class="text-white text-sm font-semibold">재귀 = 종료 조건 + 재귀 호출</p><p class="text-slate-400 text-xs mt-0.5">종료 조건 없으면 스택 오버플로</p></div>
+              </div>
+              <div class="bg-cyan-950/30 p-3 rounded-xl border border-cyan-500/20">
+                <p class="text-cyan-300 text-xs font-semibold">다음 차시 예고</p>
+                <p class="text-slate-400 text-[10px] mt-1">5차시: 포인터 기초 — &amp;, *, swap 함수를 포인터로 구현</p>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="flex justify-between items-center text-xs text-slate-500 border-t border-slate-800/80 pt-4">
+          <span>Session 4 — Key Takeaways</span><span>Session 4</span>
+        </div>
+      </div>
+
+      <!-- Slide 15: 실습 과제 -->
+      <div id="slide15" class="bg-slate-900 w-full max-w-5xl aspect-[16/9] rounded-3xl p-8 md:p-12 shadow-2xl border border-slate-800 flex flex-col justify-between hidden">
+        <div class="flex justify-between items-start">
+          <span class="text-cyan-400 font-bold tracking-wider text-sm uppercase">Slide 15 / Practice</span>
+          <span class="text-slate-500 text-sm">4차시: 함수와 재귀</span>
+        </div>
+        <div class="my-auto">
+          <h3 class="text-2xl md:text-3xl font-bold text-white mb-4 border-b border-slate-800 pb-3">실습 과제</h3>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="space-y-3">
+              <div class="bg-slate-800/40 p-4 rounded-xl border border-slate-700">
+                <h4 class="font-bold text-amber-400 text-sm mb-3">4개 파일 작성</h4>
+                <ol class="space-y-2 text-xs text-slate-300">
+                  <li class="flex gap-2"><span class="text-emerald-400 font-bold shrink-0">①</span><span><code class="text-cyan-300">functions.c</code> — 4개 함수, 프로토타입 분리 <span class="text-slate-500"></span></span></li>
+                  <li class="flex gap-2"><span class="text-emerald-400 font-bold shrink-0">②</span><span><code class="text-cyan-300">factorial.c</code> — 반복 + 재귀, 결과 일치 <span class="text-slate-500"></span></span></li>
+                  <li class="flex gap-2"><span class="text-emerald-400 font-bold shrink-0">③</span><span><code class="text-cyan-300">fibonacci.c</code> — 반복 + 재귀, 0~10 <span class="text-slate-500"></span></span></li>
+                  <li class="flex gap-2"><span class="text-amber-400 font-bold shrink-0">★</span><span><code class="text-cyan-300">pass_by_value.c</code> — 값 전달 확인 <span class="text-slate-500">(심화)</span></span></li>
+                </ol>
+              </div>
+              <div class="bg-slate-800/40 p-3 rounded-xl border border-slate-700 text-[10px] text-slate-400">
+                모든 파일: <code class="text-amber-300">gcc -Wall -Wextra -Werror</code> 경고 없이 컴파일
+              </div>
+            </div>
+            <div class="space-y-3">
+              <div class="bg-rose-950/20 p-4 rounded-xl border border-rose-500/20">
+                <h4 class="font-bold text-rose-400 text-sm mb-2">자주 막히는 부분</h4>
+                <div class="space-y-1.5 text-[10px] text-slate-300">
+                  <div><p class="font-semibold text-slate-200">implicit declaration 경고?</p><p class="text-slate-400">프로토타입을 main 위에 선언</p></div>
+                  <div><p class="font-semibold text-slate-200">재귀가 크래시?</p><p class="text-slate-400">종료 조건(base case) 확인</p></div>
+                  <div><p class="font-semibold text-slate-200">함수에서 바꿨는데 원본 그대로?</p><p class="text-slate-400">정상! 값 전달은 복사다</p></div>
+                </div>
+              </div>
+              <div class="bg-cyan-950/30 p-3 rounded-xl border border-cyan-500/20 text-center">
+                <p class="text-cyan-300 text-sm font-bold">"값 전달을 이해하면 포인터가 보입니다"</p>
+                <p class="text-slate-400 text-[10px] mt-1">5차시부터 포인터로 들어갑니다</p>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="flex justify-between items-center text-xs text-slate-500 border-t border-slate-800/80 pt-4">
+          <span>Session 4 Practice</span><span>Session 4</span>
+        </div>
+      </div>
+
+      <!-- Slide 16: Q&A -->
+      <div id="slide16" class="bg-slate-900 w-full max-w-5xl aspect-[16/9] rounded-3xl p-8 md:p-12 shadow-2xl border border-slate-800 flex flex-col justify-between hidden">
+        <div class="flex justify-between items-start">
+          <span class="text-cyan-400 font-bold tracking-wider text-sm uppercase">Slide 16 / Q&amp;A</span>
+          <span class="text-slate-500 text-sm">4차시: 함수와 재귀</span>
+        </div>
+        <div class="my-auto text-center">
+          <div class="text-4xl mb-4 font-bold text-cyan-400">?</div>
+          <h3 class="text-3xl font-black text-white mb-4">Q&amp;A 및 실습 점검</h3>
+          <p class="text-slate-400 text-sm max-w-lg mx-auto mb-6">오늘 다룬 함수, 값 전달, 재귀에서 막히는 부분을 함께 해결합니다.</p>
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-4 max-w-2xl mx-auto">
+            <div class="bg-slate-800/50 px-4 py-3 rounded-xl border border-slate-700 text-xs text-slate-300">
+              <p class="font-bold text-slate-200 mb-1">프로토타입을 꼭 써야 하나요?</p>
+              <p class="text-[10px]">호출이 정의보다 위에 있으면 필수. 헤더 파일의 기초 (15차시)</p>
+            </div>
+            <div class="bg-slate-800/50 px-4 py-3 rounded-xl border border-slate-700 text-xs text-slate-300">
+              <p class="font-bold text-slate-200 mb-1">재귀가 멈추지 않아요</p>
+              <p class="text-[10px]">종료 조건에 도달하는지 확인. n이 줄어드는 방향인지 점검</p>
+            </div>
+            <div class="bg-slate-800/50 px-4 py-3 rounded-xl border border-slate-700 text-xs text-slate-300">
+              <p class="font-bold text-slate-200 mb-1">반복과 재귀 중 뭘 쓰나요?</p>
+              <p class="text-[10px]">효율은 반복, 분할 구조는 재귀. 둘 다 쓸 줄 알아야</p>
+            </div>
+          </div>
+          <div class="mt-6 inline-block bg-slate-800/50 px-6 py-3 rounded-full border border-slate-700 text-xs text-cyan-300 font-medium">
+            "함수를 나누는 감각이 라이브러리 설계의 시작입니다."
+          </div>
+        </div>
+        <div class="flex justify-between items-center text-xs text-slate-500 border-t border-slate-800/80 pt-4">
+          <span>Session 4 Completion</span><span>Session 4</span>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Bottom Nav -->
+    <div class="bg-slate-950 border-t border-slate-800 px-6 py-4 flex items-center justify-between">
+      <button id="prevBtn" onclick="prevSlide()" class="bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold px-4 py-2 rounded-lg transition-colors border border-slate-700">&larr; 이전 슬라이드</button>
+      <div class="hidden md:flex gap-1.5" id="dotsContainer"></div>
+      <button id="nextBtn" onclick="nextSlide()" class="bg-cyan-600 hover:bg-cyan-700 text-white text-xs font-semibold px-4 py-2 rounded-lg transition-colors">다음 슬라이드 &rarr;</button>
+    </div>
+
+    <script>
+      const totalSlides = 16;
+      let currentSlide = 1;
+
+      function updateSlideVisibility() {
+        for (let i = 1; i <= totalSlides; i++) {
+          const slide = document.getElementById("slide" + i);
+          if (i === currentSlide) slide.classList.remove("hidden");
+          else slide.classList.add("hidden");
+        }
+        document.getElementById("slideCounter").innerText = currentSlide + " / " + totalSlides;
+        updateDots();
+      }
+
+      function nextSlide() { if (currentSlide < totalSlides) { currentSlide++; updateSlideVisibility(); } }
+      function prevSlide() { if (currentSlide > 1) { currentSlide--; updateSlideVisibility(); } }
+      function jumpToSlide(index) { currentSlide = index; updateSlideVisibility(); }
+
+      function buildDots() {
+        const container = document.getElementById("dotsContainer");
+        container.innerHTML = "";
+        for (let i = 1; i <= totalSlides; i++) {
+          const dot = document.createElement("button");
+          dot.id = "dot" + i;
+          dot.onclick = () => jumpToSlide(i);
+          dot.className = "w-2 h-2 rounded-full transition-colors";
+          container.appendChild(dot);
+        }
+      }
+
+      function updateDots() {
+        for (let i = 1; i <= totalSlides; i++) {
+          const dot = document.getElementById("dot" + i);
+          if (!dot) continue;
+          dot.className = i === currentSlide
+            ? "w-2 h-2 rounded-full transition-colors bg-cyan-500"
+            : "w-2 h-2 rounded-full transition-colors bg-slate-700 hover:bg-slate-500";
+        }
+      }
+
+      document.addEventListener("keydown", function(e) {
+        if (e.key === "ArrowRight" || e.key === " ") nextSlide();
+        if (e.key === "ArrowLeft") prevSlide();
+      });
+
+      buildDots();
+      updateSlideVisibility();
+    </script>
+  </body>
+</html>

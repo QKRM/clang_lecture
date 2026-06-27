@@ -1,0 +1,113 @@
+<!--
+Quiz page for C Language Session 11 (메모리 함수 II).
+15 multiple-choice questions, instant feedback, final score. Cyan & Amber palette.
+NEITHER Mermaid JS NOR SVG were used anywhere in this output.
+-->
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>11차시 퀴즈: 메모리 함수 II</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+      @import url("https://fonts.googleapis.com/css2?family=Pretendard:wght@400;500;600;700;800;900&display=swap");
+      body { font-family: "Pretendard", sans-serif; background-color: #0f172a; color: #f8fafc; }
+      pre, code { font-family: 'Courier New', Courier, monospace; }
+    </style>
+  </head>
+  <body class="min-h-screen">
+    <div class="bg-slate-900 border-b border-slate-800 px-6 py-4 flex flex-wrap items-center justify-between gap-4 sticky top-0 z-50">
+      <div class="flex items-center gap-3">
+        <span class="bg-cyan-600 text-white text-xs font-bold px-2.5 py-1 rounded-full uppercase tracking-wider">Quiz 11</span>
+        <h1 class="text-sm md:text-base font-bold text-slate-200">11차시 퀴즈 — 메모리 함수 II</h1>
+      </div>
+      <div class="flex items-center gap-2 bg-slate-800 px-3 py-1.5 rounded-lg border border-slate-700">
+        <span class="text-xs text-slate-400">진행:</span>
+        <span id="progress" class="text-xs font-bold text-cyan-400">0 / 16</span>
+      </div>
+    </div>
+
+    <div class="max-w-3xl mx-auto p-4 md:p-8">
+      <div id="intro" class="bg-slate-900 rounded-3xl p-8 border border-slate-800 mb-6">
+        <h2 class="text-2xl font-black text-white mb-2">수업 마무리 퀴즈</h2>
+        <p class="text-slate-400 text-sm mb-4">스택 vs 힙, malloc/free, 새 문자열 만들기(calloc·substr·strjoin·itoa·strdup)을 점검합니다. 총 16문항. 답을 고르면 바로 정답·해설이 표시됩니다.</p>
+        <button onclick="startQuiz()" class="bg-cyan-600 hover:bg-cyan-700 text-white text-sm font-semibold px-5 py-2.5 rounded-lg transition-colors">퀴즈 시작</button>
+      </div>
+      <div id="quizArea" class="hidden space-y-4"></div>
+      <div id="result" class="hidden bg-slate-900 rounded-3xl p-8 border border-slate-800 text-center mt-6">
+        <h2 class="text-2xl font-black text-white mb-2">결과</h2>
+        <p id="scoreText" class="text-4xl font-black mb-3"></p>
+        <p id="scoreMsg" class="text-slate-400 text-sm mb-5"></p>
+        <button onclick="location.reload()" class="bg-slate-800 hover:bg-slate-700 text-slate-200 text-sm font-semibold px-5 py-2.5 rounded-lg border border-slate-700 transition-colors">다시 풀기</button>
+      </div>
+    </div>
+
+    <script>
+      const QUESTIONS = [
+        { q: "스택(stack) 변수의 특징은?", opts: ["실행 중 크기 자유", "함수가 끝나면 자동 소멸", "free로 해제", "항상 0으로 초기화"], answer: 1, why: "스택 변수는 크기가 컴파일 시점에 고정되고, 함수가 끝나면 자동으로 사라집니다." },
+        { q: "힙(heap) 메모리를 빌리는 함수는?", opts: ["printf", "malloc", "sizeof", "return"], answer: 1, why: "malloc으로 실행 중에 원하는 크기의 힙 메모리를 할당합니다." },
+        { q: "함수가 만든 문자열을 함수 밖으로 돌려주려면?", opts: ["지역 배열 return", "malloc으로 힙에 만들어 반환", "전역 변수만", "불가능"], answer: 1, why: "지역 배열은 함수가 끝나면 사라집니다. 힙(malloc)에 만들면 함수 밖에서도 유지됩니다." },
+        { q: "malloc이 할당한 메모리의 초기 상태는?", opts: ["0으로 초기화", "초기화 안 됨(쓰레기값)", "NULL", "1로 채움"], answer: 1, why: "malloc은 초기화하지 않습니다. 0이 필요하면 calloc 또는 직접 memset." },
+        { q: "malloc 직후 반드시 해야 하는 것은?", opts: ["free", "반환값이 NULL인지 검사", "memcpy", "재할당"], answer: 1, why: "할당 실패 시 NULL을 반환하므로, 사용 전에 NULL 검사를 합니다." },
+        { q: "문자열을 담을 메모리를 malloc할 때 크기는?", opts: ["길이", "길이 + 1", "길이 - 1", "길이 × 2"], answer: 1, why: "끝의 \\0 자리를 위해 길이 + 1바이트를 할당합니다." },
+        { q: "동적 메모리를 다 쓴 뒤 안 하면 누수가 생기는 것은?", opts: ["malloc", "free", "memset", "return"], answer: 1, why: "free로 반환하지 않으면 메모리 누수가 발생합니다." },
+        { q: "calloc이 malloc과 다른 핵심은?", opts: ["더 빠름", "0으로 초기화 + 오버플로 방어", "더 큼", "free 불필요"], answer: 1, why: "calloc은 할당한 메모리를 0으로 초기화하고, count*size 오버플로를 방어합니다." },
+        { q: "sbs_calloc의 곱셈 오버플로 검사 조건은?", opts: ["total > 0", "count != 0 && total / count != size", "size == 0", "count > size"], answer: 1, why: "total = count*size가 넘치면 total/count가 size와 달라집니다. 그러면 NULL." },
+        { q: 'sbs_substr("hello", 10, 5)의 결과는? (길이 5인데 start=10)', opts: ["NULL", '빈 문자열 ""', '"hello"', "크래시"], answer: 1, why: "start가 문자열 길이 이상이면 빈 문자열을 반환합니다." },
+        { q: "sbs_strjoin의 동작은?", opts: ["s1을 잘라냄", "s1+s2를 새 메모리에 연결", "s1을 수정", "비교"], answer: 1, why: "두 문자열을 이어붙인 결과를 새 메모리(malloc)에 만듭니다. 원본은 안 건드림." },
+        { q: "strjoin이 malloc하는 크기는?", opts: ["len(s1)", "len(s1) + len(s2) + 1", "len(s2)", "고정 100"], answer: 1, why: "두 길이의 합 + \\0 자리 1바이트." },
+        { q: "sbs_itoa에서 INT_MIN(-2147483648)을 처리하는 방법은?", opts: ["int로 -n", "long으로 받아 부호 뒤집기", "그냥 무시", "0 반환"], answer: 1, why: "-(-2147483648)은 int 범위를 넘으므로 long으로 받아야 안전합니다(14차시 atoi와 같은 함정)." },
+        { q: "substr/strjoin/itoa가 만든 메모리는 누가 free하나?", opts: ["함수 자신", "호출자", "운영체제", "free 불필요"], answer: 1, why: "함수가 malloc한 메모리는 받은 호출자가 다 쓴 뒤 free해야 합니다." },
+        { q: "sbs_strdup의 동작은?", opts: ["두 문자열을 합침", "문자열을 새 메모리에 그대로 복제", "문자열을 자름", "길이만 반환"], answer: 1, why: "strdup은 원본 문자열을 malloc한 새 메모리에 똑같이 복사해 돌려줍니다(원본과 독립)." },
+        { q: "11차시에서 허용되는 표준 헤더는?", opts: ["<string.h>", "<strings.h>", "<stdlib.h>(malloc/free)", "없음"], answer: 2, why: "동적 메모리에 malloc/free가 필요하므로 <stdlib.h> 허용. <string.h>는 금지." }
+      ];
+
+      let current = 0, score = 0;
+      function startQuiz() { document.getElementById("intro").classList.add("hidden"); document.getElementById("quizArea").classList.remove("hidden"); renderQuestion(); }
+      function renderQuestion() {
+        const area = document.getElementById("quizArea");
+        const item = QUESTIONS[current];
+        document.getElementById("progress").innerText = (current + 1) + " / " + QUESTIONS.length;
+        const card = document.createElement("div");
+        card.className = "bg-slate-900 rounded-3xl p-6 md:p-8 border border-slate-800";
+        let html = '<div class="flex items-start gap-3 mb-5"><span class="bg-cyan-600 text-white text-sm font-black w-7 h-7 rounded-full flex items-center justify-center shrink-0">' + (current + 1) + '</span><p class="text-white text-base font-semibold">' + item.q + '</p></div><div class="space-y-2">';
+        item.opts.forEach(function (opt, idx) { html += '<button data-idx="' + idx + '" class="optBtn w-full text-left bg-slate-800/50 hover:bg-slate-800 text-slate-200 text-sm px-4 py-3 rounded-xl border border-slate-700 transition-colors"><span class="text-cyan-400 font-bold mr-2">' + String.fromCharCode(65 + idx) + '</span>' + opt + '</button>'; });
+        html += '</div><div class="feedback hidden mt-4 p-4 rounded-xl text-sm"></div><div class="nextWrap hidden mt-4 text-right"><button onclick="nextQuestion()" class="bg-cyan-600 hover:bg-cyan-700 text-white text-sm font-semibold px-5 py-2.5 rounded-lg transition-colors">' + (current === QUESTIONS.length - 1 ? "결과 보기" : "다음 문제") + '</button></div>';
+        card.innerHTML = html;
+        area.appendChild(card);
+        card.querySelectorAll(".optBtn").forEach(function (btn) { btn.addEventListener("click", function () { selectAnswer(card, parseInt(btn.dataset.idx)); }); });
+        card.scrollIntoView({ behavior: "smooth", block: "start" });
+      }
+      function selectAnswer(card, idx) {
+        const item = QUESTIONS[current];
+        const btns = card.querySelectorAll(".optBtn");
+        btns.forEach(function (b) { b.disabled = true; b.classList.add("cursor-default"); });
+        const correct = item.answer;
+        if (idx === correct) score++;
+        btns[correct].className = "optBtn w-full text-left bg-emerald-600/20 text-emerald-200 text-sm px-4 py-3 rounded-xl border border-emerald-500/50";
+        if (idx !== correct) btns[idx].className = "optBtn w-full text-left bg-rose-600/20 text-rose-200 text-sm px-4 py-3 rounded-xl border border-rose-500/50";
+        const fb = card.querySelector(".feedback");
+        fb.classList.remove("hidden");
+        if (idx === correct) { fb.className = "feedback mt-4 p-4 rounded-xl text-sm bg-emerald-950/40 border border-emerald-500/30 text-emerald-200"; fb.innerHTML = "<span class='font-bold'>정답!</span> " + item.why; }
+        else { fb.className = "feedback mt-4 p-4 rounded-xl text-sm bg-rose-950/40 border border-rose-500/30 text-rose-200"; fb.innerHTML = "<span class='font-bold'>오답.</span> 정답: " + String.fromCharCode(65 + correct) + ". " + item.why; }
+        card.querySelector(".nextWrap").classList.remove("hidden");
+      }
+      function nextQuestion() { current++; if (current < QUESTIONS.length) renderQuestion(); else showResult(); }
+      function showResult() {
+        document.getElementById("quizArea").classList.add("hidden");
+        const res = document.getElementById("result"); res.classList.remove("hidden");
+        const pct = Math.round((score / QUESTIONS.length) * 100);
+        const st = document.getElementById("scoreText"); st.innerText = score + " / " + QUESTIONS.length;
+        st.className = "text-4xl font-black mb-3 " + (pct >= 70 ? "text-emerald-400" : pct >= 40 ? "text-amber-400" : "text-rose-400");
+        let msg;
+        if (pct === 100) msg = "완벽합니다! 메모리 II를 확실히 이해했네요.";
+        else if (pct >= 70) msg = "잘했어요. 틀린 문항의 해설을 다시 확인하세요.";
+        else if (pct >= 40) msg = "절반 정도입니다. 강의 노트를 복습하고 다시 도전하세요.";
+        else msg = "복습이 필요합니다. lecture.md를 다시 읽어보세요.";
+        document.getElementById("scoreMsg").innerText = msg;
+        res.scrollIntoView({ behavior: "smooth" });
+      }
+    </script>
+  </body>
+</html>

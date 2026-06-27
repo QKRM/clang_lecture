@@ -1,0 +1,112 @@
+<!--
+Quiz page for C Language Session 16 (libsbs 종합 프로젝트 + 코드 리뷰).
+15 multiple-choice questions, instant feedback, final score. Cyan & Amber palette.
+NEITHER Mermaid JS NOR SVG were used anywhere in this output.
+-->
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>16차시 퀴즈: libsbs 종합 프로젝트</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+      @import url("https://fonts.googleapis.com/css2?family=Pretendard:wght@400;500;600;700;800;900&display=swap");
+      body { font-family: "Pretendard", sans-serif; background-color: #0f172a; color: #f8fafc; }
+      pre, code { font-family: 'Courier New', Courier, monospace; }
+    </style>
+  </head>
+  <body class="min-h-screen">
+    <div class="bg-slate-900 border-b border-slate-800 px-6 py-4 flex flex-wrap items-center justify-between gap-4 sticky top-0 z-50">
+      <div class="flex items-center gap-3">
+        <span class="bg-amber-600 text-white text-xs font-bold px-2.5 py-1 rounded-full uppercase tracking-wider">Quiz 16 · Final</span>
+        <h1 class="text-sm md:text-base font-bold text-slate-200">16차시 퀴즈 — libsbs 종합 프로젝트</h1>
+      </div>
+      <div class="flex items-center gap-2 bg-slate-800 px-3 py-1.5 rounded-lg border border-slate-700">
+        <span class="text-xs text-slate-400">진행:</span>
+        <span id="progress" class="text-xs font-bold text-cyan-400">0 / 15</span>
+      </div>
+    </div>
+
+    <div class="max-w-3xl mx-auto p-4 md:p-8">
+      <div id="intro" class="bg-slate-900 rounded-3xl p-8 border border-slate-800 mb-6">
+        <h2 class="text-2xl font-black text-white mb-2">최종 마무리 퀴즈</h2>
+        <p class="text-slate-400 text-sm mb-4">통합, Makefile, 코드 리뷰, 전체 과정을 점검합니다. 총 15문항. 답을 고르면 바로 정답·해설이 표시됩니다.</p>
+        <button onclick="startQuiz()" class="bg-cyan-600 hover:bg-cyan-700 text-white text-sm font-semibold px-5 py-2.5 rounded-lg transition-colors">퀴즈 시작</button>
+      </div>
+      <div id="quizArea" class="hidden space-y-4"></div>
+      <div id="result" class="hidden bg-slate-900 rounded-3xl p-8 border border-slate-800 text-center mt-6">
+        <h2 class="text-2xl font-black text-white mb-2">결과</h2>
+        <p id="scoreText" class="text-4xl font-black mb-3"></p>
+        <p id="scoreMsg" class="text-slate-400 text-sm mb-5"></p>
+        <button onclick="location.reload()" class="bg-slate-800 hover:bg-slate-700 text-slate-200 text-sm font-semibold px-5 py-2.5 rounded-lg border border-slate-700 transition-colors">다시 풀기</button>
+      </div>
+    </div>
+
+    <script>
+      const QUESTIONS = [
+        { q: "libsbs에 통합되는 함수는 총 몇 개인가? (9~14차시)", opts: ["16개", "24개", "30개", "12개"], answer: 1, why: "문자 7 + 메모리 8 + 문자열 9 = 24개입니다." },
+        { q: "여러 .c를 다른 프로젝트에서 쓰려면 필요한 두 가지는?", opts: ["libsbs.a + libsbs.h", "Makefile만", "각 .c 파일 전부", "grade.sh"], answer: 0, why: "정적 라이브러리(libsbs.a)와 헤더(libsbs.h)만 있으면 링크해서 쓸 수 있습니다." },
+        { q: "통합 Makefile에서 24개 소스를 나열하는 변수는?", opts: ["OBJS", "SRCS", "NAME", "CFLAGS"], answer: 1, why: "SRCS에 모든 .c를 나열하고 OBJS = $(SRCS:.c=.o)로 변환합니다." },
+        { q: "libsbs.a에 24개 오브젝트가 들어있는지 확인하는 명령은?", opts: ["ls libsbs.a", "ar t libsbs.a", "make check", "cat"], answer: 1, why: "ar t libsbs.a로 아카이브 내부 목록을 확인합니다." },
+        { q: "코드 리뷰의 목적이 아닌 것은?", opts: ["버그를 미리 발견", "지식 공유", "코드 일관성", "동료를 비난"], answer: 3, why: "코드 리뷰는 코드를 개선하는 것이지 사람을 비난하는 게 아닙니다." },
+        { q: "좋은 리뷰 코멘트의 특징은?", opts: ["짧게 '버그'라고만", "질문형·구체적·존중", "지적만 나열", "익명으로"], answer: 1, why: "질문형으로, 구체적으로, 존중하며, 좋은 점도 언급하는 것이 좋은 리뷰입니다." },
+        { q: "리뷰 체크리스트의 '메모리 안전' 항목은?", opts: ["들여쓰기", "malloc 후 NULL 검사 / free", "함수 이름", "주석 분량"], answer: 1, why: "메모리 안전은 NULL 검사, free, 오버플로 방어, const 등을 봅니다." },
+        { q: "sbs_isalnum이 재사용하는 함수는?", opts: ["memset", "isalpha + isdigit", "strlen", "malloc"], answer: 1, why: "isalnum은 isalpha와 isdigit를 호출해 조합합니다." },
+        { q: "sbs_bzero가 재사용하는 함수는?", opts: ["strlen", "memset", "calloc", "memcpy"], answer: 1, why: "bzero는 memset(s, 0, n)을 호출하면 한 줄로 구현됩니다." },
+        { q: "sbs_strlcpy / strlcat / strdup이 공통으로 재사용하는 함수는?", opts: ["malloc", "sbs_strlen", "memcmp", "atoi"], answer: 1, why: "세 함수 모두 길이 계산에 sbs_strlen을 사용합니다." },
+        { q: "통합 테스트(test_all)가 성공하면 출력하는 것은?", opts: ["DONE", "ALL_OK", "PASS", "SUCCESS"], answer: 1, why: "24개 함수가 모두 정상이면 ALL_OK를 출력합니다." },
+        { q: "make로 빌드 시 경고가 하나라도 있으면?", opts: ["무시됨", "-Werror로 빌드 실패", "경고만 표시", "자동 수정"], answer: 1, why: "CFLAGS의 -Werror 때문에 경고가 에러로 처리되어 빌드가 실패합니다." },
+        { q: "리뷰에서 '매직 넘버'란?", opts: ["빠른 숫자", "의미 없이 박힌 숫자 상수", "마법 함수", "에러 코드"], answer: 1, why: "맥락 없이 코드에 박힌 숫자. 의미 있는 표현으로 바꾸면 가독성이 좋아집니다." },
+        { q: "libsbs 과정에서 배운 핵심이 아닌 것은?", opts: ["포인터와 메모리", "빌드 시스템(Makefile)", "표준 함수 구현", "웹 프론트엔드"], answer: 3, why: "libsbs는 C 표준 라이브러리 구현 과정입니다. 웹 프론트엔드는 다루지 않습니다." },
+        { q: "9~16차시 채점 스크립트의 공통 정답 기준은?", opts: ["강사 코드", "표준 라이브러리(또는 정의된 정답 동작)", "다른 학생", "랜덤"], answer: 1, why: "표준 함수(libc) 또는 테스트에 구현된 정답 동작(oracle)과 비교해 채점합니다." }
+      ];
+
+      let current = 0, score = 0;
+      function startQuiz() { document.getElementById("intro").classList.add("hidden"); document.getElementById("quizArea").classList.remove("hidden"); renderQuestion(); }
+      function renderQuestion() {
+        const area = document.getElementById("quizArea");
+        const item = QUESTIONS[current];
+        document.getElementById("progress").innerText = (current + 1) + " / " + QUESTIONS.length;
+        const card = document.createElement("div");
+        card.className = "bg-slate-900 rounded-3xl p-6 md:p-8 border border-slate-800";
+        let html = '<div class="flex items-start gap-3 mb-5"><span class="bg-cyan-600 text-white text-sm font-black w-7 h-7 rounded-full flex items-center justify-center shrink-0">' + (current + 1) + '</span><p class="text-white text-base font-semibold">' + item.q + '</p></div><div class="space-y-2">';
+        item.opts.forEach(function (opt, idx) { html += '<button data-idx="' + idx + '" class="optBtn w-full text-left bg-slate-800/50 hover:bg-slate-800 text-slate-200 text-sm px-4 py-3 rounded-xl border border-slate-700 transition-colors"><span class="text-cyan-400 font-bold mr-2">' + String.fromCharCode(65 + idx) + '</span>' + opt + '</button>'; });
+        html += '</div><div class="feedback hidden mt-4 p-4 rounded-xl text-sm"></div><div class="nextWrap hidden mt-4 text-right"><button onclick="nextQuestion()" class="bg-cyan-600 hover:bg-cyan-700 text-white text-sm font-semibold px-5 py-2.5 rounded-lg transition-colors">' + (current === QUESTIONS.length - 1 ? "결과 보기" : "다음 문제") + '</button></div>';
+        card.innerHTML = html;
+        area.appendChild(card);
+        card.querySelectorAll(".optBtn").forEach(function (btn) { btn.addEventListener("click", function () { selectAnswer(card, parseInt(btn.dataset.idx)); }); });
+        card.scrollIntoView({ behavior: "smooth", block: "start" });
+      }
+      function selectAnswer(card, idx) {
+        const item = QUESTIONS[current];
+        const btns = card.querySelectorAll(".optBtn");
+        btns.forEach(function (b) { b.disabled = true; b.classList.add("cursor-default"); });
+        const correct = item.answer;
+        if (idx === correct) score++;
+        btns[correct].className = "optBtn w-full text-left bg-emerald-600/20 text-emerald-200 text-sm px-4 py-3 rounded-xl border border-emerald-500/50";
+        if (idx !== correct) btns[idx].className = "optBtn w-full text-left bg-rose-600/20 text-rose-200 text-sm px-4 py-3 rounded-xl border border-rose-500/50";
+        const fb = card.querySelector(".feedback");
+        fb.classList.remove("hidden");
+        if (idx === correct) { fb.className = "feedback mt-4 p-4 rounded-xl text-sm bg-emerald-950/40 border border-emerald-500/30 text-emerald-200"; fb.innerHTML = "<span class='font-bold'>정답!</span> " + item.why; }
+        else { fb.className = "feedback mt-4 p-4 rounded-xl text-sm bg-rose-950/40 border border-rose-500/30 text-rose-200"; fb.innerHTML = "<span class='font-bold'>오답.</span> 정답: " + String.fromCharCode(65 + correct) + ". " + item.why; }
+        card.querySelector(".nextWrap").classList.remove("hidden");
+      }
+      function nextQuestion() { current++; if (current < QUESTIONS.length) renderQuestion(); else showResult(); }
+      function showResult() {
+        document.getElementById("quizArea").classList.add("hidden");
+        const res = document.getElementById("result"); res.classList.remove("hidden");
+        const pct = Math.round((score / QUESTIONS.length) * 100);
+        const st = document.getElementById("scoreText"); st.innerText = score + " / " + QUESTIONS.length;
+        st.className = "text-4xl font-black mb-3 " + (pct >= 70 ? "text-emerald-400" : pct >= 40 ? "text-amber-400" : "text-rose-400");
+        let msg;
+        if (pct === 100) msg = "완벽합니다! libsbs 과정을 완전히 소화했네요. 🎓";
+        else if (pct >= 70) msg = "잘했어요. 틀린 문항의 해설을 다시 확인하세요.";
+        else if (pct >= 40) msg = "절반 정도입니다. 강의 노트를 복습하고 다시 도전하세요.";
+        else msg = "복습이 필요합니다. lecture.md를 다시 읽어보세요.";
+        document.getElementById("scoreMsg").innerText = msg;
+        res.scrollIntoView({ behavior: "smooth" });
+      }
+    </script>
+  </body>
+</html>

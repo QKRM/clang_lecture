@@ -1,0 +1,112 @@
+<!--
+Quiz page for C Language Session 12 (문자열 함수 I).
+15 multiple-choice questions, instant feedback, final score. Cyan & Amber palette.
+NEITHER Mermaid JS NOR SVG were used anywhere in this output.
+-->
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>12차시 퀴즈: 문자열 함수 I</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+      @import url("https://fonts.googleapis.com/css2?family=Pretendard:wght@400;500;600;700;800;900&display=swap");
+      body { font-family: "Pretendard", sans-serif; background-color: #0f172a; color: #f8fafc; }
+      pre, code { font-family: 'Courier New', Courier, monospace; }
+    </style>
+  </head>
+  <body class="min-h-screen">
+    <div class="bg-slate-900 border-b border-slate-800 px-6 py-4 flex flex-wrap items-center justify-between gap-4 sticky top-0 z-50">
+      <div class="flex items-center gap-3">
+        <span class="bg-cyan-600 text-white text-xs font-bold px-2.5 py-1 rounded-full uppercase tracking-wider">Quiz 12</span>
+        <h1 class="text-sm md:text-base font-bold text-slate-200">12차시 퀴즈 — 문자열 함수 I</h1>
+      </div>
+      <div class="flex items-center gap-2 bg-slate-800 px-3 py-1.5 rounded-lg border border-slate-700">
+        <span class="text-xs text-slate-400">진행:</span>
+        <span id="progress" class="text-xs font-bold text-cyan-400">0 / 15</span>
+      </div>
+    </div>
+
+    <div class="max-w-3xl mx-auto p-4 md:p-8">
+      <div id="intro" class="bg-slate-900 rounded-3xl p-8 border border-slate-800 mb-6">
+        <h2 class="text-2xl font-black text-white mb-2">수업 마무리 퀴즈</h2>
+        <p class="text-slate-400 text-sm mb-4">strlen, 버퍼 오버플로우, strlcpy/strlcat을 점검합니다. 총 15문항. 답을 고르면 바로 정답·해설이 표시됩니다.</p>
+        <button onclick="startQuiz()" class="bg-cyan-600 hover:bg-cyan-700 text-white text-sm font-semibold px-5 py-2.5 rounded-lg transition-colors">퀴즈 시작</button>
+      </div>
+      <div id="quizArea" class="hidden space-y-4"></div>
+      <div id="result" class="hidden bg-slate-900 rounded-3xl p-8 border border-slate-800 text-center mt-6">
+        <h2 class="text-2xl font-black text-white mb-2">결과</h2>
+        <p id="scoreText" class="text-4xl font-black mb-3"></p>
+        <p id="scoreMsg" class="text-slate-400 text-sm mb-5"></p>
+        <button onclick="location.reload()" class="bg-slate-800 hover:bg-slate-700 text-slate-200 text-sm font-semibold px-5 py-2.5 rounded-lg border border-slate-700 transition-colors">다시 풀기</button>
+      </div>
+    </div>
+
+    <script>
+      const QUESTIONS = [
+        { q: "sbs_strlen이 세는 것은?", opts: ["\\0 포함 전체", "\\0 직전까지 글자 수", "버퍼 크기", "단어 수"], answer: 1, why: "strlen은 \\0(종결자)를 제외한 글자 수를 셉니다." },
+        { q: "sbs_strlen의 반환 타입은?", opts: ["int", "size_t", "char", "void"], answer: 1, why: "길이는 음수가 없으므로 size_t를 반환합니다." },
+        { q: "strcpy가 위험한 이유는?", opts: ["느려서", "dst 크기를 몰라 버퍼 오버플로우 위험", "메모리를 더 써서", "const 때문"], answer: 1, why: "strcpy는 dst 버퍼 크기를 모릅니다. src가 길면 버퍼를 넘어 덮어쓰는 보안 취약점." },
+        { q: "버퍼 오버플로우를 막기 위해 strlcpy/strlcat이 받는 추가 인자는?", opts: ["src 길이", "dstsize(버퍼 크기)", "정지 문자", "복사 횟수"], answer: 1, why: "dstsize를 받아 절대 버퍼를 넘지 않습니다." },
+        { q: "sbs_strlcpy의 반환값은?", opts: ["복사한 글자 수", "src의 전체 길이", "dstsize", "0"], answer: 1, why: "반환값은 src 전체 길이. dstsize보다 크면 잘렸다는 신호입니다." },
+        { q: "strlcpy에서 dstsize == 0이면?", opts: ["크래시", "아무것도 안 쓰고 srclen 반환", "0 반환", "dst를 0으로"], answer: 1, why: "쓸 공간이 없으므로 아무것도 쓰지 않고 src 길이만 반환합니다." },
+        { q: "strlcpy에서 복사 한계 조건으로 올바른 것은?", opts: ["i < dstsize", "i < dstsize - 1", "i <= dstsize", "i < srclen"], answer: 1, why: "마지막 \\0 자리를 남겨야 하므로 i < dstsize - 1까지 복사합니다." },
+        { q: "strlcpy가 복사 후 항상 하는 것은?", opts: ["free", "dst[i] = '\\0' 종결", "src 비우기", "재귀 호출"], answer: 1, why: "dstsize>0이면 항상 \\0로 종결해 안전한 문자열을 만듭니다." },
+        { q: "sbs_strlcat의 역할은?", opts: ["복사", "dst 뒤에 src 이어붙이기(안전)", "비교", "검색"], answer: 1, why: "strlcat은 dst의 기존 문자열 뒤에 src를 버퍼 안전하게 이어붙입니다." },
+        { q: "strlcat이 dst 길이를 측정할 때 제한하는 이유는?", opts: ["속도", "dstsize 안에 \\0이 없는 비정상 버퍼 방어", "메모리 절약", "문법"], answer: 1, why: "dst 길이를 dstsize 안에서만 측정해 \\0 없는 버퍼에서도 안전하게 동작합니다." },
+        { q: "strlcat에서 dst에 \\0이 dstsize 안에 없으면 반환값은?", opts: ["0", "dstsize + srclen", "srclen", "dstsize"], answer: 1, why: "비정상 상황으로 보고 dstsize + srclen을 반환합니다." },
+        { q: "strlcat의 정상 반환값은?", opts: ["srclen", "dstlen + srclen", "dstsize", "복사한 수"], answer: 1, why: "원래 만들려던 전체 길이 = 초기 dstlen + srclen." },
+        { q: "안전 함수들의 반환값을 dstsize와 비교해 알 수 있는 것은?", opts: ["메모리 누수", "잘림(truncation) 발생 여부", "속도", "정렬 상태"], answer: 1, why: "반환값 >= dstsize면 버퍼에 다 못 담겨 잘렸다는 뜻입니다." },
+        { q: "strlcpy/strlcat을 다른 함수에서 재사용하는 함수는?", opts: ["malloc", "sbs_strlen", "printf", "free"], answer: 1, why: "두 함수 모두 길이 계산에 sbs_strlen을 사용합니다." },
+        { q: "12차시 채점에서 strlcpy/strlcat의 정답 기준은?", opts: ["glibc 표준 함수", "테스트 안에 구현된 정답 동작(oracle)", "강사 코드", "랜덤"], answer: 1, why: "glibc에 strlcpy/strlcat이 없을 수 있어 테스트 안에 정답 동작을 구현해 비교합니다." }
+      ];
+
+      let current = 0, score = 0;
+      function startQuiz() { document.getElementById("intro").classList.add("hidden"); document.getElementById("quizArea").classList.remove("hidden"); renderQuestion(); }
+      function renderQuestion() {
+        const area = document.getElementById("quizArea");
+        const item = QUESTIONS[current];
+        document.getElementById("progress").innerText = (current + 1) + " / " + QUESTIONS.length;
+        const card = document.createElement("div");
+        card.className = "bg-slate-900 rounded-3xl p-6 md:p-8 border border-slate-800";
+        let html = '<div class="flex items-start gap-3 mb-5"><span class="bg-cyan-600 text-white text-sm font-black w-7 h-7 rounded-full flex items-center justify-center shrink-0">' + (current + 1) + '</span><p class="text-white text-base font-semibold">' + item.q + '</p></div><div class="space-y-2">';
+        item.opts.forEach(function (opt, idx) { html += '<button data-idx="' + idx + '" class="optBtn w-full text-left bg-slate-800/50 hover:bg-slate-800 text-slate-200 text-sm px-4 py-3 rounded-xl border border-slate-700 transition-colors"><span class="text-cyan-400 font-bold mr-2">' + String.fromCharCode(65 + idx) + '</span>' + opt + '</button>'; });
+        html += '</div><div class="feedback hidden mt-4 p-4 rounded-xl text-sm"></div><div class="nextWrap hidden mt-4 text-right"><button onclick="nextQuestion()" class="bg-cyan-600 hover:bg-cyan-700 text-white text-sm font-semibold px-5 py-2.5 rounded-lg transition-colors">' + (current === QUESTIONS.length - 1 ? "결과 보기" : "다음 문제") + '</button></div>';
+        card.innerHTML = html;
+        area.appendChild(card);
+        card.querySelectorAll(".optBtn").forEach(function (btn) { btn.addEventListener("click", function () { selectAnswer(card, parseInt(btn.dataset.idx)); }); });
+        card.scrollIntoView({ behavior: "smooth", block: "start" });
+      }
+      function selectAnswer(card, idx) {
+        const item = QUESTIONS[current];
+        const btns = card.querySelectorAll(".optBtn");
+        btns.forEach(function (b) { b.disabled = true; b.classList.add("cursor-default"); });
+        const correct = item.answer;
+        if (idx === correct) score++;
+        btns[correct].className = "optBtn w-full text-left bg-emerald-600/20 text-emerald-200 text-sm px-4 py-3 rounded-xl border border-emerald-500/50";
+        if (idx !== correct) btns[idx].className = "optBtn w-full text-left bg-rose-600/20 text-rose-200 text-sm px-4 py-3 rounded-xl border border-rose-500/50";
+        const fb = card.querySelector(".feedback");
+        fb.classList.remove("hidden");
+        if (idx === correct) { fb.className = "feedback mt-4 p-4 rounded-xl text-sm bg-emerald-950/40 border border-emerald-500/30 text-emerald-200"; fb.innerHTML = "<span class='font-bold'>정답!</span> " + item.why; }
+        else { fb.className = "feedback mt-4 p-4 rounded-xl text-sm bg-rose-950/40 border border-rose-500/30 text-rose-200"; fb.innerHTML = "<span class='font-bold'>오답.</span> 정답: " + String.fromCharCode(65 + correct) + ". " + item.why; }
+        card.querySelector(".nextWrap").classList.remove("hidden");
+      }
+      function nextQuestion() { current++; if (current < QUESTIONS.length) renderQuestion(); else showResult(); }
+      function showResult() {
+        document.getElementById("quizArea").classList.add("hidden");
+        const res = document.getElementById("result"); res.classList.remove("hidden");
+        const pct = Math.round((score / QUESTIONS.length) * 100);
+        const st = document.getElementById("scoreText"); st.innerText = score + " / " + QUESTIONS.length;
+        st.className = "text-4xl font-black mb-3 " + (pct >= 70 ? "text-emerald-400" : pct >= 40 ? "text-amber-400" : "text-rose-400");
+        let msg;
+        if (pct === 100) msg = "완벽합니다! 문자열 함수 I을 확실히 이해했네요.";
+        else if (pct >= 70) msg = "잘했어요. 틀린 문항의 해설을 다시 확인하세요.";
+        else if (pct >= 40) msg = "절반 정도입니다. 강의 노트를 복습하고 다시 도전하세요.";
+        else msg = "복습이 필요합니다. lecture.md를 다시 읽어보세요.";
+        document.getElementById("scoreMsg").innerText = msg;
+        res.scrollIntoView({ behavior: "smooth" });
+      }
+    </script>
+  </body>
+</html>

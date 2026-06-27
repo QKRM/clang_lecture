@@ -1,0 +1,11 @@
+#include "libsbs.h"
+
+size_t	sbs_strlen(const char *s)
+{
+	size_t	len;
+
+	len = 0;
+	while (s[len])
+		len++;
+	return (len);
+}

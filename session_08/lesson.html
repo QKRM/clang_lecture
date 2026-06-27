@@ -1,0 +1,529 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>8차시 · 구조체와 typedef — C언어 입문 강의</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/styles/atom-one-dark.min.css" />
+    <link rel="stylesheet" href="../lesson.css" />
+  </head>
+  <body>
+    <div id="readbar" class="readbar"></div>
+    <nav class="topnav">
+      <a class="back" href="../index.html">← 강의 목록</a>
+      <span class="crumb">C언어 입문 강의 · 8 / 16</span>
+    </nav>
+    <header class="lesson-hero">
+      <div class="lesson-hero-inner">
+        <span class="badge">C 기초 · 8차시</span>
+        <h1>구조체와 typedef</h1>
+      </div>
+    </header>
+    <main class="wrap">
+      <article class="md">
+<h2>학습 목표</h2>
+<ol><li>구조체(struct)를 선언하고 멤버에 접근할 수 있다.</li><li><code>.</code>(점)과 <code>-&gt;</code>(화살표) 연산자를 구분해 사용할 수 있다.</li><li>typedef로 타입 별칭을 정의할 수 있다.</li><li>구조체 배열과 구조체 포인터를 사용할 수 있다.</li><li>구조체를 함수에 전달할 수 있다.</li></ol>
+<hr />
+<h2>1부: 구조체란?</h2>
+<h3>1.1 서로 다른 데이터를 하나로 묶기</h3>
+<p>지금까지 변수는 값 하나만 담았습니다. 구조체는 <strong>여러 값을 하나의 묶음</strong>으로 만듭니다. 예: 학생 = 이름 + 나이 + 점수.</p>
+<pre><code class="language-c">struct student {
+    char name[20];
+    int  age;
+    int  score;
+};</code></pre>
+<p>이건 "설계도"입니다. 실제 변수를 만들어야 메모리를 차지합니다.</p>
+<pre><code class="language-c">struct student s1;          // 변수 선언
+struct student s2 = {"Kim", 20, 95};  // 선언 + 초기화</code></pre>
+<h3>1.2 왜 쓰나?</h3>
+<p>관련된 데이터를 한 덩어리로 다루면 코드가 명확해집니다. 학생 100명을 <code>name[100]</code>, <code>age[100]</code>, <code>score[100]</code> 세 배열로 관리하는 것보다 <code>struct student arr[100]</code> 하나가 깔끔합니다.</p>
+<hr />
+<h2>2부: 멤버 접근 — <code>.</code> 연산자</h2>
+<h3>2.1 점으로 멤버에 접근</h3>
+<p>구조체 변수의 멤버는 <code>.</code>(점)으로 읽고 씁니다.</p>
+<pre><code class="language-c">struct student s1;
+
+s1.age = 20;              // 쓰기
+s1.score = 95;
+printf("%d\n", s1.age);   // 읽기 → 20</code></pre>
+<p>문자열 멤버는 배열이므로 대입이 아니라 복사해야 합니다(7차시).</p>
+<pre><code class="language-c">// s1.name = "Kim";   // 에러! 배열은 통째 대입 불가
+strcpy(s1.name, "Kim");  // 복사로 채움</code></pre>
+<h3>2.2 초기화</h3>
+<pre><code class="language-c">struct student s = {"Lee", 21, 88};
+// name="Lee", age=21, score=88 순서대로</code></pre>
+<hr />
+<h2>3부: typedef — 타입에 별칭</h2>
+<h3>3.1 struct를 매번 쓰기 번거롭다</h3>
+<p><code>struct student</code>를 매번 쓰는 대신, <code>typedef</code>로 짧은 별칭을 답니다.</p>
+<pre><code class="language-c">typedef struct student {
+    char name[20];
+    int  age;
+    int  score;
+} t_student;
+
+// 이제 struct 없이 t_student로 쓴다
+t_student s1;
+t_student s2 = {"Park", 22, 77};</code></pre>
+<table><thead><tr><th>표현</th><th>의미</th></tr></thead><tbody><tr><td><code>struct student s;</code></td><td>typedef 없이</td></tr><tr><td><code>t_student s;</code></td><td>typedef로 짧게</td></tr></tbody></table>
+<blockquote>libsbs 코드 규칙에서는 타입 별칭에 <code>t_</code> 접두사를 자주 씁니다 (<code>t_student</code>, <code>t_point</code>). 일관성을 위한 관례입니다.</blockquote>
+<h3>3.2 익명 구조체 + typedef</h3>
+<p>이름을 생략하고 별칭만 둘 수도 있습니다.</p>
+<pre><code class="language-c">typedef struct {
+    int x;
+    int y;
+} t_point;
+
+t_point p = {3, 4};</code></pre>
+<hr />
+<h2>4부: 구조체 포인터 — <code>-&gt;</code> 연산자</h2>
+<h3>4.1 포인터로 멤버 접근</h3>
+<p>구조체 포인터에서는 <code>.</code> 대신 <code>-&gt;</code>(화살표)로 멤버에 접근합니다.</p>
+<pre><code class="language-c">t_student s = {"Kim", 20, 95};
+t_student *p = &amp;s;
+
+printf("%d\n", (*p).age);   // 방법 1: 역참조 후 점
+printf("%d\n", p-&gt;age);     // 방법 2: 화살표 (같은 뜻, 더 간결)</code></pre>
+<p><code>p-&gt;age</code>는 <code>(*p).age</code>의 줄임말입니다. 거의 항상 <code>-&gt;</code>를 씁니다.</p>
+<table><thead><tr><th>상황</th><th>연산자</th></tr></thead><tbody><tr><td>구조체 변수</td><td><code>s.age</code></td></tr><tr><td>구조체 포인터</td><td><code>p-&gt;age</code></td></tr></tbody></table>
+<h3>4.2 왜 포인터를 쓰나?</h3>
+<p>구조체가 크면 함수에 통째로 복사하는 것은 비쌉니다. 포인터(주소)를 넘기면 복사 없이 원본에 접근합니다(5~6차시 원리).</p>
+<pre><code class="language-c">void grow_up(t_student *p)
+{
+    p-&gt;age++;       // 원본의 age가 증가
+}</code></pre>
+<hr />
+<h2>5부: 구조체 배열과 함수 전달</h2>
+<h3>5.1 구조체 배열</h3>
+<pre><code class="language-c">t_student class[3] = {
+    {"Kim", 20, 95},
+    {"Lee", 21, 88},
+    {"Park", 22, 77}
+};
+
+for (int i = 0; i &lt; 3; i++)
+    printf("%s %d\n", class[i].name, class[i].score);</code></pre>
+<p><code>class[i]</code>는 구조체 변수이므로 <code>.</code>로 접근합니다.</p>
+<h3>5.2 값 전달 vs 포인터 전달</h3>
+<pre><code class="language-c">void print_student(t_student s)    // 값 — 복사본 (원본 못 바꿈)
+{
+    printf("%s\n", s.name);
+}
+
+void update_score(t_student *p, int new_score)  // 포인터 — 원본 수정
+{
+    p-&gt;score = new_score;
+}</code></pre>
+<p>읽기만 하면 값(또는 <code>const</code> 포인터), 바꾸려면 포인터로 넘깁니다.</p>
+<hr />
+<h2>핵심 정리</h2>
+<ol><li>구조체 = 서로 다른 데이터를 하나로 묶는 설계도</li><li>구조체 변수 멤버는 <code>.</code>(점)으로 접근</li><li><code>typedef</code>로 별칭을 달아 <code>struct</code> 생략 (<code>t_student</code>)</li><li>구조체 포인터는 <code>-&gt;</code>(화살표)로 접근 — <code>p-&gt;age</code> = <code>(*p).age</code></li><li>큰 구조체나 수정이 필요하면 포인터로 전달</li><li>문자열 멤버는 대입이 아니라 복사(strcpy)로 채운다</li></ol>
+<hr />
+<h2>다음 차시 예고</h2>
+<p>9차시부터 본격적인 libsbs 구현이 시작됩니다. 첫 주제는 문자 분류 함수(<code>sbs_isalpha</code>, <code>sbs_isdigit</code>, <code>sbs_toupper</code> 등)입니다. 7차시에서 본 "문자는 ASCII 정수"와 범위 판별이 그대로 함수가 됩니다. 지금까지 배운 포인터·문자열·함수가 모두 모입니다.</p>
+<div class="section-split"><h2>실습</h2><p>아래 문제를 직접 풀어본 뒤, 맨 아래 정답 코드로 확인하세요.</p></div>
+<h2>실습 목표</h2>
+<ul><li>구조체를 선언하고 <code>.</code>/<code>-&gt;</code>로 멤버에 접근한다.</li><li>typedef로 별칭을 만들어 사용한다.</li><li>구조체 배열과 포인터로 데이터를 관리한다.</li></ul>
+<blockquote>이번 차시는 실습 분량이 평소의 2배입니다. 기본 과제(1~6)를 먼저 끝내고, 시간이 남으면 심화(7~8)로 갑니다.</blockquote>
+<hr />
+<h2>과제 1: 점(Point) 구조체</h2>
+<p><code>point.c</code> 파일을 만들고 2D 좌표 구조체를 정의해 사용하세요.</p>
+<p>요구사항:</p>
+<ul><li><code>typedef struct { int x; int y; } t_point;</code></li><li><code>main</code>에서 <code>t_point p = {3, 4};</code>를 만들고 멤버 출력</li></ul>
+<p>출력 예시:</p>
+<pre><code class="nohighlight">p = (3, 4)</code></pre>
+<p>힌트:</p>
+<pre><code class="language-c">typedef struct {
+    int x;
+    int y;
+} t_point;
+
+t_point p = {3, 4};
+printf("p = (%d, %d)\n", p.x, p.y);</code></pre>
+<hr />
+<h2>과제 2: 학생 구조체</h2>
+<p><code>student.c</code> 파일을 만들고 학생 정보 구조체를 정의하세요.</p>
+<p>요구사항:</p>
+<ul><li><code>t_student</code> (이름 <code>char name[20]</code>, 나이 <code>int age</code>, 점수 <code>int score</code>)</li><li><code>main</code>에서 한 명을 초기화하고 출력</li><li>이름은 <code>strcpy</code>로 채워볼 것</li></ul>
+<p>출력 예시:</p>
+<pre><code class="nohighlight">이름: Kim, 나이: 20, 점수: 95</code></pre>
+<p>힌트:</p>
+<pre><code class="language-c">#include &lt;string.h&gt;
+
+typedef struct {
+    char name[20];
+    int  age;
+    int  score;
+} t_student;
+
+t_student s = {"Kim", 20, 95};
+printf("이름: %s, 나이: %d, 점수: %d\n", s.name, s.age, s.score);</code></pre>
+<hr />
+<h2>과제 3: 구조체 포인터 (-&gt; 연산자)</h2>
+<p><code>student_ptr.c</code> 파일을 만들고 포인터로 멤버에 접근하세요.</p>
+<p>요구사항:</p>
+<ul><li><code>t_student s</code>를 만들고 <code>t_student *p = &amp;s;</code></li><li><code>p-&gt;name</code>, <code>p-&gt;age</code>, <code>p-&gt;score</code>로 출력</li><li><code>(*p).age</code>와 <code>p-&gt;age</code>가 같음을 주석으로 표시</li><li><code>p-&gt;age++;</code>로 나이를 올려 원본 <code>s</code>가 바뀌는지 확인</li></ul>
+<p>출력 예시:</p>
+<pre><code class="nohighlight">p-&gt;age = 20
+나이 +1 후 s.age = 21</code></pre>
+<p>힌트:</p>
+<pre><code class="language-c">t_student *p = &amp;s;
+printf("%d\n", p-&gt;age);   // (*p).age 와 같음
+p-&gt;age++;                  // 원본 s.age가 증가</code></pre>
+<hr />
+<h2>과제 4: 구조체를 함수에 전달</h2>
+<p><code>student_func.c</code> 파일을 만들고 구조체를 값/포인터로 함수에 넘기세요.</p>
+<p>요구사항:</p>
+<ul><li><code>void print_student(t_student s)</code> — 값으로 받아 출력 (읽기)</li><li><code>void set_score(t_student *p, int score)</code> — 포인터로 받아 점수 수정</li><li><code>main</code>에서 호출 후 점수가 바뀌었는지 확인</li></ul>
+<p>출력 예시:</p>
+<pre><code class="nohighlight">변경 전: Kim 90
+변경 후: Kim 100</code></pre>
+<p>힌트:</p>
+<pre><code class="language-c">void set_score(t_student *p, int score)
+{
+    p-&gt;score = score;   // 원본 수정
+}</code></pre>
+<blockquote>읽기만 하면 값 전달, 바꾸려면 포인터 전달. 5~6차시 원리가 구조체에도 그대로.</blockquote>
+<hr />
+<h2>과제 5: 구조체 배열</h2>
+<p><code>class_list.c</code> 파일을 만들고 여러 학생을 배열로 관리하세요.</p>
+<p>요구사항:</p>
+<ul><li><code>t_student class[3]</code>을 3명으로 초기화</li><li>반복문으로 전체 명단 출력</li></ul>
+<p>출력 예시:</p>
+<pre><code class="nohighlight">[0] Kim  20  95
+[1] Lee  21  88
+[2] Park 22  77</code></pre>
+<p>힌트:</p>
+<pre><code class="language-c">t_student class[3] = {
+    {"Kim", 20, 95},
+    {"Lee", 21, 88},
+    {"Park", 22, 77}
+};
+for (int i = 0; i &lt; 3; i++)
+    printf("[%d] %s %d %d\n", i, class[i].name, class[i].age, class[i].score);</code></pre>
+<hr />
+<h2>과제 6: 사각형 넓이</h2>
+<p><code>rectangle.c</code> 파일을 만들고 사각형 구조체로 넓이와 둘레를 구하세요.</p>
+<p>요구사항:</p>
+<ul><li><code>t_rect</code> (<code>int width; int height;</code>)</li><li><code>int area(t_rect r)</code> — 넓이</li><li><code>int perimeter(t_rect r)</code> — 둘레</li><li><code>main</code>에서 사각형 하나로 두 함수 호출</li></ul>
+<p>출력 예시:</p>
+<pre><code class="nohighlight">사각형 5x3 → 넓이=15, 둘레=16</code></pre>
+<p>힌트:</p>
+<pre><code class="language-c">int area(t_rect r)
+{
+    return (r.width * r.height);
+}
+int perimeter(t_rect r)
+{
+    return (2 * (r.width + r.height));
+}</code></pre>
+<hr />
+<h2>과제 7: 최고 점수 학생 찾기 (심화, 20분)</h2>
+<p><code>top_student.c</code> 파일을 만들고 학생 배열에서 점수가 가장 높은 학생을 찾으세요.</p>
+<p>요구사항:</p>
+<ul><li><code>t_student *find_top(t_student *arr, int size)</code> — 최고 점수 학생의 <strong>주소</strong> 반환</li><li><code>main</code>에서 배열을 만들고 결과 학생 출력</li><li>반환된 포인터로 <code>-&gt;</code>를 써서 출력</li></ul>
+<p>출력 예시:</p>
+<pre><code class="nohighlight">최고 점수: Kim (95점)</code></pre>
+<p>힌트:</p>
+<pre><code class="language-c">t_student *find_top(t_student *arr, int size)
+{
+    t_student *top = &amp;arr[0];
+    for (int i = 1; i &lt; size; i++)
+        if (arr[i].score &gt; top-&gt;score)
+            top = &amp;arr[i];
+    return (top);
+}</code></pre>
+<blockquote>6차시 max_array를 구조체 버전으로. 값이 아니라 <strong>주소</strong>를 비교·반환하는 점에 주목.</blockquote>
+<hr />
+<h2>과제 8: 두 점 사이 거리² (심화, 20분)</h2>
+<p><code>distance.c</code> 파일을 만들고 두 점 구조체 사이의 거리 제곱을 구하세요.</p>
+<p>요구사항:</p>
+<ul><li><code>t_point</code> 두 개를 함수에 전달</li><li><code>int dist_squared(t_point a, t_point b)</code> — <code>(x2-x1)² + (y2-y1)²</code> 반환</li><li>(제곱근은 안 함 — 정수로 거리² 만)</li></ul>
+<p>출력 예시:</p>
+<pre><code class="nohighlight">(0,0) ~ (3,4) 거리² = 25
+(1,1) ~ (4,5) 거리² = 25</code></pre>
+<p>힌트:</p>
+<pre><code class="language-c">int dist_squared(t_point a, t_point b)
+{
+    int dx = b.x - a.x;
+    int dy = b.y - a.y;
+    return (dx * dx + dy * dy);
+}</code></pre>
+<p>생각해보기: 구조체를 값으로 넘기면 멤버가 모두 복사됩니다. 점은 작아서 괜찮지만, 멤버가 많은 큰 구조체라면 포인터가 유리합니다.</p>
+<hr />
+<h2>제출 확인 사항</h2>
+<p>기본 (6과제):</p>
+<ul><li>[ ] <code>point.c</code> - 점 구조체 + typedef</li><li>[ ] <code>student.c</code> - 학생 구조체, strcpy로 이름</li><li>[ ] <code>student_ptr.c</code> - <code>-&gt;</code> 연산자, 원본 수정</li><li>[ ] <code>student_func.c</code> - 값/포인터 전달</li><li>[ ] <code>class_list.c</code> - 구조체 배열 순회</li><li>[ ] <code>rectangle.c</code> - 넓이/둘레 함수</li></ul>
+<p>심화 (2과제):</p>
+<ul><li>[ ] <code>top_student.c</code> - 최고 점수 학생 주소 반환</li><li>[ ] <code>distance.c</code> - 두 점 거리²</li></ul>
+<ul><li>[ ] 모든 파일: <code>gcc -Wall -Wextra -Werror</code> 경고 없이 컴파일</li><li>[ ] 구조체 정의 끝에 <code>};</code> 세미콜론을 붙였는가?</li></ul>
+<div class="section-split"><h2>정답 코드</h2><p>각 항목의 "정답 보기"를 눌러 펼치세요. 먼저 직접 풀어본 뒤 확인하는 것을 권장합니다.</p></div>
+<div class="answer"><div class="answer-head"><span class="answer-name">📄 <span class="file">class_list.c</span></span><button class="answer-toggle">정답 보기</button></div><div class="answer-body"><pre><code class="language-c">#include &lt;stdio.h&gt;
+
+typedef struct s_student
+{
+	char	name[20];
+	int		age;
+	int		score;
+}	t_student;
+
+int	main(void)
+{
+	t_student	class[3] = {
+		{"Kim", 20, 95},
+		{"Lee", 21, 88},
+		{"Park", 22, 77}
+	};
+	int			i;
+
+	i = 0;
+	while (i &lt; 3)
+	{
+		printf("[%d] %-4s %d %d\n", i, class[i].name,
+			class[i].age, class[i].score);
+		i++;
+	}
+	return (0);
+}</code></pre></div></div>
+<div class="answer"><div class="answer-head"><span class="answer-name">📄 <span class="file">distance.c</span></span><button class="answer-toggle">정답 보기</button></div><div class="answer-body"><pre><code class="language-c">#include &lt;stdio.h&gt;
+
+typedef struct s_point
+{
+	int	x;
+	int	y;
+}	t_point;
+
+int	dist_squared(t_point a, t_point b);
+
+int	main(void)
+{
+	t_point	o;
+	t_point	p;
+	t_point	q;
+	t_point	r;
+
+	o.x = 0;
+	o.y = 0;
+	p.x = 3;
+	p.y = 4;
+	q.x = 1;
+	q.y = 1;
+	r.x = 4;
+	r.y = 5;
+	printf("(0,0) ~ (3,4) 거리² = %d\n", dist_squared(o, p));
+	printf("(1,1) ~ (4,5) 거리² = %d\n", dist_squared(q, r));
+	return (0);
+}
+
+int	dist_squared(t_point a, t_point b)
+{
+	int	dx;
+	int	dy;
+
+	dx = b.x - a.x;
+	dy = b.y - a.y;
+	return (dx * dx + dy * dy);
+}</code></pre></div></div>
+<div class="answer"><div class="answer-head"><span class="answer-name">📄 <span class="file">point.c</span></span><button class="answer-toggle">정답 보기</button></div><div class="answer-body"><pre><code class="language-c">#include &lt;stdio.h&gt;
+
+typedef struct s_point
+{
+	int	x;
+	int	y;
+}	t_point;
+
+int	main(void)
+{
+	t_point	p;
+
+	p.x = 3;
+	p.y = 4;
+	printf("p = (%d, %d)\n", p.x, p.y);
+	return (0);
+}</code></pre></div></div>
+<div class="answer"><div class="answer-head"><span class="answer-name">📄 <span class="file">rectangle.c</span></span><button class="answer-toggle">정답 보기</button></div><div class="answer-body"><pre><code class="language-c">#include &lt;stdio.h&gt;
+
+typedef struct s_rect
+{
+	int	width;
+	int	height;
+}	t_rect;
+
+int	area(t_rect r);
+int	perimeter(t_rect r);
+
+int	main(void)
+{
+	t_rect	r;
+
+	r.width = 5;
+	r.height = 3;
+	printf("사각형 %dx%d → 넓이=%d, 둘레=%d\n",
+		r.width, r.height, area(r), perimeter(r));
+	return (0);
+}
+
+int	area(t_rect r)
+{
+	return (r.width * r.height);
+}
+
+int	perimeter(t_rect r)
+{
+	return (2 * (r.width + r.height));
+}</code></pre></div></div>
+<div class="answer"><div class="answer-head"><span class="answer-name">📄 <span class="file">student_func.c</span></span><button class="answer-toggle">정답 보기</button></div><div class="answer-body"><pre><code class="language-c">#include &lt;stdio.h&gt;
+#include &lt;string.h&gt;
+
+typedef struct s_student
+{
+	char	name[20];
+	int		age;
+	int		score;
+}	t_student;
+
+void	print_student(t_student s);
+void	set_score(t_student *p, int score);
+
+int	main(void)
+{
+	t_student	s;
+
+	strcpy(s.name, "Kim");
+	s.age = 20;
+	s.score = 90;
+	printf("변경 전: ");
+	print_student(s);
+	set_score(&amp;s, 100);
+	printf("변경 후: ");
+	print_student(s);
+	return (0);
+}
+
+void	print_student(t_student s)
+{
+	printf("%s %d\n", s.name, s.score);
+}
+
+void	set_score(t_student *p, int score)
+{
+	p-&gt;score = score;
+}</code></pre></div></div>
+<div class="answer"><div class="answer-head"><span class="answer-name">📄 <span class="file">student_ptr.c</span></span><button class="answer-toggle">정답 보기</button></div><div class="answer-body"><pre><code class="language-c">#include &lt;stdio.h&gt;
+#include &lt;string.h&gt;
+
+typedef struct s_student
+{
+	char	name[20];
+	int		age;
+	int		score;
+}	t_student;
+
+int	main(void)
+{
+	t_student	s;
+	t_student	*p;
+
+	strcpy(s.name, "Kim");
+	s.age = 20;
+	s.score = 95;
+	p = &amp;s;
+	printf("p-&gt;age = %d\n", p-&gt;age);
+	p-&gt;age++;
+	printf("나이 +1 후 s.age = %d\n", s.age);
+	return (0);
+}</code></pre></div></div>
+<div class="answer"><div class="answer-head"><span class="answer-name">📄 <span class="file">student.c</span></span><button class="answer-toggle">정답 보기</button></div><div class="answer-body"><pre><code class="language-c">#include &lt;stdio.h&gt;
+#include &lt;string.h&gt;
+
+typedef struct s_student
+{
+	char	name[20];
+	int		age;
+	int		score;
+}	t_student;
+
+int	main(void)
+{
+	t_student	s;
+
+	strcpy(s.name, "Kim");
+	s.age = 20;
+	s.score = 95;
+	printf("이름: %s, 나이: %d, 점수: %d\n", s.name, s.age, s.score);
+	return (0);
+}</code></pre></div></div>
+<div class="answer"><div class="answer-head"><span class="answer-name">📄 <span class="file">top_student.c</span></span><button class="answer-toggle">정답 보기</button></div><div class="answer-body"><pre><code class="language-c">#include &lt;stdio.h&gt;
+
+typedef struct s_student
+{
+	char	name[20];
+	int		age;
+	int		score;
+}	t_student;
+
+t_student	*find_top(t_student *arr, int size);
+
+int	main(void)
+{
+	t_student	class[3] = {
+		{"Kim", 20, 95},
+		{"Lee", 21, 88},
+		{"Park", 22, 77}
+	};
+	t_student	*top;
+
+	top = find_top(class, 3);
+	printf("최고 점수: %s (%d점)\n", top-&gt;name, top-&gt;score);
+	return (0);
+}
+
+t_student	*find_top(t_student *arr, int size)
+{
+	t_student	*top;
+	int			i;
+
+	top = &amp;arr[0];
+	i = 1;
+	while (i &lt; size)
+	{
+		if (arr[i].score &gt; top-&gt;score)
+			top = &amp;arr[i];
+		i++;
+	}
+	return (top);
+}</code></pre></div></div>
+
+      </article>
+    </main>
+    <button id="toTop" class="to-top" aria-label="맨 위로">↑</button>
+    <script>
+      document.querySelectorAll(".answer-head").forEach(function (h) {
+        h.addEventListener("click", function () {
+          var card = h.parentElement;
+          card.classList.toggle("open");
+          h.querySelector(".answer-toggle").textContent =
+            card.classList.contains("open") ? "정답 숨기기" : "정답 보기";
+        });
+      });
+      var bar = document.getElementById("readbar");
+      var toTopBtn = document.getElementById("toTop");
+      function onScroll() {
+        var y = window.scrollY || document.documentElement.scrollTop;
+        var dh = document.documentElement.scrollHeight - window.innerHeight;
+        var r = dh > 0 ? y / dh : 0;
+        bar.style.width = (Math.min(1, Math.max(0, r)) * 100) + "%";
+        toTopBtn.classList.toggle("show", y > 400);
+      }
+      window.addEventListener("scroll", onScroll, { passive: true });
+      toTopBtn.addEventListener("click", function () { window.scrollTo({ top: 0, behavior: "smooth" }); });
+      onScroll();
+    </script>
+    <script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/highlight.min.js"></script>
+    <script>
+      if (window.hljs) {
+        document.querySelectorAll("pre code:not(.nohighlight)").forEach(function (el) { hljs.highlightElement(el); });
+      }
+    </script>
+  </body>
+</html>

@@ -1,0 +1,428 @@
+<!--
+Palette: Cyan & Amber (same as C_01..C_11 — consistent course design)
+Plan Summary: 16-slide interactive presentation for C Language Session 12.
+Covers strlen, buffer overflow danger, and buffer-safe strlcpy/strlcat with their return-value rules. grade.sh workflow.
+NEITHER Mermaid JS NOR SVG were used anywhere in this output.
+-->
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>12차시 강의자료: 문자열 함수 I</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+      @import url("https://fonts.googleapis.com/css2?family=Pretendard:wght@400;500;600;700;800;900&display=swap");
+      body { font-family: "Pretendard", sans-serif; background-color: #0f172a; color: #f8fafc; overflow-x: hidden; }
+      pre, code { font-family: 'Courier New', Courier, monospace; }
+    </style>
+  </head>
+  <body class="min-h-screen flex flex-col justify-between">
+    <div class="bg-slate-900 border-b border-slate-800 px-6 py-4 flex flex-wrap items-center justify-between gap-4 sticky top-0 z-50">
+      <div class="flex items-center gap-3">
+        <span class="bg-cyan-600 text-white text-xs font-bold px-2.5 py-1 rounded-full uppercase tracking-wider">Session 12</span>
+        <h1 class="text-sm md:text-base font-bold text-slate-200">C언어 기초 — libsbs 구현 과정</h1>
+      </div>
+      <div class="flex items-center gap-4">
+        <div class="flex items-center gap-2 bg-slate-800 px-3 py-1.5 rounded-lg border border-slate-700">
+          <span class="text-xs text-slate-400">슬라이드:</span>
+          <span id="slideCounter" class="text-xs font-bold text-cyan-400">1 / 16</span>
+        </div>
+      </div>
+    </div>
+
+    <div id="deckContainer" class="flex-grow flex items-center justify-center p-4 md:p-8">
+
+      <!-- 01 -->
+      <div id="slide1" class="bg-gradient-to-br from-slate-900 via-cyan-950 to-slate-900 w-full max-w-5xl aspect-[16/9] rounded-3xl p-8 md:p-12 shadow-2xl border border-slate-800 flex flex-col justify-between">
+        <div class="flex justify-between items-start"><span class="text-cyan-400 font-bold tracking-wider text-sm uppercase">Slide 01 / Cover</span><span class="text-slate-500 text-sm">12차시: 문자열 함수 I</span></div>
+        <div class="my-auto">
+          <span class="inline-block bg-amber-500/20 text-amber-300 text-xs font-extrabold px-3 py-1.5 rounded-md mb-4 border border-amber-500/30">12차시 · 버퍼 안전 문자열 함수</span>
+          <h2 class="text-3xl md:text-5xl font-black text-white leading-tight mb-4">문자열 함수 <span class="text-transparent bg-clip-text bg-gradient-to-r from-amber-400 to-orange-300">I</span></h2>
+          <p class="text-slate-400 text-base md:text-lg max-w-2xl">길이를 세는 <code class="text-cyan-300">strlen</code>, 버퍼 오버플로우를 막는 안전 복사·이어붙이기 <code class="text-cyan-300">strlcpy · strlcat</code>.</p>
+        </div>
+        <div class="flex justify-between items-center text-xs text-slate-500 border-t border-slate-800/80 pt-4"><span>C Language — libsbs Implementation Course</span><span>Time Frame: 3 Hours</span></div>
+      </div>
+
+      <!-- 02 -->
+      <div id="slide2" class="bg-slate-900 w-full max-w-5xl aspect-[16/9] rounded-3xl p-8 md:p-12 shadow-2xl border border-slate-800 flex flex-col justify-between hidden">
+        <div class="flex justify-between items-start"><span class="text-cyan-400 font-bold tracking-wider text-sm uppercase">Slide 02 / Goal</span><span class="text-slate-500 text-sm">12차시: 문자열 함수 I</span></div>
+        <div class="my-auto">
+          <h3 class="text-2xl md:text-3xl font-bold text-white mb-6 border-b border-slate-800 pb-3">오늘의 목표</h3>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <div class="space-y-3">
+              <div class="p-4 bg-slate-800/30 rounded-xl border-l-4 border-cyan-500"><h4 class="font-bold text-white text-sm mb-1">1부 — 강사 설명</h4><p class="text-slate-400 text-xs">strlen, 버퍼 오버플로우, strlcpy/strlcat 명세</p></div>
+              <div class="p-4 bg-slate-800/30 rounded-xl border-l-4 border-amber-500"><h4 class="font-bold text-white text-sm mb-1">2부 — 직접 구현</h4><p class="text-slate-400 text-xs">3개 함수 + 버퍼 안전성·잘림 테스트</p></div>
+            </div>
+            <div class="bg-slate-800/50 p-6 rounded-xl border border-slate-700">
+              <h4 class="font-bold text-amber-400 text-sm mb-3">오늘 수업이 끝나면</h4>
+              <ul class="space-y-2 text-xs text-slate-300">
+                <li class="flex items-start gap-2"><span class="text-emerald-400 font-bold mt-0.5">1</span><span>strlen으로 길이를 센다</span></li>
+                <li class="flex items-start gap-2"><span class="text-emerald-400 font-bold mt-0.5">2</span><span>버퍼 오버플로우를 설명한다</span></li>
+                <li class="flex items-start gap-2"><span class="text-emerald-400 font-bold mt-0.5">3</span><span>안전 복사·이어붙이기를 구현한다</span></li>
+              </ul>
+              <div class="mt-4 bg-amber-950/40 p-3 rounded-lg border border-amber-500/20"><p class="text-amber-300 text-xs font-semibold">보안의 시작</p><p class="text-slate-400 text-[10px] mt-1">strlcpy/strlcat은 실무 보안 코딩의 기본</p></div>
+            </div>
+          </div>
+        </div>
+        <div class="flex justify-between items-center text-xs text-slate-500 border-t border-slate-800/80 pt-4"><span>Today's Goal</span><span>Session 12</span></div>
+      </div>
+
+      <!-- 03 strlen -->
+      <div id="slide3" class="bg-slate-900 w-full max-w-5xl aspect-[16/9] rounded-3xl p-8 md:p-12 shadow-2xl border border-slate-800 flex flex-col justify-between hidden">
+        <div class="flex justify-between items-start"><span class="text-cyan-400 font-bold tracking-wider text-sm uppercase">Slide 03 / strlen</span><span class="text-slate-500 text-sm">12차시: 문자열 함수 I</span></div>
+        <div class="my-auto">
+          <h3 class="text-2xl md:text-3xl font-bold text-white mb-4 border-b border-slate-800 pb-3">sbs_strlen — 길이 세기</h3>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <pre class="bg-slate-950 text-slate-200 p-4 rounded-xl text-[11px] leading-relaxed border border-slate-700"><code><span class="text-cyan-300">size_t</span> sbs_strlen(<span class="text-cyan-300">const char</span> *s)
+{
+  <span class="text-cyan-300">size_t</span> len = 0;
+  <span class="text-amber-300">while</span> (s[len])
+    len++;
+  <span class="text-amber-300">return</span> (len);
+}</code></pre>
+            </div>
+            <div class="space-y-3">
+              <div class="bg-slate-800/40 p-4 rounded-xl border border-slate-700"><p class="text-amber-400 text-xs font-semibold mb-2">7차시 길이 세기</p><p class="text-slate-400 text-[10px]"><code class="text-white">\0</code>까지 세는 로직 그대로. 반환은 <code class="text-white">size_t</code>, 읽기만 하므로 <code class="text-white">const</code>.</p></div>
+              <div class="bg-cyan-950/30 p-4 rounded-xl border border-cyan-500/20"><p class="text-slate-400 text-[10px]">모든 문자열 함수가 길이를 알아야 하므로 먼저 만들어 <span class="text-white">재사용</span>한다.</p></div>
+            </div>
+          </div>
+        </div>
+        <div class="flex justify-between items-center text-xs text-slate-500 border-t border-slate-800/80 pt-4"><span>sbs_strlen</span><span>Session 12</span></div>
+      </div>
+
+      <!-- 04 overflow -->
+      <div id="slide4" class="bg-slate-900 w-full max-w-5xl aspect-[16/9] rounded-3xl p-8 md:p-12 shadow-2xl border border-slate-800 flex flex-col justify-between hidden">
+        <div class="flex justify-between items-start"><span class="text-cyan-400 font-bold tracking-wider text-sm uppercase">Slide 04 / Buffer Overflow</span><span class="text-slate-500 text-sm">12차시: 문자열 함수 I</span></div>
+        <div class="my-auto">
+          <h3 class="text-2xl md:text-3xl font-bold text-white mb-4 border-b border-slate-800 pb-3">버퍼 오버플로우 — strcpy의 위험</h3>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <pre class="bg-slate-950 text-slate-200 p-4 rounded-xl text-[11px] leading-relaxed border border-slate-700"><code><span class="text-cyan-300">char</span> dst[4];
+strcpy(dst, <span class="text-emerald-300">"hello"</span>);
+<span class="text-slate-500">// 6바이트를 4바이트에!</span>
+<span class="text-rose-400">// → 다른 메모리 덮어씀</span></code></pre>
+            </div>
+            <div class="space-y-3">
+              <div class="bg-rose-950/20 p-4 rounded-xl border border-rose-500/20"><p class="text-rose-400 text-xs font-semibold mb-2">심각한 보안 취약점</p><p class="text-slate-400 text-[10px]">strcpy는 dst 크기를 모른다. src가 길면 버퍼를 넘어 인접 메모리를 덮어쓴다.</p></div>
+              <div class="bg-emerald-950/20 p-4 rounded-xl border border-emerald-500/20"><p class="text-emerald-400 text-xs font-semibold mb-2">해법: 크기 인자</p><p class="text-slate-400 text-[10px]">strlcpy/strlcat은 <code class="text-white">dstsize</code>를 받아 절대 넘지 않고 항상 <code class="text-white">\0</code> 종결.</p></div>
+            </div>
+          </div>
+        </div>
+        <div class="flex justify-between items-center text-xs text-slate-500 border-t border-slate-800/80 pt-4"><span>Buffer Overflow</span><span>Session 12</span></div>
+      </div>
+
+      <!-- 05 strlcpy -->
+      <div id="slide5" class="bg-slate-900 w-full max-w-5xl aspect-[16/9] rounded-3xl p-8 md:p-12 shadow-2xl border border-slate-800 flex flex-col justify-between hidden">
+        <div class="flex justify-between items-start"><span class="text-cyan-400 font-bold tracking-wider text-sm uppercase">Slide 05 / strlcpy</span><span class="text-slate-500 text-sm">12차시: 문자열 함수 I</span></div>
+        <div class="my-auto">
+          <h3 class="text-2xl md:text-3xl font-bold text-white mb-4 border-b border-slate-800 pb-3">sbs_strlcpy — 안전 복사</h3>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <pre class="bg-slate-950 text-slate-200 p-4 rounded-xl text-[11px] leading-relaxed border border-slate-700"><code>srclen = sbs_strlen(src);
+<span class="text-amber-300">if</span> (dstsize == 0)
+  <span class="text-amber-300">return</span> (srclen);
+<span class="text-amber-300">while</span> (src[i]
+    &amp;&amp; i &lt; dstsize - 1)
+  dst[i] = src[i], i++;
+dst[i] = <span class="text-emerald-300">'\0'</span>;
+<span class="text-amber-300">return</span> (srclen);</code></pre>
+            </div>
+            <div class="space-y-3">
+              <div class="bg-amber-950/20 p-4 rounded-xl border border-amber-500/20"><p class="text-amber-400 text-xs font-semibold mb-2">반환값 = src 전체 길이</p><p class="text-slate-400 text-[10px]">복사한 수가 아니다. 반환값 &gt;= dstsize면 <span class="text-white">잘렸다</span>는 신호.</p></div>
+              <div class="bg-cyan-950/30 p-4 rounded-xl border border-cyan-500/20"><p class="text-slate-400 text-[10px]"><code class="text-white">i &lt; dstsize - 1</code>로 마지막 <code class="text-white">\0</code> 자리 확보. dstsize==0 예외 처리.</p></div>
+            </div>
+          </div>
+        </div>
+        <div class="flex justify-between items-center text-xs text-slate-500 border-t border-slate-800/80 pt-4"><span>sbs_strlcpy</span><span>Session 12</span></div>
+      </div>
+
+      <!-- 06 strlcat -->
+      <div id="slide6" class="bg-slate-900 w-full max-w-5xl aspect-[16/9] rounded-3xl p-8 md:p-12 shadow-2xl border border-slate-800 flex flex-col justify-between hidden">
+        <div class="flex justify-between items-start"><span class="text-cyan-400 font-bold tracking-wider text-sm uppercase">Slide 06 / strlcat</span><span class="text-slate-500 text-sm">12차시: 문자열 함수 I</span></div>
+        <div class="my-auto">
+          <h3 class="text-2xl md:text-3xl font-bold text-white mb-4 border-b border-slate-800 pb-3">sbs_strlcat — 안전 이어붙이기</h3>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <pre class="bg-slate-950 text-slate-200 p-4 rounded-xl text-[11px] leading-relaxed border border-slate-700"><code>dstlen = 0;
+<span class="text-amber-300">while</span> (dstlen &lt; dstsize
+    &amp;&amp; dst[dstlen])
+  dstlen++;
+<span class="text-amber-300">if</span> (dstlen == dstsize)
+  <span class="text-amber-300">return</span> (dstsize + srclen);
+<span class="text-amber-300">while</span> (src[i] &amp;&amp;
+   dstlen+i &lt; dstsize-1)
+  dst[dstlen+i]=src[i], i++;
+dst[dstlen+i] = <span class="text-emerald-300">'\0'</span>;
+<span class="text-amber-300">return</span> (dstlen + srclen);</code></pre>
+            </div>
+            <div class="space-y-3">
+              <div class="bg-rose-950/20 p-4 rounded-xl border border-rose-500/20"><p class="text-rose-400 text-xs font-semibold mb-2">까다로운 반환값</p><p class="text-slate-400 text-[10px]">dst에 <code class="text-white">\0</code>이 dstsize 안에 없으면 <code class="text-white">dstsize + srclen</code>. 정상은 <code class="text-white">dstlen + srclen</code>.</p></div>
+              <div class="bg-slate-800/40 p-4 rounded-xl border border-slate-700"><p class="text-slate-400 text-[10px]">dst 길이를 <span class="text-white">dstsize 안에서만</span> 측정해 비정상 버퍼를 방어.</p></div>
+            </div>
+          </div>
+        </div>
+        <div class="flex justify-between items-center text-xs text-slate-500 border-t border-slate-800/80 pt-4"><span>sbs_strlcat</span><span>Session 12</span></div>
+      </div>
+
+      <!-- 07 return rules -->
+      <div id="slide7" class="bg-slate-900 w-full max-w-5xl aspect-[16/9] rounded-3xl p-8 md:p-12 shadow-2xl border border-slate-800 flex flex-col justify-between hidden">
+        <div class="flex justify-between items-start"><span class="text-cyan-400 font-bold tracking-wider text-sm uppercase">Slide 07 / Return Rules</span><span class="text-slate-500 text-sm">12차시: 문자열 함수 I</span></div>
+        <div class="my-auto">
+          <h3 class="text-2xl md:text-3xl font-bold text-white mb-4 border-b border-slate-800 pb-3">반환값 규칙 정리</h3>
+          <div class="bg-slate-950 rounded-xl border border-slate-700 overflow-hidden">
+            <table class="w-full text-xs">
+              <thead><tr class="border-b border-slate-700 bg-slate-800/60"><th class="text-left px-4 py-2 text-cyan-400">함수</th><th class="text-left px-4 py-2 text-amber-400">반환값</th><th class="text-left px-4 py-2 text-amber-400">의미</th></tr></thead>
+              <tbody class="divide-y divide-slate-800">
+                <tr><td class="px-4 py-2"><code class="text-slate-300">strlen</code></td><td class="px-4 py-2 text-slate-400">글자 수</td><td class="px-4 py-2 text-slate-400">\0 제외</td></tr>
+                <tr><td class="px-4 py-2"><code class="text-slate-300">strlcpy</code></td><td class="px-4 py-2 text-slate-400">src 길이</td><td class="px-4 py-2 text-slate-400">≥ dstsize면 잘림</td></tr>
+                <tr><td class="px-4 py-2"><code class="text-slate-300">strlcat</code></td><td class="px-4 py-2 text-slate-400">dstlen + srclen</td><td class="px-4 py-2 text-slate-400">만들려던 전체 길이</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="mt-4 bg-cyan-950/30 p-3 rounded-xl border border-cyan-500/20"><p class="text-slate-400 text-[10px]">두 안전 함수의 반환값은 모두 "원래 만들려던 길이". 이걸 dstsize와 비교해 <span class="text-white">잘림을 감지</span>한다.</p></div>
+        </div>
+        <div class="flex justify-between items-center text-xs text-slate-500 border-t border-slate-800/80 pt-4"><span>Return Value Rules</span><span>Session 12</span></div>
+      </div>
+
+      <!-- 08 truncation example -->
+      <div id="slide8" class="bg-slate-900 w-full max-w-5xl aspect-[16/9] rounded-3xl p-8 md:p-12 shadow-2xl border border-slate-800 flex flex-col justify-between hidden">
+        <div class="flex justify-between items-start"><span class="text-cyan-400 font-bold tracking-wider text-sm uppercase">Slide 08 / Truncation</span><span class="text-slate-500 text-sm">12차시: 문자열 함수 I</span></div>
+        <div class="my-auto">
+          <h3 class="text-2xl md:text-3xl font-bold text-white mb-4 border-b border-slate-800 pb-3">잘림 감지 예시</h3>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <pre class="bg-slate-950 text-slate-200 p-4 rounded-xl text-[11px] leading-relaxed border border-slate-700"><code><span class="text-cyan-300">char</span> buf[4];
+<span class="text-cyan-300">size_t</span> n =
+  sbs_strlcpy(buf, <span class="text-emerald-300">"hello"</span>, 4);
+
+<span class="text-slate-500">// buf = "hel\0"</span>
+<span class="text-slate-500">// n = 5</span>
+<span class="text-amber-300">if</span> (n &gt;= 4)
+  <span class="text-slate-500">// 잘림 발생!</span></code></pre>
+            </div>
+            <div class="bg-cyan-950/30 p-5 rounded-xl border border-cyan-500/20 self-center"><p class="text-cyan-300 text-sm font-bold mb-2">왜 안전한가</p><p class="text-slate-400 text-xs">버퍼 4바이트에 3글자+\0만 안전하게 들어가고, 반환값 5로 "원래 5글자였다"를 알려준다. 넘침 없음.</p></div>
+          </div>
+        </div>
+        <div class="flex justify-between items-center text-xs text-slate-500 border-t border-slate-800/80 pt-4"><span>Truncation Detection</span><span>Session 12</span></div>
+      </div>
+
+      <!-- 09 layout -->
+      <div id="slide9" class="bg-slate-900 w-full max-w-5xl aspect-[16/9] rounded-3xl p-8 md:p-12 shadow-2xl border border-slate-800 flex flex-col justify-between hidden">
+        <div class="flex justify-between items-start"><span class="text-cyan-400 font-bold tracking-wider text-sm uppercase">Slide 09 / Layout</span><span class="text-slate-500 text-sm">12차시: 문자열 함수 I</span></div>
+        <div class="my-auto">
+          <h3 class="text-2xl md:text-3xl font-bold text-white mb-4 border-b border-slate-800 pb-3">실습 파일 구조</h3>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <pre class="bg-slate-950 text-slate-200 p-4 rounded-xl text-[11px] leading-relaxed border border-slate-700"><code>session_12/
+├── <span class="text-cyan-300">libsbs.h</span>      <span class="text-slate-500"># 3개 추가</span>
+├── sbs_strlen.c
+├── sbs_strlcpy.c
+├── sbs_strlcat.c
+├── <span class="text-amber-300">grade.sh</span>
+└── tests/</code></pre>
+            </div>
+            <div class="bg-cyan-950/30 p-4 rounded-xl border border-cyan-500/20 self-center"><p class="text-cyan-300 text-xs font-semibold mb-2">채점 정답 기준</p><p class="text-slate-400 text-[10px]">strlen은 표준과 비교. strlcpy/strlcat은 glibc에 없을 수 있어 <span class="text-white">테스트 안의 정답 동작</span>과 비교한다.</p></div>
+          </div>
+        </div>
+        <div class="flex justify-between items-center text-xs text-slate-500 border-t border-slate-800/80 pt-4"><span>File Layout</span><span>Session 12</span></div>
+      </div>
+
+      <!-- 10 grade -->
+      <div id="slide10" class="bg-slate-900 w-full max-w-5xl aspect-[16/9] rounded-3xl p-8 md:p-12 shadow-2xl border border-slate-800 flex flex-col justify-between hidden">
+        <div class="flex justify-between items-start"><span class="text-cyan-400 font-bold tracking-wider text-sm uppercase">Slide 10 / grade.sh</span><span class="text-slate-500 text-sm">12차시: 문자열 함수 I</span></div>
+        <div class="my-auto">
+          <h3 class="text-2xl md:text-3xl font-bold text-white mb-4 border-b border-slate-800 pb-3">채점 실행</h3>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <pre class="bg-slate-950 text-slate-200 p-4 rounded-xl text-[11px] leading-relaxed border border-slate-700"><code><span class="text-emerald-300">$</span> bash grade.sh
+=== libsbs 12차시 채점 ===
+<span class="text-emerald-300">✓ sbs_strlen    (...)</span>
+<span class="text-emerald-300">✓ sbs_strlcpy   (...)</span>
+<span class="text-emerald-300">✓ sbs_strlcat   (...)</span>
+결과: 3 / 3 통과</code></pre>
+            </div>
+            <div class="space-y-3">
+              <div class="bg-slate-800/40 p-4 rounded-xl border border-slate-700"><p class="text-amber-400 text-xs font-semibold mb-2">검사 범위</p><p class="text-slate-400 text-[10px]">여러 dstsize(0 포함)·빈문자열·잘림 상황에서 <span class="text-white">버퍼 내용 + 반환값</span>을 비교.</p></div>
+              <div class="bg-rose-950/20 p-3 rounded-xl border border-rose-500/20"><p class="text-slate-400 text-[10px]">금지: <code class="text-white">&lt;string.h&gt;</code>, <code class="text-white">&lt;strings.h&gt;</code></p></div>
+            </div>
+          </div>
+        </div>
+        <div class="flex justify-between items-center text-xs text-slate-500 border-t border-slate-800/80 pt-4"><span>Auto Grader</span><span>Session 12</span></div>
+      </div>
+
+      <!-- 11 practice 1-2 -->
+      <div id="slide11" class="bg-slate-900 w-full max-w-5xl aspect-[16/9] rounded-3xl p-8 md:p-12 shadow-2xl border border-slate-800 flex flex-col justify-between hidden">
+        <div class="flex justify-between items-start"><span class="text-cyan-400 font-bold tracking-wider text-sm uppercase">Slide 11 / Practice 1-2</span><span class="text-slate-500 text-sm">12차시: 문자열 함수 I</span></div>
+        <div class="my-auto">
+          <h3 class="text-2xl md:text-3xl font-bold text-white mb-4 border-b border-slate-800 pb-3">실습 ①② — strlen &amp; strlcpy</h3>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div><span class="text-cyan-400 text-xs font-bold block mb-2">① sbs_strlen</span><pre class="bg-slate-950 text-slate-200 p-3 rounded-xl text-[11px] leading-relaxed border border-slate-700"><code><span class="text-amber-300">while</span> (s[len]) len++;
+<span class="text-amber-300">return</span> (len);</code></pre></div>
+            <div><span class="text-cyan-400 text-xs font-bold block mb-2">② sbs_strlcpy</span><pre class="bg-slate-950 text-slate-200 p-3 rounded-xl text-[11px] leading-relaxed border border-slate-700"><code><span class="text-amber-300">if</span> (dstsize==0)
+  <span class="text-amber-300">return</span> (srclen);
+<span class="text-amber-300">while</span> (src[i]&amp;&amp;i&lt;dstsize-1)
+  dst[i]=src[i], i++;
+dst[i]=<span class="text-emerald-300">'\0'</span>;</code></pre></div>
+          </div>
+        </div>
+        <div class="flex justify-between items-center text-xs text-slate-500 border-t border-slate-800/80 pt-4"><span>Practice 1-2</span><span>Session 12</span></div>
+      </div>
+
+      <!-- 12 practice 3 -->
+      <div id="slide12" class="bg-slate-900 w-full max-w-5xl aspect-[16/9] rounded-3xl p-8 md:p-12 shadow-2xl border border-slate-800 flex flex-col justify-between hidden">
+        <div class="flex justify-between items-start"><span class="text-cyan-400 font-bold tracking-wider text-sm uppercase">Slide 12 / Practice 3</span><span class="text-slate-500 text-sm">12차시: 문자열 함수 I</span></div>
+        <div class="my-auto">
+          <h3 class="text-2xl md:text-3xl font-bold text-white mb-4 border-b border-slate-800 pb-3">실습 ③ — strlcat (가장 까다로움)</h3>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <pre class="bg-slate-950 text-slate-200 p-4 rounded-xl text-[11px] leading-relaxed border border-slate-700"><code>dstlen=0;
+<span class="text-amber-300">while</span> (dstlen&lt;dstsize
+    &amp;&amp; dst[dstlen]) dstlen++;
+<span class="text-amber-300">if</span> (dstlen==dstsize)
+  <span class="text-amber-300">return</span> (dstsize+srclen);
+<span class="text-amber-300">while</span> (src[i]&amp;&amp;
+  dstlen+i&lt;dstsize-1)
+  dst[dstlen+i]=src[i], i++;
+dst[dstlen+i]=<span class="text-emerald-300">'\0'</span>;
+<span class="text-amber-300">return</span> (dstlen+srclen);</code></pre>
+            </div>
+            <div class="bg-amber-950/20 p-5 rounded-xl border border-amber-500/20 self-center"><p class="text-amber-400 text-sm font-bold mb-2">30분 · man 3 strlcat</p><p class="text-slate-400 text-xs">반환값 두 경우(정상 / \0 없음)를 모두 처리해야 통과. dst 길이는 dstsize로 제한 측정.</p></div>
+          </div>
+        </div>
+        <div class="flex justify-between items-center text-xs text-slate-500 border-t border-slate-800/80 pt-4"><span>Practice 3</span><span>Session 12</span></div>
+      </div>
+
+      <!-- 13 pitfalls -->
+      <div id="slide13" class="bg-slate-900 w-full max-w-5xl aspect-[16/9] rounded-3xl p-8 md:p-12 shadow-2xl border border-slate-800 flex flex-col justify-between hidden">
+        <div class="flex justify-between items-start"><span class="text-cyan-400 font-bold tracking-wider text-sm uppercase">Slide 13 / Pitfalls</span><span class="text-slate-500 text-sm">12차시: 문자열 함수 I</span></div>
+        <div class="my-auto">
+          <h3 class="text-2xl md:text-3xl font-bold text-white mb-4 border-b border-slate-800 pb-3">자주 하는 실수</h3>
+          <div class="bg-slate-950 rounded-xl border border-slate-700 overflow-hidden">
+            <table class="w-full text-xs">
+              <thead><tr class="border-b border-slate-700 bg-slate-800/60"><th class="text-left px-4 py-2 text-rose-400">실수</th><th class="text-left px-4 py-2 text-emerald-400">올바른 방법</th></tr></thead>
+              <tbody class="divide-y divide-slate-800">
+                <tr><td class="px-4 py-2 text-slate-300">strlcpy 반환 = 복사 수</td><td class="px-4 py-2 text-slate-400">src 전체 길이</td></tr>
+                <tr><td class="px-4 py-2 text-slate-300">\0 자리 안 비움</td><td class="px-4 py-2 text-slate-400">i &lt; dstsize - 1</td></tr>
+                <tr><td class="px-4 py-2 text-slate-300">dstsize==0 미처리</td><td class="px-4 py-2 text-slate-400">예외 분기</td></tr>
+                <tr><td class="px-4 py-2 text-slate-300">strlcat dst 길이 무제한</td><td class="px-4 py-2 text-slate-400">dstsize 안에서 측정</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <div class="flex justify-between items-center text-xs text-slate-500 border-t border-slate-800/80 pt-4"><span>Common Pitfalls</span><span>Session 12</span></div>
+      </div>
+
+      <!-- 14 summary -->
+      <div id="slide14" class="bg-slate-900 w-full max-w-5xl aspect-[16/9] rounded-3xl p-8 md:p-12 shadow-2xl border border-slate-800 flex flex-col justify-between hidden">
+        <div class="flex justify-between items-start"><span class="text-cyan-400 font-bold tracking-wider text-sm uppercase">Slide 14 / Summary</span><span class="text-slate-500 text-sm">12차시: 문자열 함수 I</span></div>
+        <div class="my-auto">
+          <h3 class="text-2xl md:text-3xl font-bold text-white mb-5 border-b border-slate-800 pb-3">12차시 핵심 정리</h3>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+            <div class="space-y-2.5">
+              <div class="flex gap-3 items-start p-3 bg-slate-800/30 rounded-xl"><span class="bg-cyan-600 text-white text-sm font-black w-7 h-7 rounded-full flex items-center justify-center shrink-0">1</span><div><p class="text-white text-sm font-semibold">strlen은 \0까지 세고 size_t 반환</p></div></div>
+              <div class="flex gap-3 items-start p-3 bg-slate-800/30 rounded-xl"><span class="bg-cyan-600 text-white text-sm font-black w-7 h-7 rounded-full flex items-center justify-center shrink-0">2</span><div><p class="text-white text-sm font-semibold">strcpy는 버퍼 오버플로우 위험</p></div></div>
+              <div class="flex gap-3 items-start p-3 bg-slate-800/30 rounded-xl"><span class="bg-cyan-600 text-white text-sm font-black w-7 h-7 rounded-full flex items-center justify-center shrink-0">3</span><div><p class="text-white text-sm font-semibold">strlcpy/strlcat은 dstsize로 안전</p></div></div>
+            </div>
+            <div class="space-y-2.5">
+              <div class="flex gap-3 items-start p-3 bg-slate-800/30 rounded-xl"><span class="bg-amber-500 text-white text-sm font-black w-7 h-7 rounded-full flex items-center justify-center shrink-0">4</span><div><p class="text-white text-sm font-semibold">strlcpy 반환 = src 길이(잘림 감지)</p></div></div>
+              <div class="flex gap-3 items-start p-3 bg-slate-800/30 rounded-xl"><span class="bg-amber-500 text-white text-sm font-black w-7 h-7 rounded-full flex items-center justify-center shrink-0">5</span><div><p class="text-white text-sm font-semibold">strlcat 반환 = dstlen + srclen</p></div></div>
+              <div class="bg-amber-950/30 p-3 rounded-xl border border-amber-500/20"><p class="text-amber-300 text-xs font-semibold">다음 차시 예고</p><p class="text-slate-400 text-[10px] mt-1">13차시: strchr, strrchr, strnstr (문자·부분 문자열 검색)</p></div>
+            </div>
+          </div>
+        </div>
+        <div class="flex justify-between items-center text-xs text-slate-500 border-t border-slate-800/80 pt-4"><span>Session 12 — Key Takeaways</span><span>Session 12</span></div>
+      </div>
+
+      <!-- 15 checklist -->
+      <div id="slide15" class="bg-slate-900 w-full max-w-5xl aspect-[16/9] rounded-3xl p-8 md:p-12 shadow-2xl border border-slate-800 flex flex-col justify-between hidden">
+        <div class="flex justify-between items-start"><span class="text-cyan-400 font-bold tracking-wider text-sm uppercase">Slide 15 / Checklist</span><span class="text-slate-500 text-sm">12차시: 문자열 함수 I</span></div>
+        <div class="my-auto">
+          <h3 class="text-2xl md:text-3xl font-bold text-white mb-4 border-b border-slate-800 pb-3">제출 확인</h3>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="bg-slate-800/40 p-4 rounded-xl border border-slate-700">
+              <h4 class="font-bold text-amber-400 text-sm mb-3">작성 파일</h4>
+              <ul class="space-y-1 text-[10px] text-slate-300">
+                <li class="flex gap-2"><span class="text-emerald-400">✓</span><code class="text-cyan-300">libsbs.h</code> (3 프로토타입)</li>
+                <li class="flex gap-2"><span class="text-emerald-400">✓</span><code class="text-cyan-300">sbs_strlen/strlcpy/strlcat.c</code></li>
+                <li class="flex gap-2"><span class="text-emerald-400">✓</span><code class="text-amber-300">bash grade.sh</code> → 3 / 3</li>
+              </ul>
+            </div>
+            <div class="bg-rose-950/20 p-4 rounded-xl border border-rose-500/20">
+              <h4 class="font-bold text-rose-400 text-sm mb-2">자주 막히는 부분</h4>
+              <div class="space-y-1.5 text-[10px] text-slate-300">
+                <div><p class="font-semibold text-slate-200">strlcpy 반환?</p><p class="text-slate-400">src 길이</p></div>
+                <div><p class="font-semibold text-slate-200">버퍼 넘침?</p><p class="text-slate-400">dstsize-1</p></div>
+                <div><p class="font-semibold text-slate-200">strlcat 반환?</p><p class="text-slate-400">dstlen+srclen</p></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="flex justify-between items-center text-xs text-slate-500 border-t border-slate-800/80 pt-4"><span>Session 12 Checklist</span><span>Session 12</span></div>
+      </div>
+
+      <!-- 16 Q&A -->
+      <div id="slide16" class="bg-slate-900 w-full max-w-5xl aspect-[16/9] rounded-3xl p-8 md:p-12 shadow-2xl border border-slate-800 flex flex-col justify-between hidden">
+        <div class="flex justify-between items-start"><span class="text-cyan-400 font-bold tracking-wider text-sm uppercase">Slide 16 / Q&amp;A</span><span class="text-slate-500 text-sm">12차시: 문자열 함수 I</span></div>
+        <div class="my-auto text-center">
+          <div class="text-4xl mb-4 font-bold text-cyan-400">?</div>
+          <h3 class="text-3xl font-black text-white mb-4">Q&amp;A 및 실습 점검</h3>
+          <p class="text-slate-400 text-sm max-w-lg mx-auto mb-6">버퍼 안전, 반환값 규칙에서 막히는 부분을 함께 해결합니다.</p>
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-4 max-w-2xl mx-auto">
+            <div class="bg-slate-800/50 px-4 py-3 rounded-xl border border-slate-700 text-xs text-slate-300"><p class="font-bold text-slate-200 mb-1">왜 dstsize?</p><p class="text-[10px]">버퍼 크기를 알아야 넘침을 막는다</p></div>
+            <div class="bg-slate-800/50 px-4 py-3 rounded-xl border border-slate-700 text-xs text-slate-300"><p class="font-bold text-slate-200 mb-1">반환이 왜 src 길이?</p><p class="text-[10px]">잘렸는지 감지하려고</p></div>
+            <div class="bg-slate-800/50 px-4 py-3 rounded-xl border border-slate-700 text-xs text-slate-300"><p class="font-bold text-slate-200 mb-1">strlcat이 어려워요</p><p class="text-[10px]">반환 두 경우를 나눠서</p></div>
+          </div>
+          <div class="mt-6 inline-block bg-slate-800/50 px-6 py-3 rounded-full border border-slate-700 text-xs text-amber-300 font-medium">"안전한 문자열 처리가 실무의 기본."</div>
+        </div>
+        <div class="flex justify-between items-center text-xs text-slate-500 border-t border-slate-800/80 pt-4"><span>Session 12 Completion</span><span>Session 12</span></div>
+      </div>
+
+    </div>
+
+    <div class="bg-slate-950 border-t border-slate-800 px-6 py-4 flex items-center justify-between">
+      <button id="prevBtn" onclick="prevSlide()" class="bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold px-4 py-2 rounded-lg transition-colors border border-slate-700">&larr; 이전 슬라이드</button>
+      <div class="hidden md:flex gap-1.5" id="dotsContainer"></div>
+      <button id="nextBtn" onclick="nextSlide()" class="bg-cyan-600 hover:bg-cyan-700 text-white text-xs font-semibold px-4 py-2 rounded-lg transition-colors">다음 슬라이드 &rarr;</button>
+    </div>
+
+    <script>
+      const totalSlides = 16;
+      let currentSlide = 1;
+      function updateSlideVisibility() {
+        for (let i = 1; i <= totalSlides; i++) {
+          const slide = document.getElementById("slide" + i);
+          if (i === currentSlide) slide.classList.remove("hidden");
+          else slide.classList.add("hidden");
+        }
+        document.getElementById("slideCounter").innerText = currentSlide + " / " + totalSlides;
+        updateDots();
+      }
+      function nextSlide() { if (currentSlide < totalSlides) { currentSlide++; updateSlideVisibility(); } }
+      function prevSlide() { if (currentSlide > 1) { currentSlide--; updateSlideVisibility(); } }
+      function jumpToSlide(index) { currentSlide = index; updateSlideVisibility(); }
+      function buildDots() {
+        const container = document.getElementById("dotsContainer");
+        container.innerHTML = "";
+        for (let i = 1; i <= totalSlides; i++) {
+          const dot = document.createElement("button");
+          dot.id = "dot" + i;
+          dot.onclick = () => jumpToSlide(i);
+          dot.className = "w-2 h-2 rounded-full transition-colors";
+          container.appendChild(dot);
+        }
+      }
+      function updateDots() {
+        for (let i = 1; i <= totalSlides; i++) {
+          const dot = document.getElementById("dot" + i);
+          if (!dot) continue;
+          dot.className = i === currentSlide ? "w-2 h-2 rounded-full transition-colors bg-cyan-500" : "w-2 h-2 rounded-full transition-colors bg-slate-700 hover:bg-slate-500";
+        }
+      }
+      document.addEventListener("keydown", function(e) { if (e.key === "ArrowRight" || e.key === " ") nextSlide(); if (e.key === "ArrowLeft") prevSlide(); });
+      buildDots();
+      updateSlideVisibility();
+    </script>
+  </body>
+</html>

@@ -1,0 +1,434 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>4차시 · 함수와 재귀 — C언어 입문 강의</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/styles/atom-one-dark.min.css" />
+    <link rel="stylesheet" href="../lesson.css" />
+  </head>
+  <body>
+    <div id="readbar" class="readbar"></div>
+    <nav class="topnav">
+      <a class="back" href="../index.html">← 강의 목록</a>
+      <span class="crumb">C언어 입문 강의 · 4 / 16</span>
+    </nav>
+    <header class="lesson-hero">
+      <div class="lesson-hero-inner">
+        <span class="badge">C 기초 · 4차시</span>
+        <h1>함수와 재귀</h1>
+      </div>
+    </header>
+    <main class="wrap">
+      <article class="md">
+<h2>학습 목표</h2>
+<ol><li>함수를 선언(프로토타입), 정의, 호출할 수 있다.</li><li>매개변수와 반환값의 역할을 설명할 수 있다.</li><li>값에 의한 전달(pass by value)을 이해한다.</li><li>스택 프레임 개념으로 함수 호출 과정을 설명할 수 있다.</li><li>재귀 함수의 동작 원리를 설명하고 구현할 수 있다.</li></ol>
+<hr />
+<h2>1부: 함수란?</h2>
+<h3>1.1 함수의 정의</h3>
+<p>입력(매개변수)을 받아 어떤 일을 하고 결과(반환값)를 돌려주는 코드 묶음입니다. 같은 일을 여러 번 할 때 반복을 줄이고, 코드를 의미 단위로 나눕니다.</p>
+<pre><code class="language-c">//  반환타입  함수이름(매개변수 목록)
+int add(int a, int b)
+{
+    return (a + b);   // 반환값
+}</code></pre>
+<table><thead><tr><th>구성 요소</th><th>설명</th></tr></thead><tbody><tr><td>반환 타입</td><td>함수가 돌려주는 값의 타입 (<code>void</code>면 없음)</td></tr><tr><td>함수 이름</td><td>호출할 때 쓰는 이름 (snake_case 권장)</td></tr><tr><td>매개변수</td><td>함수가 받는 입력 (없으면 <code>void</code>)</td></tr><tr><td>반환값</td><td><code>return</code>으로 돌려주는 결과</td></tr></tbody></table>
+<h3>1.2 main도 함수다</h3>
+<p>지금까지 쓴 <code>main</code>도 함수입니다. <code>int</code>를 반환하며, <code>return (0)</code>은 "정상 종료"를 뜻합니다.</p>
+<pre><code class="language-c">int main(void)
+{
+    return (0);   // 0 = 성공
+}</code></pre>
+<hr />
+<h2>2부: 함수 선언·정의·호출</h2>
+<h3>2.1 세 가지 단계</h3>
+<pre><code class="language-c">#include &lt;stdio.h&gt;
+
+/* 1. 선언 (프로토타입) — "이런 함수가 있다"고 컴파일러에 알림 */
+int add(int a, int b);
+
+int main(void)
+{
+    /* 3. 호출 — 실제로 사용 */
+    int result = add(3, 5);
+    printf("%d\n", result);   // 8
+    return (0);
+}
+
+/* 2. 정의 — 함수의 실제 내용 */
+int add(int a, int b)
+{
+    return (a + b);
+}</code></pre>
+<h3>2.2 프로토타입이 왜 필요한가?</h3>
+<p>C는 위에서 아래로 읽습니다. <code>main</code>보다 아래에 정의된 함수를 <code>main</code>에서 호출하려면, 미리 <strong>프로토타입</strong>으로 알려야 합니다. 알리지 않으면 경고/에러가 발생합니다.</p>
+<pre><code class="language-c">int add(int a, int b);   // 세미콜론으로 끝남 (본문 없음)</code></pre>
+<blockquote>매개변수 이름은 프로토타입에서 생략 가능: <code>int add(int, int);</code></blockquote>
+<h3>2.3 void 활용</h3>
+<pre><code class="language-c">/* 반환값 없음 */
+void print_line(void)
+{
+    printf("----------\n");
+}
+
+/* 매개변수 없음, 반환값 있음 */
+int get_answer(void)
+{
+    return (42);
+}</code></pre>
+<p><code>return;</code>만 쓰면 (값 없이) 함수를 즉시 종료할 수 있습니다.</p>
+<hr />
+<h2>3부: 값에 의한 전달 (Pass by Value)</h2>
+<h3>3.1 복사본이 전달된다</h3>
+<p>함수에 인자를 넘기면 <strong>값이 복사</strong>됩니다. 함수 안에서 매개변수를 바꿔도 원본은 그대로입니다.</p>
+<pre><code class="language-c">void try_change(int x)
+{
+    x = 100;   // 복사본만 변경
+}
+
+int main(void)
+{
+    int a = 5;
+    try_change(a);
+    printf("%d\n", a);   // 5 (변하지 않음!)
+    return (0);
+}</code></pre>
+<h3>3.2 그럼 어떻게 원본을 바꾸나?</h3>
+<p>주소를 넘기면 됩니다. 이것이 <strong>포인터</strong>이며 5차시의 핵심 주제입니다.</p>
+<pre><code class="language-c">/* 미리보기 — 포인터로 swap (5차시 상세) */
+void swap(int *a, int *b)
+{
+    int tmp = *a;
+    *a = *b;
+    *b = tmp;
+}</code></pre>
+<blockquote>지금은 "기본 전달은 복사다"만 확실히 기억하면 됩니다.</blockquote>
+<hr />
+<h2>4부: 스택 프레임</h2>
+<h3>4.1 함수 호출과 스택</h3>
+<p>함수를 호출할 때마다 메모리의 <strong>스택(stack)</strong> 영역에 "스택 프레임"이 쌓입니다. 프레임에는 그 함수의 지역 변수와 매개변수가 담깁니다. 함수가 끝나면(<code>return</code>) 프레임이 제거됩니다.</p>
+<pre><code class="nohighlight">main() 호출       → [main 프레임]
+ add() 호출       → [main][add]
+ add() 반환       → [main]          (add 프레임 제거)
+main() 반환       → (비어 있음)</code></pre>
+<h3>4.2 지역 변수의 수명</h3>
+<p>함수 안에서 선언한 변수는 그 함수가 실행되는 동안만 살아있습니다. 함수가 끝나면 사라집니다.</p>
+<pre><code class="language-c">int make(void)
+{
+    int local = 10;   // make가 끝나면 사라짐
+    return (local);   // 값은 복사되어 반환됨 (안전)
+}</code></pre>
+<blockquote>지역 변수의 <strong>주소</strong>를 반환하면 위험합니다 (사라진 메모리를 가리킴). 5차시 포인터, 11차시 동적 메모리에서 자세히 다룹니다.</blockquote>
+<hr />
+<h2>5부: 재귀 (Recursion)</h2>
+<h3>5.1 재귀란?</h3>
+<p>함수가 자기 자신을 호출하는 것입니다. 반드시 두 가지가 필요합니다:</p>
+<ol><li><strong>종료 조건 (base case)</strong> — 더 이상 재귀하지 않고 끝나는 지점</li><li><strong>재귀 호출 (recursive case)</strong> — 자기 자신을 더 작은 문제로 호출</li></ol>
+<pre><code class="language-c">int factorial(int n)
+{
+    if (n &lt;= 1)              // 종료 조건
+        return (1);
+    return (n * factorial(n - 1));  // 재귀 호출
+}</code></pre>
+<h3>5.2 동작 추적 (factorial(4))</h3>
+<pre><code class="nohighlight">factorial(4) = 4 * factorial(3)
+             = 4 * (3 * factorial(2))
+             = 4 * (3 * (2 * factorial(1)))
+             = 4 * (3 * (2 * 1))
+             = 24</code></pre>
+<p>각 호출이 스택 프레임을 쌓고, 종료 조건에 닿으면 거꾸로 계산되며 프레임이 풀립니다.</p>
+<h3>5.3 종료 조건이 없으면?</h3>
+<p>스택 프레임이 무한히 쌓여 <strong>스택 오버플로(stack overflow)</strong>가 발생하고 프로그램이 죽습니다.</p>
+<pre><code class="language-c">int bad(int n)
+{
+    return (bad(n - 1));   // 종료 조건 없음 → 무한 재귀 → 크래시
+}</code></pre>
+<h3>5.4 반복 vs 재귀</h3>
+<table><thead><tr><th>기준</th><th>반복(for/while)</th><th>재귀</th></tr></thead><tbody><tr><td>속도/메모리</td><td>효율적</td><td>함수 호출 비용 + 스택 사용</td></tr><tr><td>가독성</td><td>단순 반복에 적합</td><td>분할 구조(트리, 분할정복)에 명료</td></tr><tr><td>위험</td><td>무한 루프</td><td>스택 오버플로</td></tr></tbody></table>
+<blockquote>같은 문제를 두 방식으로 모두 풀 수 있어야 합니다. 실습에서 직접 비교합니다.</blockquote>
+<hr />
+<h2>핵심 정리</h2>
+<ol><li>함수 = 반환타입 + 이름 + 매개변수 + 본문</li><li><code>main</code> 아래 정의된 함수는 <strong>프로토타입</strong>으로 미리 선언</li><li>인자는 <strong>값으로 복사</strong>되어 전달 — 원본은 안 바뀜</li><li>함수 호출마다 <strong>스택 프레임</strong>이 쌓이고 반환 시 제거</li><li>재귀는 <strong>종료 조건 + 재귀 호출</strong> 두 가지가 필수</li><li>종료 조건이 없으면 스택 오버플로로 크래시</li></ol>
+<hr />
+<h2>다음 차시 예고</h2>
+<p>5차시에서는 포인터 기초를 학습합니다. 메모리 주소, <code>&amp;</code>(주소 연산자), <code>*</code>(역참조 연산자)를 다루고, 오늘 미리 본 <code>swap</code> 함수를 포인터로 직접 구현합니다. "값 전달의 한계를 포인터로 넘는다"가 핵심입니다.</p>
+<div class="section-split"><h2>실습</h2><p>아래 문제를 직접 풀어본 뒤, 맨 아래 정답 코드로 확인하세요.</p></div>
+<h2>실습 목표</h2>
+<ul><li>함수를 선언·정의·호출하는 전체 흐름을 직접 작성한다.</li><li>같은 문제(팩토리얼, 피보나치)를 반복문과 재귀로 각각 구현해 비교한다.</li><li>값에 의한 전달을 코드로 확인한다.</li></ul>
+<hr />
+<h2>과제 1: 함수 기본 — 사칙연산</h2>
+<p><code>functions.c</code> 파일을 만들고 네 개의 함수를 작성하세요.</p>
+<p>요구사항:</p>
+<ul><li><code>int add(int a, int b)</code> / <code>int sub(int a, int b)</code> / <code>int mul(int a, int b)</code> / <code>int divide(int a, int b)</code></li><li>모두 프로토타입을 <code>main</code> 위에 선언, 정의는 <code>main</code> 아래</li><li><code>main</code>에서 각 함수를 호출해 결과 출력</li></ul>
+<p>출력 예시 (a=12, b=4):</p>
+<pre><code class="nohighlight">add: 16
+sub: 8
+mul: 48
+divide: 3</code></pre>
+<p>힌트:</p>
+<pre><code class="language-c">#include &lt;stdio.h&gt;
+
+int add(int a, int b);   // 프로토타입
+/* ... 나머지 프로토타입 ... */
+
+int main(void)
+{
+    int a = 12, b = 4;
+    printf("add: %d\n", add(a, b));
+    /* ... */
+    return (0);
+}
+
+int add(int a, int b)    // 정의
+{
+    return (a + b);
+}</code></pre>
+<hr />
+<h2>과제 2: 팩토리얼 — 반복 vs 재귀</h2>
+<p><code>factorial.c</code> 파일을 만들고 두 가지 버전을 모두 구현하세요.</p>
+<p>요구사항:</p>
+<ul><li><code>int fact_loop(int n)</code> — for 또는 while 반복</li><li><code>int fact_rec(int n)</code> — 재귀</li><li><code>main</code>에서 1~5에 대해 두 함수 결과가 같은지 출력</li></ul>
+<p>출력 예시:</p>
+<pre><code class="nohighlight">n=1  loop=1   rec=1
+n=2  loop=2   rec=2
+n=3  loop=6   rec=6
+n=4  loop=24  rec=24
+n=5  loop=120 rec=120</code></pre>
+<p>힌트:</p>
+<pre><code class="language-c">int fact_loop(int n)
+{
+    int result = 1;
+    for (int i = 2; i &lt;= n; i++)
+        result *= i;
+    return (result);
+}
+
+int fact_rec(int n)
+{
+    if (n &lt;= 1)
+        return (1);
+    return (n * fact_rec(n - 1));
+}</code></pre>
+<hr />
+<h2>과제 3: 피보나치 — 반복 vs 재귀</h2>
+<p><code>fibonacci.c</code> 파일을 만들고 피보나치 수열을 두 방식으로 구현하세요.</p>
+<p>수열 정의: <code>fib(0)=0</code>, <code>fib(1)=1</code>, <code>fib(n)=fib(n-1)+fib(n-2)</code></p>
+<p>요구사항:</p>
+<ul><li><code>int fib_loop(int n)</code> — 반복</li><li><code>int fib_rec(int n)</code> — 재귀</li><li><code>main</code>에서 0~10 출력</li></ul>
+<p>출력 예시:</p>
+<pre><code class="nohighlight">fib(0) = 0
+fib(1) = 1
+fib(2) = 1
+fib(3) = 2
+fib(4) = 3
+fib(5) = 5
+...
+fib(10) = 55</code></pre>
+<p>힌트 (재귀):</p>
+<pre><code class="language-c">int fib_rec(int n)
+{
+    if (n &lt; 2)
+        return (n);
+    return (fib_rec(n - 1) + fib_rec(n - 2));
+}</code></pre>
+<blockquote>생각해보기: 재귀 버전 <code>fib_rec(40)</code>은 왜 느릴까? (같은 값을 몇 번이나 다시 계산하는지 추적)</blockquote>
+<hr />
+<h2>과제 4: 값 전달 확인 (심화, 25분)</h2>
+<p><code>pass_by_value.c</code> 파일을 만들고 값에 의한 전달을 직접 확인하세요.</p>
+<p>요구사항:</p>
+<ul><li><code>void try_change(int x)</code> — 매개변수 x를 999로 바꿈</li><li><code>main</code>에서 변수 a=5를 넘기고, 호출 전후로 a를 출력</li><li>a가 변하지 <strong>않음</strong>을 확인</li></ul>
+<p>출력 예시:</p>
+<pre><code class="nohighlight">호출 전: a = 5
+함수 안: x = 999
+호출 후: a = 5   ← 변하지 않음!</code></pre>
+<p>생각해보기: 원본을 진짜로 바꾸려면 무엇이 필요할까? (답은 5차시 포인터)</p>
+<pre><code class="language-c">void try_change(int x)
+{
+    x = 999;
+    printf("함수 안: x = %d\n", x);
+}</code></pre>
+<hr />
+<h2>제출 확인 사항</h2>
+<ul><li>[ ] <code>functions.c</code> - 4개 함수, 프로토타입 분리</li><li>[ ] <code>factorial.c</code> - 반복 + 재귀, 결과 일치 확인</li><li>[ ] <code>fibonacci.c</code> - 반복 + 재귀, 0~10 출력</li><li>[ ] <code>pass_by_value.c</code> - 값 전달 확인 (심화)</li><li>[ ] 모든 파일: <code>gcc -Wall -Wextra -Werror</code> 경고 없이 컴파일</li></ul>
+<div class="section-split"><h2>정답 코드</h2><p>각 항목의 "정답 보기"를 눌러 펼치세요. 먼저 직접 풀어본 뒤 확인하는 것을 권장합니다.</p></div>
+<div class="answer"><div class="answer-head"><span class="answer-name">📄 <span class="file">factorial.c</span></span><button class="answer-toggle">정답 보기</button></div><div class="answer-body"><pre><code class="language-c">#include &lt;stdio.h&gt;
+
+int	fact_loop(int n);
+int	fact_rec(int n);
+
+int	main(void)
+{
+	int	n;
+
+	n = 1;
+	while (n &lt;= 5)
+	{
+		printf("n=%d  loop=%d  rec=%d\n", n, fact_loop(n), fact_rec(n));
+		n++;
+	}
+	return (0);
+}
+
+int	fact_loop(int n)
+{
+	int	result;
+	int	i;
+
+	result = 1;
+	i = 2;
+	while (i &lt;= n)
+	{
+		result *= i;
+		i++;
+	}
+	return (result);
+}
+
+int	fact_rec(int n)
+{
+	if (n &lt;= 1)
+		return (1);
+	return (n * fact_rec(n - 1));
+}</code></pre></div></div>
+<div class="answer"><div class="answer-head"><span class="answer-name">📄 <span class="file">fibonacci.c</span></span><button class="answer-toggle">정답 보기</button></div><div class="answer-body"><pre><code class="language-c">#include &lt;stdio.h&gt;
+
+int	fib_loop(int n);
+int	fib_rec(int n);
+
+int	main(void)
+{
+	int	n;
+
+	n = 0;
+	while (n &lt;= 10)
+	{
+		printf("fib(%d) = %d  (rec=%d)\n", n, fib_loop(n), fib_rec(n));
+		n++;
+	}
+	return (0);
+}
+
+int	fib_loop(int n)
+{
+	int	prev;
+	int	curr;
+	int	next;
+	int	i;
+
+	if (n &lt; 2)
+		return (n);
+	prev = 0;
+	curr = 1;
+	i = 2;
+	while (i &lt;= n)
+	{
+		next = prev + curr;
+		prev = curr;
+		curr = next;
+		i++;
+	}
+	return (curr);
+}
+
+int	fib_rec(int n)
+{
+	if (n &lt; 2)
+		return (n);
+	return (fib_rec(n - 1) + fib_rec(n - 2));
+}</code></pre></div></div>
+<div class="answer"><div class="answer-head"><span class="answer-name">📄 <span class="file">functions.c</span></span><button class="answer-toggle">정답 보기</button></div><div class="answer-body"><pre><code class="language-c">#include &lt;stdio.h&gt;
+
+int	add(int a, int b);
+int	sub(int a, int b);
+int	mul(int a, int b);
+int	divide(int a, int b);
+
+int	main(void)
+{
+	int	a;
+	int	b;
+
+	a = 12;
+	b = 4;
+	printf("add: %d\n", add(a, b));
+	printf("sub: %d\n", sub(a, b));
+	printf("mul: %d\n", mul(a, b));
+	printf("divide: %d\n", divide(a, b));
+	return (0);
+}
+
+int	add(int a, int b)
+{
+	return (a + b);
+}
+
+int	sub(int a, int b)
+{
+	return (a - b);
+}
+
+int	mul(int a, int b)
+{
+	return (a * b);
+}
+
+int	divide(int a, int b)
+{
+	if (b == 0)
+		return (0);
+	return (a / b);
+}</code></pre></div></div>
+<div class="answer"><div class="answer-head"><span class="answer-name">📄 <span class="file">pass_by_value.c</span></span><button class="answer-toggle">정답 보기</button></div><div class="answer-body"><pre><code class="language-c">#include &lt;stdio.h&gt;
+
+void	try_change(int x);
+
+int	main(void)
+{
+	int	a;
+
+	a = 5;
+	printf("호출 전: a = %d\n", a);
+	try_change(a);
+	printf("호출 후: a = %d\n", a);
+	return (0);
+}
+
+void	try_change(int x)
+{
+	x = 999;
+	printf("함수 안: x = %d\n", x);
+}</code></pre></div></div>
+
+      </article>
+    </main>
+    <button id="toTop" class="to-top" aria-label="맨 위로">↑</button>
+    <script>
+      document.querySelectorAll(".answer-head").forEach(function (h) {
+        h.addEventListener("click", function () {
+          var card = h.parentElement;
+          card.classList.toggle("open");
+          h.querySelector(".answer-toggle").textContent =
+            card.classList.contains("open") ? "정답 숨기기" : "정답 보기";
+        });
+      });
+      var bar = document.getElementById("readbar");
+      var toTopBtn = document.getElementById("toTop");
+      function onScroll() {
+        var y = window.scrollY || document.documentElement.scrollTop;
+        var dh = document.documentElement.scrollHeight - window.innerHeight;
+        var r = dh > 0 ? y / dh : 0;
+        bar.style.width = (Math.min(1, Math.max(0, r)) * 100) + "%";
+        toTopBtn.classList.toggle("show", y > 400);
+      }
+      window.addEventListener("scroll", onScroll, { passive: true });
+      toTopBtn.addEventListener("click", function () { window.scrollTo({ top: 0, behavior: "smooth" }); });
+      onScroll();
+    </script>
+    <script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/highlight.min.js"></script>
+    <script>
+      if (window.hljs) {
+        document.querySelectorAll("pre code:not(.nohighlight)").forEach(function (el) { hljs.highlightElement(el); });
+      }
+    </script>
+  </body>
+</html>

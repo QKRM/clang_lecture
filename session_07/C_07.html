@@ -1,0 +1,719 @@
+<!--
+Palette: Cyan & Amber (same as C_01..C_06 — consistent course design)
+Plan Summary: 16-slide interactive presentation for C Language Session 7.
+Covers C string structure (char array + \0), char array vs char pointer, string traversal via pointers, char as ASCII int, case conversion, string reverse. Practice load doubled (8 tasks).
+NEITHER Mermaid JS NOR SVG were used anywhere in this output.
+-->
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>7차시 강의자료: 문자열과 포인터</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+      @import url("https://fonts.googleapis.com/css2?family=Pretendard:wght@400;500;600;700;800;900&display=swap");
+      body {
+        font-family: "Pretendard", sans-serif;
+        background-color: #0f172a;
+        color: #f8fafc;
+        overflow-x: hidden;
+      }
+      pre, code { font-family: 'Courier New', Courier, monospace; }
+    </style>
+  </head>
+  <body class="min-h-screen flex flex-col justify-between">
+
+    <!-- Top Nav -->
+    <div class="bg-slate-900 border-b border-slate-800 px-6 py-4 flex flex-wrap items-center justify-between gap-4 sticky top-0 z-50">
+      <div class="flex items-center gap-3">
+        <span class="bg-cyan-600 text-white text-xs font-bold px-2.5 py-1 rounded-full uppercase tracking-wider">Session 7</span>
+        <h1 class="text-sm md:text-base font-bold text-slate-200">C언어 기초 — libsbs 구현 과정</h1>
+      </div>
+      <div class="flex items-center gap-4">
+        <div class="flex items-center gap-2 bg-slate-800 px-3 py-1.5 rounded-lg border border-slate-700">
+          <span class="text-xs text-slate-400">슬라이드:</span>
+          <span id="slideCounter" class="text-xs font-bold text-cyan-400">1 / 16</span>
+        </div>
+      </div>
+    </div>
+
+    <div id="deckContainer" class="flex-grow flex items-center justify-center p-4 md:p-8">
+
+      <!-- Slide 01: Cover -->
+      <div id="slide1" class="bg-gradient-to-br from-slate-900 via-cyan-950 to-slate-900 w-full max-w-5xl aspect-[16/9] rounded-3xl p-8 md:p-12 shadow-2xl border border-slate-800 flex flex-col justify-between">
+        <div class="flex justify-between items-start">
+          <span class="text-cyan-400 font-bold tracking-wider text-sm uppercase">Slide 01 / Cover</span>
+          <span class="text-slate-500 text-sm">7차시: 문자열과 포인터</span>
+        </div>
+        <div class="my-auto">
+          <span class="inline-block bg-cyan-500/20 text-cyan-300 text-xs font-extrabold px-3 py-1.5 rounded-md mb-4 border border-cyan-500/30">7차시 · 3시간 · 문자열 + \0 + 순회</span>
+          <h2 class="text-3xl md:text-5xl font-black text-white leading-tight mb-4">
+            문자열과<br /><span class="text-transparent bg-clip-text bg-gradient-to-r from-amber-400 to-orange-300">포인터</span>
+          </h2>
+          <p class="text-slate-400 text-base md:text-lg max-w-2xl">
+            C 문자열은 <code class="text-cyan-300">char</code> 배열에 <code class="text-cyan-300">\0</code>으로 끝나는 구조. 포인터로 한 글자씩 읽으며 길이·복사·뒤집기를 직접 구현합니다.
+          </p>
+        </div>
+        <div class="flex justify-between items-center text-xs text-slate-500 border-t border-slate-800/80 pt-4">
+          <span>C Language — libsbs Implementation Course</span>
+          <span>Time Frame: 3 Hours</span>
+        </div>
+      </div>
+
+      <!-- Slide 02: 오늘의 목표 -->
+      <div id="slide2" class="bg-slate-900 w-full max-w-5xl aspect-[16/9] rounded-3xl p-8 md:p-12 shadow-2xl border border-slate-800 flex flex-col justify-between hidden">
+        <div class="flex justify-between items-start">
+          <span class="text-cyan-400 font-bold tracking-wider text-sm uppercase">Slide 02 / Goal</span>
+          <span class="text-slate-500 text-sm">7차시: 문자열과 포인터</span>
+        </div>
+        <div class="my-auto">
+          <h3 class="text-2xl md:text-3xl font-bold text-white mb-6 border-b border-slate-800 pb-3">오늘의 목표</h3>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <div class="space-y-3">
+              <div class="p-4 bg-slate-800/30 rounded-xl border-l-4 border-cyan-500">
+                <h4 class="font-bold text-white text-sm mb-1">1부 — 강사 설명</h4>
+                <p class="text-slate-400 text-xs">문자열 구조, `\0`, 배열 vs 포인터, 순회, 문자=ASCII</p>
+              </div>
+              <div class="p-4 bg-slate-800/30 rounded-xl border-l-4 border-amber-500">
+                <h4 class="font-bold text-white text-sm mb-1">2부 — 직접 구현 <span class="text-amber-300">(2배 분량)</span></h4>
+                <p class="text-slate-400 text-xs">길이·출력·대문자·복사·세기·뒤집기 + 심화(모음·회문) = 8과제</p>
+              </div>
+            </div>
+            <div class="bg-slate-800/50 p-6 rounded-xl border border-slate-700">
+              <h4 class="font-bold text-amber-400 text-sm mb-3">오늘 수업이 끝나면</h4>
+              <ul class="space-y-2 text-xs text-slate-300">
+                <li class="flex items-start gap-2"><span class="text-emerald-400 font-bold mt-0.5">1</span><span>문자열 = char 배열 + `\0`을 설명한다</span></li>
+                <li class="flex items-start gap-2"><span class="text-emerald-400 font-bold mt-0.5">2</span><span>배열과 포인터 문자열을 구분한다</span></li>
+                <li class="flex items-start gap-2"><span class="text-emerald-400 font-bold mt-0.5">3</span><span><code class="text-cyan-300 bg-slate-950 px-1 rounded">while (*p)</code>로 순회한다</span></li>
+                <li class="flex items-start gap-2"><span class="text-emerald-400 font-bold mt-0.5">4</span><span>문자열을 뒤집고 변환한다</span></li>
+              </ul>
+              <div class="mt-4 bg-cyan-950/40 p-3 rounded-lg border border-cyan-500/20">
+                <p class="text-cyan-300 text-xs font-semibold">libsbs와의 연결</p>
+                <p class="text-slate-400 text-[10px] mt-1">오늘의 길이·복사·순회가 12~14차시 <code class="text-amber-300">sbs_strlen, sbs_strlcpy</code>의 토대</p>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="flex justify-between items-center text-xs text-slate-500 border-t border-slate-800/80 pt-4">
+          <span>Today's Goal</span><span>Session 7</span>
+        </div>
+      </div>
+
+      <!-- Slide 03: 문자열 구조 -->
+      <div id="slide3" class="bg-slate-900 w-full max-w-5xl aspect-[16/9] rounded-3xl p-8 md:p-12 shadow-2xl border border-slate-800 flex flex-col justify-between hidden">
+        <div class="flex justify-between items-start">
+          <span class="text-cyan-400 font-bold tracking-wider text-sm uppercase">Slide 03 / String Structure</span>
+          <span class="text-slate-500 text-sm">7차시: 문자열과 포인터</span>
+        </div>
+        <div class="my-auto">
+          <h3 class="text-2xl md:text-3xl font-bold text-white mb-4 border-b border-slate-800 pb-3">C 문자열의 정체 — char 배열 + \0</h3>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="space-y-4">
+              <div class="bg-slate-800/40 p-5 rounded-xl border border-slate-700">
+                <h4 class="font-bold text-cyan-400 text-sm mb-3">string 타입은 없다</h4>
+                <p class="text-white text-base font-semibold mb-2">문자열 = char들의 배열 + 끝의 `\0`</p>
+                <p class="text-slate-400 text-xs"><code class="text-white">"hello"</code>는 글자 5개지만 메모리는 6칸.</p>
+              </div>
+              <div class="bg-rose-950/20 p-4 rounded-xl border border-rose-500/20">
+                <p class="text-rose-400 text-xs font-semibold mb-2">\0이 없으면?</p>
+                <p class="text-slate-400 text-[10px]">끝을 몰라 출력·길이 계산이 메모리를 넘어 폭주. 모든 문자열 함수가 `\0`에서 멈춘다.</p>
+              </div>
+            </div>
+            <div>
+              <pre class="bg-slate-950 text-slate-200 p-4 rounded-xl text-[11px] leading-relaxed border border-slate-700"><code><span class="text-cyan-300">char</span> s[6] = <span class="text-emerald-300">"hello"</span>;
+
+인덱스  0   1   2   3   4   5
+값     <span class="text-amber-300">'h' 'e' 'l' 'l' 'o'</span> <span class="text-emerald-300">\0</span>
+                        ↑ 끝 표시</code></pre>
+              <div class="mt-3 bg-cyan-950/30 p-3 rounded-xl border border-cyan-500/20">
+                <p class="text-slate-400 text-[10px]"><code class="text-white">\0</code>은 값이 0인 한 바이트. 숫자 <code class="text-white">'0'</code>(48)이나 공백과 다르다.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="flex justify-between items-center text-xs text-slate-500 border-t border-slate-800/80 pt-4">
+          <span>String Structure</span><span>Session 7</span>
+        </div>
+      </div>
+
+      <!-- Slide 04: 배열 vs 포인터 -->
+      <div id="slide4" class="bg-slate-900 w-full max-w-5xl aspect-[16/9] rounded-3xl p-8 md:p-12 shadow-2xl border border-slate-800 flex flex-col justify-between hidden">
+        <div class="flex justify-between items-start">
+          <span class="text-cyan-400 font-bold tracking-wider text-sm uppercase">Slide 04 / Array vs Pointer</span>
+          <span class="text-slate-500 text-sm">7차시: 문자열과 포인터</span>
+        </div>
+        <div class="my-auto">
+          <h3 class="text-2xl md:text-3xl font-bold text-white mb-4 border-b border-slate-800 pb-3">char 배열 vs char 포인터</h3>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <pre class="bg-slate-950 text-slate-200 p-4 rounded-xl text-[11px] leading-relaxed border border-slate-700"><code><span class="text-cyan-300">char</span>  arr[] = <span class="text-emerald-300">"hello"</span>;
+<span class="text-slate-500">// 복사본 — 수정 가능</span>
+arr[0] = <span class="text-emerald-300">'H'</span>;   <span class="text-slate-500">// OK → "Hello"</span>
+
+<span class="text-cyan-300">char</span> *ptr = <span class="text-emerald-300">"hello"</span>;
+<span class="text-slate-500">// 리터럴 — 읽기 전용</span>
+ptr[0] = <span class="text-emerald-300">'H'</span>;   <span class="text-slate-500">// 위험! 크래시</span></code></pre>
+            </div>
+            <div>
+              <div class="bg-slate-950 rounded-xl border border-slate-700 overflow-hidden mb-3">
+                <table class="w-full text-xs">
+                  <thead><tr class="border-b border-slate-700 bg-slate-800/60">
+                    <th class="text-left px-3 py-1.5 text-cyan-400">구분</th>
+                    <th class="text-left px-3 py-1.5 text-amber-400">arr[]</th>
+                    <th class="text-left px-3 py-1.5 text-amber-400">*ptr</th>
+                  </tr></thead>
+                  <tbody class="divide-y divide-slate-800">
+                    <tr><td class="px-3 py-1.5 text-slate-300">메모리</td><td class="px-3 py-1.5 text-slate-400">복사</td><td class="px-3 py-1.5 text-slate-400">주소만</td></tr>
+                    <tr><td class="px-3 py-1.5 text-slate-300">수정</td><td class="px-3 py-1.5 text-emerald-300">가능</td><td class="px-3 py-1.5 text-rose-400">크래시</td></tr>
+                    <tr><td class="px-3 py-1.5 text-slate-300">용도</td><td class="px-3 py-1.5 text-slate-400">변경</td><td class="px-3 py-1.5 text-slate-400">읽기</td></tr>
+                  </tbody>
+                </table>
+              </div>
+              <div class="bg-cyan-950/30 p-3 rounded-xl border border-cyan-500/20">
+                <p class="text-cyan-300 text-xs font-semibold text-center">"바꾸면 배열, 읽으면 포인터"</p>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="flex justify-between items-center text-xs text-slate-500 border-t border-slate-800/80 pt-4">
+          <span>Array vs Pointer</span><span>Session 7</span>
+        </div>
+      </div>
+
+      <!-- Slide 05: 포인터로 순회 -->
+      <div id="slide5" class="bg-slate-900 w-full max-w-5xl aspect-[16/9] rounded-3xl p-8 md:p-12 shadow-2xl border border-slate-800 flex flex-col justify-between hidden">
+        <div class="flex justify-between items-start">
+          <span class="text-cyan-400 font-bold tracking-wider text-sm uppercase">Slide 05 / Traversal</span>
+          <span class="text-slate-500 text-sm">7차시: 문자열과 포인터</span>
+        </div>
+        <div class="my-auto">
+          <h3 class="text-2xl md:text-3xl font-bold text-white mb-4 border-b border-slate-800 pb-3">포인터로 문자열 순회 — <code class="text-amber-400">while (*p)</code></h3>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <pre class="bg-slate-950 text-slate-200 p-4 rounded-xl text-[11px] leading-relaxed border border-slate-700"><code><span class="text-cyan-300">char</span> *p = s;
+<span class="text-amber-300">while</span> (*p)        <span class="text-slate-500">// \0이면 종료</span>
+{
+    printf(<span class="text-emerald-300">"%c"</span>, *p);
+    p++;            <span class="text-slate-500">// 다음 글자</span>
+}</code></pre>
+              <p class="text-slate-500 text-[10px] mt-2"><code class="text-white">while (*p)</code> = "`*p`가 `\0`(0, 거짓)이 아닌 동안"</p>
+            </div>
+            <div class="space-y-3">
+              <div class="bg-slate-800/40 p-4 rounded-xl border border-slate-700">
+                <p class="text-amber-400 text-xs font-semibold mb-2">길이 세기</p>
+                <pre class="bg-slate-950 text-slate-200 p-2 rounded text-[10px] border border-slate-700"><code><span class="text-cyan-300">int</span> len = 0;
+<span class="text-amber-300">while</span> (s[len])
+    len++;</code></pre>
+                <p class="text-slate-400 text-[10px] mt-2">12차시 <code class="text-white">sbs_strlen</code>의 핵심.</p>
+              </div>
+              <div class="bg-cyan-950/30 p-3 rounded-xl border border-cyan-500/20">
+                <p class="text-slate-400 text-[10px]"><code class="text-white">s[i]</code>와 <code class="text-white">*(s + i)</code>는 같다(6차시). 두 방식 다 익숙해질 것.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="flex justify-between items-center text-xs text-slate-500 border-t border-slate-800/80 pt-4">
+          <span>String Traversal</span><span>Session 7</span>
+        </div>
+      </div>
+
+      <!-- Slide 06: 문자는 ASCII 정수 -->
+      <div id="slide6" class="bg-slate-900 w-full max-w-5xl aspect-[16/9] rounded-3xl p-8 md:p-12 shadow-2xl border border-slate-800 flex flex-col justify-between hidden">
+        <div class="flex justify-between items-start">
+          <span class="text-cyan-400 font-bold tracking-wider text-sm uppercase">Slide 06 / Char = ASCII</span>
+          <span class="text-slate-500 text-sm">7차시: 문자열과 포인터</span>
+        </div>
+        <div class="my-auto">
+          <h3 class="text-2xl md:text-3xl font-bold text-white mb-4 border-b border-slate-800 pb-3">문자는 숫자다 — ASCII</h3>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <pre class="bg-slate-950 text-slate-200 p-4 rounded-xl text-[11px] leading-relaxed border border-slate-700"><code><span class="text-emerald-300">'A'</span> == 65   <span class="text-emerald-300">'a'</span> == 97
+<span class="text-emerald-300">'0'</span> == 48   <span class="text-emerald-300">' '</span> == 32
+
+<span class="text-cyan-300">char</span> c = <span class="text-emerald-300">'A'</span>;
+printf(<span class="text-emerald-300">"%d\n"</span>, c);      <span class="text-slate-500">// 65</span>
+printf(<span class="text-emerald-300">"%c\n"</span>, c + 1);  <span class="text-slate-500">// B</span></code></pre>
+            </div>
+            <div class="space-y-3">
+              <div class="bg-amber-950/20 p-4 rounded-xl border border-amber-500/20">
+                <p class="text-amber-400 text-xs font-semibold mb-2">대소문자는 ±32</p>
+                <pre class="bg-slate-950 text-slate-200 p-2 rounded text-[10px] border border-slate-700"><code><span class="text-emerald-300">'a'</span> - 32 == <span class="text-emerald-300">'A'</span>
+<span class="text-emerald-300">'Z'</span> + 32 == <span class="text-emerald-300">'z'</span></code></pre>
+              </div>
+              <div class="bg-slate-800/40 p-4 rounded-xl border border-slate-700">
+                <p class="text-amber-400 text-xs font-semibold mb-2">범위 판별</p>
+                <pre class="bg-slate-950 text-slate-200 p-2 rounded text-[10px] border border-slate-700"><code><span class="text-amber-300">if</span> (c &gt;= <span class="text-emerald-300">'a'</span> &amp;&amp; c &lt;= <span class="text-emerald-300">'z'</span>)
+<span class="text-amber-300">if</span> (c &gt;= <span class="text-emerald-300">'0'</span> &amp;&amp; c &lt;= <span class="text-emerald-300">'9'</span>)</code></pre>
+                <p class="text-slate-400 text-[10px] mt-2">9차시 <code class="text-white">sbs_isalpha, sbs_toupper</code>의 토대.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="flex justify-between items-center text-xs text-slate-500 border-t border-slate-800/80 pt-4">
+          <span>Char = ASCII Integer</span><span>Session 7</span>
+        </div>
+      </div>
+
+      <!-- Slide 07: 문자열 뒤집기 -->
+      <div id="slide7" class="bg-slate-900 w-full max-w-5xl aspect-[16/9] rounded-3xl p-8 md:p-12 shadow-2xl border border-slate-800 flex flex-col justify-between hidden">
+        <div class="flex justify-between items-start">
+          <span class="text-cyan-400 font-bold tracking-wider text-sm uppercase">Slide 07 / Reverse</span>
+          <span class="text-slate-500 text-sm">7차시: 문자열과 포인터</span>
+        </div>
+        <div class="my-auto">
+          <h3 class="text-2xl md:text-3xl font-bold text-white mb-4 border-b border-slate-800 pb-3">문자열 뒤집기 — 양끝→가운데 swap</h3>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <pre class="bg-slate-950 text-slate-200 p-4 rounded-xl text-[11px] leading-relaxed border border-slate-700"><code><span class="text-cyan-300">void</span> reverse(<span class="text-cyan-300">char</span> *s)
+{
+  <span class="text-cyan-300">int</span> left = 0, right = 0;
+  <span class="text-amber-300">while</span> (s[right]) right++;
+  right--;  <span class="text-slate-500">// 마지막 글자</span>
+  <span class="text-amber-300">while</span> (left &lt; right)
+  {
+    <span class="text-cyan-300">char</span> t = s[left];
+    s[left] = s[right];
+    s[right] = t;
+    left++; right--;
+  }
+}</code></pre>
+            </div>
+            <div class="space-y-3">
+              <div class="bg-slate-950 p-3 rounded-xl border border-slate-700">
+                <pre class="text-slate-300 text-[11px]"><code><span class="text-amber-300">h e l l o</span>
+↑       ↑   left/right
+<span class="text-amber-300">o e l l h</span>  교환
+  ↑   ↑
+<span class="text-emerald-300">o l l e h</span>  완료</code></pre>
+              </div>
+              <div class="bg-rose-950/20 p-3 rounded-xl border border-rose-500/20">
+                <p class="text-slate-400 text-[10px]">배열(<code class="text-white">char arr[]</code>)에만 사용. 리터럴 포인터에 쓰면 크래시.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="flex justify-between items-center text-xs text-slate-500 border-t border-slate-800/80 pt-4">
+          <span>String Reverse</span><span>Session 7</span>
+        </div>
+      </div>
+
+      <!-- Slide 08: 자주 하는 실수 -->
+      <div id="slide8" class="bg-slate-900 w-full max-w-5xl aspect-[16/9] rounded-3xl p-8 md:p-12 shadow-2xl border border-slate-800 flex flex-col justify-between hidden">
+        <div class="flex justify-between items-start">
+          <span class="text-cyan-400 font-bold tracking-wider text-sm uppercase">Slide 08 / Pitfalls</span>
+          <span class="text-slate-500 text-sm">7차시: 문자열과 포인터</span>
+        </div>
+        <div class="my-auto">
+          <h3 class="text-2xl md:text-3xl font-bold text-white mb-4 border-b border-slate-800 pb-3">자주 하는 실수</h3>
+          <div class="bg-slate-950 rounded-xl border border-slate-700 overflow-hidden mb-4">
+            <table class="w-full text-xs">
+              <thead><tr class="border-b border-slate-700 bg-slate-800/60">
+                <th class="text-left px-4 py-2 text-rose-400">실수</th>
+                <th class="text-left px-4 py-2 text-emerald-400">올바른 방법</th>
+              </tr></thead>
+              <tbody class="divide-y divide-slate-800">
+                <tr><td class="px-4 py-2 text-slate-300">복사 후 `\0` 안 붙임</td><td class="px-4 py-2 text-slate-400"><code class="text-emerald-300">dst[i] = '\0';</code> 마지막에</td></tr>
+                <tr><td class="px-4 py-2 text-slate-300">리터럴 포인터 수정</td><td class="px-4 py-2 text-slate-400"><code class="text-emerald-300">char arr[]</code>로 선언</td></tr>
+                <tr><td class="px-4 py-2 text-slate-300">배열 크기 = 글자 수</td><td class="px-4 py-2 text-slate-400">글자 수 <span class="text-emerald-300">+1</span> (\0 자리)</td></tr>
+                <tr><td class="px-4 py-2 text-slate-300">뒤집기 right=len</td><td class="px-4 py-2 text-slate-400">right = <span class="text-emerald-300">len-1</span> (마지막 글자)</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="bg-cyan-950/30 p-4 rounded-xl border border-cyan-500/20">
+            <p class="text-cyan-300 text-xs font-semibold mb-1">\0 = 보이지 않는 종결자</p>
+            <p class="text-slate-400 text-[10px]">문자열을 만들거나 복사할 때 항상 마지막 `\0`을 챙겨야 합니다. C 문자열 버그의 절반이 여기서 옵니다.</p>
+          </div>
+        </div>
+        <div class="flex justify-between items-center text-xs text-slate-500 border-t border-slate-800/80 pt-4">
+          <span>Common Pitfalls</span><span>Session 7</span>
+        </div>
+      </div>
+
+      <!-- Slide 09: 실습 안내 -->
+      <div id="slide9" class="bg-slate-900 w-full max-w-5xl aspect-[16/9] rounded-3xl p-8 md:p-12 shadow-2xl border border-slate-800 flex flex-col justify-between hidden">
+        <div class="flex justify-between items-start">
+          <span class="text-cyan-400 font-bold tracking-wider text-sm uppercase">Slide 09 / Practice Overview</span>
+          <span class="text-slate-500 text-sm">7차시: 문자열과 포인터</span>
+        </div>
+        <div class="my-auto">
+          <h3 class="text-2xl md:text-3xl font-bold text-white mb-4 border-b border-slate-800 pb-3">실습 8과제 <span class="text-amber-400 text-base">(2배 분량)</span></h3>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="bg-slate-800/40 p-4 rounded-xl border border-slate-700">
+              <h4 class="font-bold text-cyan-400 text-sm mb-3">기본 6과제</h4>
+              <ul class="space-y-1.5 text-[11px] text-slate-300">
+                <li class="flex gap-2"><span class="text-emerald-400">①</span><code class="text-cyan-300">str_length</code> — 길이</li>
+                <li class="flex gap-2"><span class="text-emerald-400">②</span><code class="text-cyan-300">str_print</code> — 순회 출력</li>
+                <li class="flex gap-2"><span class="text-emerald-400">③</span><code class="text-cyan-300">to_upper</code> — 대문자</li>
+                <li class="flex gap-2"><span class="text-emerald-400">④</span><code class="text-cyan-300">str_copy</code> — 복사</li>
+                <li class="flex gap-2"><span class="text-emerald-400">⑤</span><code class="text-cyan-300">count_char</code> — 문자 세기</li>
+                <li class="flex gap-2"><span class="text-emerald-400">⑥</span><code class="text-cyan-300">str_reverse</code> — 뒤집기</li>
+              </ul>
+            </div>
+            <div class="space-y-3">
+              <div class="bg-amber-950/20 p-4 rounded-xl border border-amber-500/20">
+                <h4 class="font-bold text-amber-400 text-sm mb-3">심화 2과제</h4>
+                <ul class="space-y-1.5 text-[11px] text-slate-300">
+                  <li class="flex gap-2"><span class="text-amber-400">★</span><code class="text-cyan-300">count_vowels</code> — 모음 세기</li>
+                  <li class="flex gap-2"><span class="text-amber-400">★</span><code class="text-cyan-300">palindrome</code> — 회문 판별</li>
+                </ul>
+              </div>
+              <div class="bg-cyan-950/30 p-3 rounded-xl border border-cyan-500/20">
+                <p class="text-slate-400 text-[10px]">기본을 먼저 끝내고 심화로. 모두 <code class="text-amber-300">char arr[]</code>로 만들고 표준 함수(strlen 등) 없이 직접 구현.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="flex justify-between items-center text-xs text-slate-500 border-t border-slate-800/80 pt-4">
+          <span>Practice Overview</span><span>Session 7</span>
+        </div>
+      </div>
+
+      <!-- Slide 10: 실습 1-2 -->
+      <div id="slide10" class="bg-slate-900 w-full max-w-5xl aspect-[16/9] rounded-3xl p-8 md:p-12 shadow-2xl border border-slate-800 flex flex-col justify-between hidden">
+        <div class="flex justify-between items-start">
+          <span class="text-cyan-400 font-bold tracking-wider text-sm uppercase">Slide 10 / Practice 1-2</span>
+          <span class="text-slate-500 text-sm">7차시: 문자열과 포인터</span>
+        </div>
+        <div class="my-auto">
+          <h3 class="text-2xl md:text-3xl font-bold text-white mb-4 border-b border-slate-800 pb-3">실습 ①② — 길이 &amp; 순회 출력</h3>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <span class="text-cyan-400 text-xs font-bold block mb-2">① str_length.c</span>
+              <pre class="bg-slate-950 text-slate-200 p-3 rounded-xl text-[11px] leading-relaxed border border-slate-700"><code><span class="text-cyan-300">int</span> str_length(<span class="text-cyan-300">char</span> *s)
+{
+    <span class="text-cyan-300">int</span> len = 0;
+    <span class="text-amber-300">while</span> (s[len])
+        len++;
+    <span class="text-amber-300">return</span> (len);
+}</code></pre>
+              <p class="text-slate-500 text-[10px] mt-2">strlen 없이. "hello"→5, ""→0</p>
+            </div>
+            <div>
+              <span class="text-cyan-400 text-xs font-bold block mb-2">② str_print.c</span>
+              <pre class="bg-slate-950 text-slate-200 p-3 rounded-xl text-[11px] leading-relaxed border border-slate-700"><code><span class="text-cyan-300">void</span> str_print(<span class="text-cyan-300">char</span> *s)
+{
+    <span class="text-cyan-300">char</span> *p = s;
+    <span class="text-amber-300">while</span> (*p)
+    {
+        printf(<span class="text-emerald-300">"%c"</span>, *p);
+        p++;
+    }
+    printf(<span class="text-emerald-300">"\n"</span>);
+}</code></pre>
+              <p class="text-slate-500 text-[10px] mt-2"><code class="text-white">%c</code>만 사용 (<code class="text-white">%s</code> 금지)</p>
+            </div>
+          </div>
+        </div>
+        <div class="flex justify-between items-center text-xs text-slate-500 border-t border-slate-800/80 pt-4">
+          <span>Practice 1-2</span><span>Session 7</span>
+        </div>
+      </div>
+
+      <!-- Slide 11: 실습 3-4 -->
+      <div id="slide11" class="bg-slate-900 w-full max-w-5xl aspect-[16/9] rounded-3xl p-8 md:p-12 shadow-2xl border border-slate-800 flex flex-col justify-between hidden">
+        <div class="flex justify-between items-start">
+          <span class="text-cyan-400 font-bold tracking-wider text-sm uppercase">Slide 11 / Practice 3-4</span>
+          <span class="text-slate-500 text-sm">7차시: 문자열과 포인터</span>
+        </div>
+        <div class="my-auto">
+          <h3 class="text-2xl md:text-3xl font-bold text-white mb-4 border-b border-slate-800 pb-3">실습 ③④ — 대문자 &amp; 복사</h3>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <span class="text-cyan-400 text-xs font-bold block mb-2">③ to_upper.c</span>
+              <pre class="bg-slate-950 text-slate-200 p-3 rounded-xl text-[11px] leading-relaxed border border-slate-700"><code><span class="text-cyan-300">void</span> to_upper(<span class="text-cyan-300">char</span> *s)
+{
+  <span class="text-cyan-300">int</span> i = 0;
+  <span class="text-amber-300">while</span> (s[i])
+  {
+    <span class="text-amber-300">if</span> (s[i]&gt;=<span class="text-emerald-300">'a'</span> &amp;&amp; s[i]&lt;=<span class="text-emerald-300">'z'</span>)
+      s[i] = s[i] - 32;
+    i++;
+  }
+}</code></pre>
+              <p class="text-slate-500 text-[10px] mt-2">"Hello,42!"→"HELLO,42!"</p>
+            </div>
+            <div>
+              <span class="text-cyan-400 text-xs font-bold block mb-2">④ str_copy.c</span>
+              <pre class="bg-slate-950 text-slate-200 p-3 rounded-xl text-[11px] leading-relaxed border border-slate-700"><code><span class="text-cyan-300">void</span> str_copy(<span class="text-cyan-300">char</span> *dst,
+              <span class="text-cyan-300">char</span> *src)
+{
+  <span class="text-cyan-300">int</span> i = 0;
+  <span class="text-amber-300">while</span> (src[i])
+  {
+    dst[i] = src[i];
+    i++;
+  }
+  dst[i] = <span class="text-emerald-300">'\0'</span>;  <span class="text-slate-500">// 필수!</span>
+}</code></pre>
+              <p class="text-slate-500 text-[10px] mt-2">strcpy 금지. `\0`까지 복사</p>
+            </div>
+          </div>
+        </div>
+        <div class="flex justify-between items-center text-xs text-slate-500 border-t border-slate-800/80 pt-4">
+          <span>Practice 3-4</span><span>Session 7</span>
+        </div>
+      </div>
+
+      <!-- Slide 12: 실습 5-6 -->
+      <div id="slide12" class="bg-slate-900 w-full max-w-5xl aspect-[16/9] rounded-3xl p-8 md:p-12 shadow-2xl border border-slate-800 flex flex-col justify-between hidden">
+        <div class="flex justify-between items-start">
+          <span class="text-cyan-400 font-bold tracking-wider text-sm uppercase">Slide 12 / Practice 5-6</span>
+          <span class="text-slate-500 text-sm">7차시: 문자열과 포인터</span>
+        </div>
+        <div class="my-auto">
+          <h3 class="text-2xl md:text-3xl font-bold text-white mb-4 border-b border-slate-800 pb-3">실습 ⑤⑥ — 문자 세기 &amp; 뒤집기</h3>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <span class="text-cyan-400 text-xs font-bold block mb-2">⑤ count_char.c</span>
+              <pre class="bg-slate-950 text-slate-200 p-3 rounded-xl text-[11px] leading-relaxed border border-slate-700"><code><span class="text-cyan-300">int</span> count_char(<span class="text-cyan-300">char</span> *s,
+               <span class="text-cyan-300">char</span> t)
+{
+  <span class="text-cyan-300">int</span> n = 0, i = 0;
+  <span class="text-amber-300">while</span> (s[i])
+  {
+    <span class="text-amber-300">if</span> (s[i] == t) n++;
+    i++;
+  }
+  <span class="text-amber-300">return</span> (n);
+}</code></pre>
+              <p class="text-slate-500 text-[10px] mt-2">"banana"의 'a'→3</p>
+            </div>
+            <div>
+              <span class="text-cyan-400 text-xs font-bold block mb-2">⑥ str_reverse.c</span>
+              <pre class="bg-slate-950 text-slate-200 p-3 rounded-xl text-[11px] leading-relaxed border border-slate-700"><code><span class="text-slate-500">// 양끝 → 가운데 swap</span>
+<span class="text-amber-300">while</span> (s[right]) right++;
+right--;
+<span class="text-amber-300">while</span> (left &lt; right)
+{
+  t = s[left];
+  s[left] = s[right];
+  s[right] = t;
+  left++; right--;
+}</code></pre>
+              <p class="text-slate-500 text-[10px] mt-2">"hello"→"olleh" (제자리)</p>
+            </div>
+          </div>
+        </div>
+        <div class="flex justify-between items-center text-xs text-slate-500 border-t border-slate-800/80 pt-4">
+          <span>Practice 5-6</span><span>Session 7</span>
+        </div>
+      </div>
+
+      <!-- Slide 13: 심화 실습 7-8 -->
+      <div id="slide13" class="bg-slate-900 w-full max-w-5xl aspect-[16/9] rounded-3xl p-8 md:p-12 shadow-2xl border border-slate-800 flex flex-col justify-between hidden">
+        <div class="flex justify-between items-start">
+          <span class="text-cyan-400 font-bold tracking-wider text-sm uppercase">Slide 13 / Advanced 7-8</span>
+          <span class="text-slate-500 text-sm">7차시: 문자열과 포인터</span>
+        </div>
+        <div class="my-auto">
+          <h3 class="text-2xl md:text-3xl font-bold text-white mb-4 border-b border-slate-800 pb-3">심화 ⑦⑧ — 모음 세기 &amp; 회문</h3>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <span class="text-amber-400 text-xs font-bold block mb-2">⑦ count_vowels.c</span>
+              <pre class="bg-slate-950 text-slate-200 p-3 rounded-xl text-[11px] leading-relaxed border border-slate-700"><code><span class="text-cyan-300">int</span> is_vowel(<span class="text-cyan-300">char</span> c)
+{
+  <span class="text-amber-300">if</span> (c&gt;=<span class="text-emerald-300">'A'</span> &amp;&amp; c&lt;=<span class="text-emerald-300">'Z'</span>)
+    c = c + 32;  <span class="text-slate-500">// 통일</span>
+  <span class="text-amber-300">return</span> (c==<span class="text-emerald-300">'a'</span>||c==<span class="text-emerald-300">'e'</span>||
+    c==<span class="text-emerald-300">'i'</span>||c==<span class="text-emerald-300">'o'</span>||c==<span class="text-emerald-300">'u'</span>);
+}</code></pre>
+              <p class="text-slate-500 text-[10px] mt-2">"Hello World"→3</p>
+            </div>
+            <div>
+              <span class="text-amber-400 text-xs font-bold block mb-2">⑧ palindrome.c</span>
+              <pre class="bg-slate-950 text-slate-200 p-3 rounded-xl text-[11px] leading-relaxed border border-slate-700"><code><span class="text-amber-300">while</span> (left &lt; right)
+{
+  <span class="text-amber-300">if</span> (s[left] != s[right])
+    <span class="text-amber-300">return</span> (0);
+  left++; right--;
+}
+<span class="text-amber-300">return</span> (1);</code></pre>
+              <p class="text-slate-500 text-[10px] mt-2">"level"→회문, "hello"→아님</p>
+            </div>
+          </div>
+        </div>
+        <div class="flex justify-between items-center text-xs text-slate-500 border-t border-slate-800/80 pt-4">
+          <span>Advanced Practice 7-8</span><span>Session 7</span>
+        </div>
+      </div>
+
+      <!-- Slide 14: 핵심 정리 -->
+      <div id="slide14" class="bg-slate-900 w-full max-w-5xl aspect-[16/9] rounded-3xl p-8 md:p-12 shadow-2xl border border-slate-800 flex flex-col justify-between hidden">
+        <div class="flex justify-between items-start">
+          <span class="text-cyan-400 font-bold tracking-wider text-sm uppercase">Slide 14 / Summary</span>
+          <span class="text-slate-500 text-sm">7차시: 문자열과 포인터</span>
+        </div>
+        <div class="my-auto">
+          <h3 class="text-2xl md:text-3xl font-bold text-white mb-5 border-b border-slate-800 pb-3">7차시 핵심 정리</h3>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+            <div class="space-y-2.5">
+              <div class="flex gap-3 items-start p-3 bg-slate-800/30 rounded-xl">
+                <span class="bg-cyan-600 text-white text-sm font-black w-7 h-7 rounded-full flex items-center justify-center shrink-0">1</span>
+                <div><p class="text-white text-sm font-semibold">문자열 = char 배열 + `\0`</p><p class="text-slate-400 text-xs mt-0.5">"hello"는 6바이트</p></div>
+              </div>
+              <div class="flex gap-3 items-start p-3 bg-slate-800/30 rounded-xl">
+                <span class="bg-cyan-600 text-white text-sm font-black w-7 h-7 rounded-full flex items-center justify-center shrink-0">2</span>
+                <div><p class="text-white text-sm font-semibold">배열은 수정 가능, 리터럴 포인터는 읽기 전용</p><p class="text-slate-400 text-xs mt-0.5">바꾸면 배열</p></div>
+              </div>
+              <div class="flex gap-3 items-start p-3 bg-slate-800/30 rounded-xl">
+                <span class="bg-cyan-600 text-white text-sm font-black w-7 h-7 rounded-full flex items-center justify-center shrink-0">3</span>
+                <div><p class="text-white text-sm font-semibold"><code class="text-cyan-300">while (*p)</code>로 `\0`까지 순회</p><p class="text-slate-400 text-xs mt-0.5">길이를 몰라도 됨</p></div>
+              </div>
+            </div>
+            <div class="space-y-2.5">
+              <div class="flex gap-3 items-start p-3 bg-slate-800/30 rounded-xl">
+                <span class="bg-amber-500 text-white text-sm font-black w-7 h-7 rounded-full flex items-center justify-center shrink-0">4</span>
+                <div><p class="text-white text-sm font-semibold">문자는 ASCII 정수 — 대소문자 ±32</p><p class="text-slate-400 text-xs mt-0.5">범위 판별로 분류</p></div>
+              </div>
+              <div class="flex gap-3 items-start p-3 bg-slate-800/30 rounded-xl">
+                <span class="bg-amber-500 text-white text-sm font-black w-7 h-7 rounded-full flex items-center justify-center shrink-0">5</span>
+                <div><p class="text-white text-sm font-semibold">복사 시 `\0`을 꼭 붙인다</p><p class="text-slate-400 text-xs mt-0.5">뒤집기는 양끝→가운데</p></div>
+              </div>
+              <div class="bg-cyan-950/30 p-3 rounded-xl border border-cyan-500/20">
+                <p class="text-cyan-300 text-xs font-semibold">다음 차시 예고</p>
+                <p class="text-slate-400 text-[10px] mt-1">8차시: 구조체와 typedef — 데이터를 묶고, `->`로 접근, 학생 관리 프로그램</p>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="flex justify-between items-center text-xs text-slate-500 border-t border-slate-800/80 pt-4">
+          <span>Session 7 — Key Takeaways</span><span>Session 7</span>
+        </div>
+      </div>
+
+      <!-- Slide 15: 제출 체크 -->
+      <div id="slide15" class="bg-slate-900 w-full max-w-5xl aspect-[16/9] rounded-3xl p-8 md:p-12 shadow-2xl border border-slate-800 flex flex-col justify-between hidden">
+        <div class="flex justify-between items-start">
+          <span class="text-cyan-400 font-bold tracking-wider text-sm uppercase">Slide 15 / Checklist</span>
+          <span class="text-slate-500 text-sm">7차시: 문자열과 포인터</span>
+        </div>
+        <div class="my-auto">
+          <h3 class="text-2xl md:text-3xl font-bold text-white mb-4 border-b border-slate-800 pb-3">제출 확인 (8과제)</h3>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="space-y-3">
+              <div class="bg-slate-800/40 p-4 rounded-xl border border-slate-700">
+                <h4 class="font-bold text-amber-400 text-sm mb-3">파일 8개</h4>
+                <ul class="space-y-1 text-[10px] text-slate-300">
+                  <li class="flex gap-2"><span class="text-emerald-400">✓</span><code class="text-cyan-300">str_length / str_print / to_upper</code></li>
+                  <li class="flex gap-2"><span class="text-emerald-400">✓</span><code class="text-cyan-300">str_copy / count_char / str_reverse</code></li>
+                  <li class="flex gap-2"><span class="text-amber-400">★</span><code class="text-cyan-300">count_vowels / palindrome</code></li>
+                </ul>
+              </div>
+              <div class="bg-slate-800/40 p-3 rounded-xl border border-slate-700 text-[10px] text-slate-400">
+                모든 파일: <code class="text-amber-300">gcc -Wall -Wextra -Werror</code> 경고 없이 컴파일
+              </div>
+            </div>
+            <div class="space-y-3">
+              <div class="bg-rose-950/20 p-4 rounded-xl border border-rose-500/20">
+                <h4 class="font-bold text-rose-400 text-sm mb-2">자주 막히는 부분</h4>
+                <div class="space-y-1.5 text-[10px] text-slate-300">
+                  <div><p class="font-semibold text-slate-200">출력에 쓰레기?</p><p class="text-slate-400">`\0` 누락. 배열 크기 글자+1</p></div>
+                  <div><p class="font-semibold text-slate-200">수정 시 크래시?</p><p class="text-slate-400">리터럴 포인터 → char arr[]</p></div>
+                  <div><p class="font-semibold text-slate-200">변환 안 됨?</p><p class="text-slate-400">±32 방향 확인</p></div>
+                </div>
+              </div>
+              <div class="bg-cyan-950/30 p-3 rounded-xl border border-cyan-500/20 text-center">
+                <p class="text-cyan-300 text-sm font-bold">"문자열은 \0까지가 전부다"</p>
+                <p class="text-slate-400 text-[10px] mt-1">12~14차시 sbs_str* 함수로 직결</p>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="flex justify-between items-center text-xs text-slate-500 border-t border-slate-800/80 pt-4">
+          <span>Session 7 Checklist</span><span>Session 7</span>
+        </div>
+      </div>
+
+      <!-- Slide 16: Q&A -->
+      <div id="slide16" class="bg-slate-900 w-full max-w-5xl aspect-[16/9] rounded-3xl p-8 md:p-12 shadow-2xl border border-slate-800 flex flex-col justify-between hidden">
+        <div class="flex justify-between items-start">
+          <span class="text-cyan-400 font-bold tracking-wider text-sm uppercase">Slide 16 / Q&amp;A</span>
+          <span class="text-slate-500 text-sm">7차시: 문자열과 포인터</span>
+        </div>
+        <div class="my-auto text-center">
+          <div class="text-4xl mb-4 font-bold text-cyan-400">?</div>
+          <h3 class="text-3xl font-black text-white mb-4">Q&amp;A 및 실습 점검</h3>
+          <p class="text-slate-400 text-sm max-w-lg mx-auto mb-6">오늘 다룬 문자열 구조, 포인터 순회, 대소문자 변환에서 막히는 부분을 함께 해결합니다.</p>
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-4 max-w-2xl mx-auto">
+            <div class="bg-slate-800/50 px-4 py-3 rounded-xl border border-slate-700 text-xs text-slate-300">
+              <p class="font-bold text-slate-200 mb-1">\0이 왜 필요해요?</p>
+              <p class="text-[10px]">문자열의 끝 표시. 없으면 어디까지인지 모름</p>
+            </div>
+            <div class="bg-slate-800/50 px-4 py-3 rounded-xl border border-slate-700 text-xs text-slate-300">
+              <p class="font-bold text-slate-200 mb-1">arr[]와 *ptr 차이는?</p>
+              <p class="text-[10px]">배열은 복사본(수정OK), 포인터는 읽기 전용</p>
+            </div>
+            <div class="bg-slate-800/50 px-4 py-3 rounded-xl border border-slate-700 text-xs text-slate-300">
+              <p class="font-bold text-slate-200 mb-1">문자를 어떻게 계산해요?</p>
+              <p class="text-[10px]">문자는 ASCII 숫자. 'a'-32='A'</p>
+            </div>
+          </div>
+          <div class="mt-6 inline-block bg-slate-800/50 px-6 py-3 rounded-full border border-slate-700 text-xs text-cyan-300 font-medium">
+            "문자열을 손으로 순회해본 사람이 sbs_str* 함수를 만든다."
+          </div>
+        </div>
+        <div class="flex justify-between items-center text-xs text-slate-500 border-t border-slate-800/80 pt-4">
+          <span>Session 7 Completion</span><span>Session 7</span>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Bottom Nav -->
+    <div class="bg-slate-950 border-t border-slate-800 px-6 py-4 flex items-center justify-between">
+      <button id="prevBtn" onclick="prevSlide()" class="bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold px-4 py-2 rounded-lg transition-colors border border-slate-700">&larr; 이전 슬라이드</button>
+      <div class="hidden md:flex gap-1.5" id="dotsContainer"></div>
+      <button id="nextBtn" onclick="nextSlide()" class="bg-cyan-600 hover:bg-cyan-700 text-white text-xs font-semibold px-4 py-2 rounded-lg transition-colors">다음 슬라이드 &rarr;</button>
+    </div>
+
+    <script>
+      const totalSlides = 16;
+      let currentSlide = 1;
+
+      function updateSlideVisibility() {
+        for (let i = 1; i <= totalSlides; i++) {
+          const slide = document.getElementById("slide" + i);
+          if (i === currentSlide) slide.classList.remove("hidden");
+          else slide.classList.add("hidden");
+        }
+        document.getElementById("slideCounter").innerText = currentSlide + " / " + totalSlides;
+        updateDots();
+      }
+
+      function nextSlide() { if (currentSlide < totalSlides) { currentSlide++; updateSlideVisibility(); } }
+      function prevSlide() { if (currentSlide > 1) { currentSlide--; updateSlideVisibility(); } }
+      function jumpToSlide(index) { currentSlide = index; updateSlideVisibility(); }
+
+      function buildDots() {
+        const container = document.getElementById("dotsContainer");
+        container.innerHTML = "";
+        for (let i = 1; i <= totalSlides; i++) {
+          const dot = document.createElement("button");
+          dot.id = "dot" + i;
+          dot.onclick = () => jumpToSlide(i);
+          dot.className = "w-2 h-2 rounded-full transition-colors";
+          container.appendChild(dot);
+        }
+      }
+
+      function updateDots() {
+        for (let i = 1; i <= totalSlides; i++) {
+          const dot = document.getElementById("dot" + i);
+          if (!dot) continue;
+          dot.className = i === currentSlide
+            ? "w-2 h-2 rounded-full transition-colors bg-cyan-500"
+            : "w-2 h-2 rounded-full transition-colors bg-slate-700 hover:bg-slate-500";
+        }
+      }
+
+      document.addEventListener("keydown", function(e) {
+        if (e.key === "ArrowRight" || e.key === " ") nextSlide();
+        if (e.key === "ArrowLeft") prevSlide();
+      });
+
+      buildDots();
+      updateSlideVisibility();
+    </script>
+  </body>
+</html>

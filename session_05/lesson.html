@@ -1,0 +1,399 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>5차시 · 포인터 기초 — C언어 입문 강의</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/styles/atom-one-dark.min.css" />
+    <link rel="stylesheet" href="../lesson.css" />
+  </head>
+  <body>
+    <div id="readbar" class="readbar"></div>
+    <nav class="topnav">
+      <a class="back" href="../index.html">← 강의 목록</a>
+      <span class="crumb">C언어 입문 강의 · 5 / 16</span>
+    </nav>
+    <header class="lesson-hero">
+      <div class="lesson-hero-inner">
+        <span class="badge">C 기초 · 5차시</span>
+        <h1>포인터 기초</h1>
+      </div>
+    </header>
+    <main class="wrap">
+      <article class="md">
+<h2>학습 목표</h2>
+<ol><li>메모리와 주소의 개념을 설명할 수 있다.</li><li><code>&amp;</code>(주소 연산자)와 <code>*</code>(역참조 연산자)를 사용할 수 있다.</li><li>포인터를 선언하고 초기화할 수 있다.</li><li>포인터를 통해 원본 값을 읽고 수정할 수 있다.</li><li><code>swap</code> 함수를 포인터로 구현할 수 있다.</li></ol>
+<hr />
+<h2>1부: 메모리와 주소</h2>
+<h3>1.1 변수는 메모리 어딘가에 산다</h3>
+<p>변수를 선언하면 메모리(RAM)에 공간이 생기고, 그 공간에는 <strong>주소(address)</strong> 가 있습니다. 주소는 메모리의 번지수입니다.</p>
+<pre><code class="language-c">int n = 42;</code></pre>
+<p><code>n</code>이라는 이름은 "42가 들어있는 어떤 주소"를 가리킵니다. 우리가 <code>n</code>을 쓰면 컴파일러가 그 주소에서 값을 꺼냅니다.</p>
+<h3>1.2 주소 연산자 <code>&amp;</code></h3>
+<p>변수 앞에 <code>&amp;</code>를 붙이면 그 변수의 <strong>주소</strong>를 얻습니다.</p>
+<pre><code class="language-c">int n = 42;
+printf("%p\n", (void *)&amp;n);   // n의 주소 (예: 0x7ffe...)</code></pre>
+<blockquote>3차시 실습(숫자 맞추기 게임)에서 쓴 <code>scanf("%d", &amp;guess)</code>의 <code>&amp;</code>가 바로 이것입니다. "값을 저장할 주소"를 넘긴 것. (<code>scanf</code>는 입력받은 값을 그 주소에 직접 써넣습니다.)</blockquote>
+<hr />
+<h2>2부: 포인터 선언과 역참조</h2>
+<h3>2.1 포인터란?</h3>
+<p><strong>주소를 담는 변수</strong>입니다. 타입 뒤에 <code>*</code>를 붙여 선언합니다.</p>
+<pre><code class="language-c">int n = 42;
+int *p;      // int를 가리키는 포인터
+p = &amp;n;      // p에 n의 주소를 저장</code></pre>
+<table><thead><tr><th>표현</th><th>의미</th></tr></thead><tbody><tr><td><code>int *p;</code></td><td><code>p</code>는 int를 가리키는 포인터</td></tr><tr><td><code>&amp;n</code></td><td><code>n</code>의 주소</td></tr><tr><td><code>p = &amp;n;</code></td><td><code>p</code>가 <code>n</code>을 가리킴</td></tr></tbody></table>
+<h3>2.2 역참조 연산자 <code>*</code></h3>
+<p>포인터 앞에 <code>*</code>를 붙이면 <strong>그 주소에 있는 값</strong>에 접근합니다. 읽기도 쓰기도 됩니다.</p>
+<pre><code class="language-c">int n = 42;
+int *p = &amp;n;
+
+printf("%d\n", *p);   // 42 (p가 가리키는 값을 읽음)
+*p = 100;             // p가 가리키는 곳에 100을 씀
+printf("%d\n", n);    // 100 (n이 바뀜!)</code></pre>
+<p><code>*p</code>와 <code>n</code>은 <strong>같은 메모리</strong>를 가리킵니다. 하나를 바꾸면 둘 다 바뀐 것처럼 보입니다.</p>
+<h3>2.3 <code>*</code>의 두 가지 얼굴</h3>
+<pre><code class="language-c">int *p;     // 선언: "p는 포인터다"
+*p = 5;     // 사용: "p가 가리키는 곳에 5"</code></pre>
+<p>선언할 때의 <code>*</code>와 사용할 때의 <code>*</code>는 문법적으로 다른 역할입니다. 헷갈리지 마세요.</p>
+<hr />
+<h2>3부: 포인터로 원본 바꾸기</h2>
+<h3>3.1 4차시의 한계를 넘다</h3>
+<p>4차시에서 값 전달은 <strong>복사</strong>라서 함수가 원본을 못 바꿨습니다. 주소를 넘기면 함수가 원본에 직접 접근할 수 있습니다.</p>
+<pre><code class="language-c">void try_change(int x)   { x = 100; }       // 복사 — 원본 안 바뀜
+void real_change(int *p) { *p = 100; }       // 주소 — 원본 바뀜!
+
+int main(void)
+{
+    int a = 5;
+    try_change(a);
+    printf("%d\n", a);    // 5
+    real_change(&amp;a);
+    printf("%d\n", a);    // 100
+    return (0);
+}</code></pre>
+<h3>3.2 swap — 포인터의 대표 예제</h3>
+<p>두 변수의 값을 맞바꾸려면 두 주소를 넘겨야 합니다.</p>
+<pre><code class="language-c">void swap(int *a, int *b)
+{
+    int tmp = *a;   // a가 가리키는 값을 보관
+    *a = *b;        // b의 값을 a 자리에
+    *b = tmp;       // 보관한 값을 b 자리에
+}
+
+int main(void)
+{
+    int x = 3, y = 7;
+    swap(&amp;x, &amp;y);          // 주소를 넘김
+    printf("%d %d\n", x, y);   // 7 3
+    return (0);
+}</code></pre>
+<blockquote>값으로 넘긴 swap은 동작하지 않습니다. 반드시 <strong>주소</strong>(<code>&amp;x</code>, <code>&amp;y</code>)를 넘기고, 함수는 <strong>포인터</strong>(<code>int *</code>)로 받습니다.</blockquote>
+<hr />
+<h2>4부: 포인터 안전과 NULL</h2>
+<h3>4.1 초기화 안 한 포인터는 위험</h3>
+<p>어디를 가리키는지 모르는 포인터를 역참조하면 프로그램이 죽습니다 (segmentation fault).</p>
+<pre><code class="language-c">int *p;       // 쓰레기 주소
+*p = 5;       // 위험! 어딘지 모를 곳에 씀 → 크래시</code></pre>
+<h3>4.2 NULL 포인터</h3>
+<p>"아무 곳도 가리키지 않음"을 나타내는 값이 <code>NULL</code>입니다. 초기화할 때 안전하게 씁니다.</p>
+<pre><code class="language-c">int *p = NULL;   // 아무것도 안 가리킴
+
+if (p != NULL)   // 쓰기 전에 확인하는 습관
+    *p = 5;</code></pre>
+<blockquote>libsbs의 <code>malloc</code> 계열 함수는 실패 시 <code>NULL</code>을 반환합니다. NULL 체크는 메모리 함수 구현(10~11차시)의 필수 습관입니다.</blockquote>
+<h3>4.3 포인터도 타입이 있다</h3>
+<p><code>int *</code>는 int를, <code>char *</code>는 char를 가리킵니다. 타입이 맞아야 역참조 크기가 맞습니다. 7차시 문자열에서 <code>char *</code>를 본격적으로 다룹니다.</p>
+<hr />
+<h2>핵심 정리</h2>
+<ol><li>모든 변수는 메모리에 <strong>주소</strong>를 가진다</li><li><code>&amp;n</code> = n의 주소, <code>*p</code> = p가 가리키는 값</li><li>포인터는 <strong>주소를 담는 변수</strong> (<code>int *p;</code>)</li><li><code>*p = 값</code>으로 원본을 직접 수정할 수 있다</li><li>함수에 <strong>주소를 넘기면</strong> 원본을 바꿀 수 있다 (swap)</li><li>초기화 안 한 포인터 역참조는 크래시 → <code>NULL</code>로 초기화하고 확인</li></ol>
+<hr />
+<h2>다음 차시 예고</h2>
+<p>6차시에서는 배열과 포인터의 관계를 학습합니다. 배열 이름이 곧 첫 원소의 주소라는 사실, 포인터 산술(<code>p + 1</code>), 그리고 포인터로 배열을 순회하는 법을 다룹니다. 실습으로 버블 정렬을 구현합니다.</p>
+<div class="section-split"><h2>실습</h2><p>아래 문제를 직접 풀어본 뒤, 맨 아래 정답 코드로 확인하세요.</p></div>
+<h2>실습 목표</h2>
+<ul><li><code>&amp;</code>와 <code>*</code>로 주소를 얻고 값을 역참조한다.</li><li>포인터로 함수에서 원본 변수를 수정한다.</li><li><code>swap</code> 함수를 포인터로 구현한다.</li></ul>
+<hr />
+<h2>과제 1: 주소와 역참조</h2>
+<p><code>pointer_basics.c</code> 파일을 만들고 포인터의 기본 동작을 확인하세요.</p>
+<p>요구사항:</p>
+<ul><li><code>int n = 42;</code> 선언</li><li><code>int *p = &amp;n;</code>으로 포인터에 주소 저장</li><li><code>n</code>의 값, <code>n</code>의 주소, <code>p</code>의 값, <code>*p</code>의 값 출력</li><li><code>*p = 100;</code>으로 바꾼 뒤 <code>n</code> 출력 → 바뀜 확인</li></ul>
+<p>힌트:</p>
+<pre><code class="language-c">int n = 42;
+int *p = &amp;n;
+printf("n   값   = %d\n", n);
+printf("n   주소 = %p\n", (void *)&amp;n);
+printf("*p  값   = %d\n", *p);
+*p = 100;
+printf("*p로 수정 후 n = %d\n", n);</code></pre>
+<blockquote>주소를 <code>%p</code>로 출력할 때 <code>(void *)</code>로 캐스팅하면 경고가 사라집니다.</blockquote>
+<hr />
+<h2>과제 2: swap — 포인터로 교환</h2>
+<p><code>swap.c</code> 파일을 만들고 두 변수의 값을 맞바꾸는 함수를 작성하세요.</p>
+<p>요구사항:</p>
+<ul><li><code>void swap(int *a, int *b)</code> 구현</li><li><code>main</code>에서 <code>x=3, y=7</code>을 만들고 <code>swap(&amp;x, &amp;y)</code> 호출</li><li>교환 전후 출력</li></ul>
+<p>출력 예시:</p>
+<pre><code class="nohighlight">교환 전: x = 3, y = 7
+교환 후: x = 7, y = 3</code></pre>
+<p>힌트:</p>
+<pre><code class="language-c">void swap(int *a, int *b)
+{
+    int tmp = *a;
+    *a = *b;
+    *b = tmp;
+}</code></pre>
+<blockquote><strong>주의</strong>: 반드시 <code>&amp;x</code>, <code>&amp;y</code>(주소)를 넘기세요. 값을 넘기면 교환되지 않습니다.</blockquote>
+<hr />
+<h2>과제 3: 포인터로 원본 수정</h2>
+<p><code>modify.c</code> 파일을 만들고 포인터로 원본을 바꾸는 함수 두 개를 작성하세요.</p>
+<p>요구사항:</p>
+<ul><li><code>void add_one(int *p)</code> — 가리키는 값에 1을 더함</li><li><code>void set_to_ten(int *p)</code> — 가리키는 값을 10으로 만듦</li><li><code>main</code>에서 <code>a=5</code>로 시작해 각 함수 호출 후 출력</li></ul>
+<p>출력 예시:</p>
+<pre><code class="nohighlight">시작: a = 5
+add_one 후: a = 6
+set_to_ten 후: a = 10</code></pre>
+<p>힌트:</p>
+<pre><code class="language-c">void add_one(int *p)
+{
+    *p = *p + 1;
+}</code></pre>
+<hr />
+<h2>과제 4: 포인터 추적 (심화, 25분)</h2>
+<p><code>pointer_trace.c</code> 파일을 만들고 하나의 포인터가 여러 변수를 가리키도록 바꿔가며 추적하세요.</p>
+<p>요구사항:</p>
+<ul><li><code>a=10, b=20</code> 두 변수</li><li>포인터 <code>p</code>가 <code>a</code>를 가리킬 때 <code>*p</code>로 <code>a</code>를 수정</li><li><code>p</code>가 <code>b</code>를 가리키도록 바꾼 뒤 <code>*p</code>로 <code>b</code>를 수정</li><li>각 단계에서 <code>a</code>, <code>b</code> 출력</li></ul>
+<p>생각해보기: <code>p = &amp;a</code>일 때 <code>*p</code>를 바꾸면 왜 <code>b</code>는 그대로일까?</p>
+<pre><code class="language-c">int *p = &amp;a;
+*p = 11;      // a만 바뀜
+p = &amp;b;       // 이제 b를 가리킴
+*p = 21;      // b만 바뀜</code></pre>
+<hr />
+<h2>제출 확인 사항</h2>
+<ul><li>[ ] <code>pointer_basics.c</code> - 주소/역참조, <code>*p</code>로 원본 수정</li><li>[ ] <code>swap.c</code> - 포인터로 두 변수 교환</li><li>[ ] <code>modify.c</code> - 포인터로 원본 수정하는 함수 2개</li><li>[ ] <code>pointer_trace.c</code> - 포인터 대상 변경 추적 (심화)</li><li>[ ] 모든 파일: <code>gcc -Wall -Wextra -Werror</code> 경고 없이 컴파일</li></ul>
+<div class="section-split"><h2>정답 코드</h2><p>각 항목의 "정답 보기"를 눌러 펼치세요. 먼저 직접 풀어본 뒤 확인하는 것을 권장합니다.</p></div>
+<div class="answer"><div class="answer-head"><span class="answer-name">📄 <span class="file">const_ptr.c</span></span><button class="answer-toggle">정답 보기</button></div><div class="answer-body"><pre><code class="language-c">#include &lt;stdio.h&gt;
+
+void	print_value(const int *p);
+
+int	main(void)
+{
+	int	n;
+
+	n = 7;
+	printf("값 읽기: ");
+	print_value(&amp;n);
+	return (0);
+}
+
+void	print_value(const int *p)
+{
+	printf("%d\n", *p);
+	/* *p = 100;  // 주석을 풀면 컴파일 에러: const 값은 수정 불가 */
+}</code></pre></div></div>
+<div class="answer"><div class="answer-head"><span class="answer-name">📄 <span class="file">divmod.c</span></span><button class="answer-toggle">정답 보기</button></div><div class="answer-body"><pre><code class="language-c">#include &lt;stdio.h&gt;
+
+void	divmod(int a, int b, int *quot, int *rem);
+void	min_max(int a, int b, int *min, int *max);
+
+int	main(void)
+{
+	int	q;
+	int	r;
+	int	lo;
+	int	hi;
+
+	divmod(17, 5, &amp;q, &amp;r);
+	printf("17 / 5 → 몫=%d 나머지=%d\n", q, r);
+	min_max(8, 3, &amp;lo, &amp;hi);
+	printf("min=%d max=%d\n", lo, hi);
+	return (0);
+}
+
+void	divmod(int a, int b, int *quot, int *rem)
+{
+	*quot = a / b;
+	*rem = a % b;
+}
+
+void	min_max(int a, int b, int *min, int *max)
+{
+	if (a &lt; b)
+	{
+		*min = a;
+		*max = b;
+	}
+	else
+	{
+		*min = b;
+		*max = a;
+	}
+}</code></pre></div></div>
+<div class="answer"><div class="answer-head"><span class="answer-name">📄 <span class="file">double_pointer.c</span></span><button class="answer-toggle">정답 보기</button></div><div class="answer-body"><pre><code class="language-c">#include &lt;stdio.h&gt;
+
+int	main(void)
+{
+	int		n;
+	int		*p;
+	int		**pp;
+
+	n = 42;
+	p = &amp;n;
+	pp = &amp;p;
+	printf("n     = %d\n", n);
+	printf("*p    = %d\n", *p);
+	printf("**pp  = %d\n", **pp);
+	printf("--- 주소 ---\n");
+	printf("&amp;n    = %p\n", (void *)&amp;n);
+	printf("p     = %p\n", (void *)p);
+	printf("*pp   = %p (p의 값 = n의 주소)\n", (void *)*pp);
+	**pp = 100;
+	printf("**pp = 100 실행 후 n = %d\n", n);
+	return (0);
+}</code></pre></div></div>
+<div class="answer"><div class="answer-head"><span class="answer-name">📄 <span class="file">modify.c</span></span><button class="answer-toggle">정답 보기</button></div><div class="answer-body"><pre><code class="language-c">#include &lt;stdio.h&gt;
+
+void	set_to_ten(int *p);
+void	add_one(int *p);
+
+int	main(void)
+{
+	int	a;
+
+	a = 5;
+	printf("시작: a = %d\n", a);
+	add_one(&amp;a);
+	printf("add_one 후: a = %d\n", a);
+	set_to_ten(&amp;a);
+	printf("set_to_ten 후: a = %d\n", a);
+	return (0);
+}
+
+void	set_to_ten(int *p)
+{
+	*p = 10;
+}
+
+void	add_one(int *p)
+{
+	*p = *p + 1;
+}</code></pre></div></div>
+<div class="answer"><div class="answer-head"><span class="answer-name">📄 <span class="file">pointer_basics.c</span></span><button class="answer-toggle">정답 보기</button></div><div class="answer-body"><pre><code class="language-c">#include &lt;stdio.h&gt;
+
+int	main(void)
+{
+	int		n;
+	int		*p;
+
+	n = 42;
+	p = &amp;n;
+	printf("n   값   = %d\n", n);
+	printf("n   주소 = %p\n", (void *)&amp;n);
+	printf("p   값   = %p\n", (void *)p);
+	printf("*p  값   = %d\n", *p);
+	*p = 100;
+	printf("*p로 수정 후 n = %d\n", n);
+	return (0);
+}</code></pre></div></div>
+<div class="answer"><div class="answer-head"><span class="answer-name">📄 <span class="file">pointer_trace.c</span></span><button class="answer-toggle">정답 보기</button></div><div class="answer-body"><pre><code class="language-c">#include &lt;stdio.h&gt;
+
+int	main(void)
+{
+	int		a;
+	int		b;
+	int		*p;
+
+	a = 10;
+	b = 20;
+	p = &amp;a;
+	printf("p가 a를 가리킴: *p = %d\n", *p);
+	*p = 11;
+	printf("*p = 11 실행 → a = %d (b = %d)\n", a, b);
+	p = &amp;b;
+	printf("p가 b를 가리킴: *p = %d\n", *p);
+	*p = 21;
+	printf("*p = 21 실행 → b = %d (a = %d)\n", b, a);
+	return (0);
+}</code></pre></div></div>
+<div class="answer"><div class="answer-head"><span class="answer-name">📄 <span class="file">ptr_size.c</span></span><button class="answer-toggle">정답 보기</button></div><div class="answer-body"><pre><code class="language-c">#include &lt;stdio.h&gt;
+
+int	main(void)
+{
+	int		arr[3];
+	int		*pi;
+	char	cbuf[3];
+	char	*pc;
+
+	arr[0] = 10;
+	arr[1] = 20;
+	arr[2] = 30;
+	cbuf[0] = 'A';
+	cbuf[1] = 'B';
+	cbuf[2] = 'C';
+	pi = arr;
+	pc = cbuf;
+	printf("int  *: p=%p  p+1=%p  (차이 %ld바이트)\n",
+		(void *)pi, (void *)(pi + 1), (long)((char *)(pi + 1) - (char *)pi));
+	printf("char *: p=%p  p+1=%p  (차이 %ld바이트)\n",
+		(void *)pc, (void *)(pc + 1), (long)((pc + 1) - pc));
+	printf("sizeof(int *)  = %zu\n", sizeof(int *));
+	printf("sizeof(char *) = %zu\n", sizeof(char *));
+	return (0);
+}</code></pre></div></div>
+<div class="answer"><div class="answer-head"><span class="answer-name">📄 <span class="file">swap.c</span></span><button class="answer-toggle">정답 보기</button></div><div class="answer-body"><pre><code class="language-c">#include &lt;stdio.h&gt;
+
+void	swap(int *a, int *b);
+
+int	main(void)
+{
+	int	x;
+	int	y;
+
+	x = 3;
+	y = 7;
+	printf("교환 전: x = %d, y = %d\n", x, y);
+	swap(&amp;x, &amp;y);
+	printf("교환 후: x = %d, y = %d\n", x, y);
+	return (0);
+}
+
+void	swap(int *a, int *b)
+{
+	int	tmp;
+
+	tmp = *a;
+	*a = *b;
+	*b = tmp;
+}</code></pre></div></div>
+
+      </article>
+    </main>
+    <button id="toTop" class="to-top" aria-label="맨 위로">↑</button>
+    <script>
+      document.querySelectorAll(".answer-head").forEach(function (h) {
+        h.addEventListener("click", function () {
+          var card = h.parentElement;
+          card.classList.toggle("open");
+          h.querySelector(".answer-toggle").textContent =
+            card.classList.contains("open") ? "정답 숨기기" : "정답 보기";
+        });
+      });
+      var bar = document.getElementById("readbar");
+      var toTopBtn = document.getElementById("toTop");
+      function onScroll() {
+        var y = window.scrollY || document.documentElement.scrollTop;
+        var dh = document.documentElement.scrollHeight - window.innerHeight;
+        var r = dh > 0 ? y / dh : 0;
+        bar.style.width = (Math.min(1, Math.max(0, r)) * 100) + "%";
+        toTopBtn.classList.toggle("show", y > 400);
+      }
+      window.addEventListener("scroll", onScroll, { passive: true });
+      toTopBtn.addEventListener("click", function () { window.scrollTo({ top: 0, behavior: "smooth" }); });
+      onScroll();
+    </script>
+    <script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/highlight.min.js"></script>
+    <script>
+      if (window.hljs) {
+        document.querySelectorAll("pre code:not(.nohighlight)").forEach(function (el) { hljs.highlightElement(el); });
+      }
+    </script>
+  </body>
+</html>

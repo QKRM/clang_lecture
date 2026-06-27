@@ -1,0 +1,568 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>11차시 · 동적 메모리와 malloc — C언어 입문 강의</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/styles/atom-one-dark.min.css" />
+    <link rel="stylesheet" href="../lesson.css" />
+  </head>
+  <body>
+    <div id="readbar" class="readbar"></div>
+    <nav class="topnav">
+      <a class="back" href="../index.html">← 강의 목록</a>
+      <span class="crumb">C언어 입문 강의 · 11 / 16</span>
+    </nav>
+    <header class="lesson-hero">
+      <div class="lesson-hero-inner">
+        <span class="badge">libsbs 구현 · 11차시</span>
+        <h1>동적 메모리와 malloc</h1>
+      </div>
+    </header>
+    <main class="wrap">
+      <article class="md">
+<h2>학습 목표</h2>
+<ol><li>스택과 힙의 차이, 동적 메모리가 왜 필요한지 설명할 수 있다.</li><li><code>malloc</code> / <code>free</code>로 메모리를 할당하고 반환할 수 있다.</li><li><code>sbs_calloc</code>(0 초기화 할당)을 구현할 수 있다.</li><li><code>malloc</code>으로 <strong>새 문자열을 만드는</strong> 함수(<code>substr</code>, <code>strjoin</code>, <code>itoa</code>, <code>strdup</code>)를 구현할 수 있다.</li><li>메모리 누수를 이해하고 <code>free</code> 책임을 설명할 수 있다.</li></ol>
+<hr />
+<h2>1부: 왜 malloc인가?</h2>
+<h3>1.1 스택의 한계</h3>
+<p>지금까지 변수는 <strong>스택(stack)</strong> 에 자동으로 생겼습니다.</p>
+<pre><code class="language-c">int  arr[5];          // 스택 — 크기를 컴파일 시점에 알아야 함
+char buf[100];        // 스택 — 함수 끝나면 자동 사라짐</code></pre>
+<p>스택의 두 가지 한계:</p>
+<ol><li><strong>크기를 미리 정해야 한다</strong> — 실행 중에 정해지는 크기를 못 다룸</li><li><strong>함수가 끝나면 사라진다</strong> — 함수 밖으로 데이터를 못 들고 나감</li></ol>
+<pre><code class="language-c">char *make_name(void)
+{
+    char name[20] = "Kim";
+    return (name);     // 위험! name은 함수 끝나면 사라짐
+}</code></pre>
+<h3>1.2 힙 — 실행 중에 직접 할당</h3>
+<p><strong>힙(heap)</strong> 은 실행 중에 원하는 크기를 빌리고, 다 쓰면 돌려주는 메모리 영역입니다. <code>malloc</code>으로 빌리고 <code>free</code>로 반환합니다.</p>
+<pre><code class="language-c">#include &lt;stdlib.h&gt;
+
+char *p = malloc(20);   // 힙에서 20바이트 빌림
+/* ... 사용 ... */
+free(p);                // 다 쓰면 반환</code></pre>
+<table><thead><tr><th>구분</th><th>스택(stack)</th><th>힙(heap)</th></tr></thead><tbody><tr><td>크기 결정</td><td>컴파일 시점</td><td>실행 중 자유롭게</td></tr><tr><td>수명</td><td>함수 끝나면 사라짐</td><td><code>free</code> 할 때까지 유지</td></tr><tr><td>관리</td><td>자동</td><td>직접 (<code>malloc</code>/<code>free</code>)</td></tr><tr><td>초기화</td><td>안 됨</td><td><code>malloc</code>은 안 됨 / <code>calloc</code>은 0</td></tr></tbody></table>
+<h3>1.3 malloc을 쓰는 대표 상황</h3>
+<ul><li><strong>실행 중에 크기가 정해질 때</strong>: 사용자 입력 길이만큼 버퍼</li><li><strong>함수가 새 데이터를 만들어 돌려줄 때</strong>: 문자열을 합쳐 반환(<code>strjoin</code>)</li><li><strong>데이터가 함수 밖에서도 살아남아야 할 때</strong>: 동적 배열·연결 리스트</li></ul>
+<hr />
+<h2>2부: malloc / free 사용법</h2>
+<h3>2.1 기본 패턴</h3>
+<pre><code class="language-c">int *arr = malloc(sizeof(int) * 10);   // int 10개 공간
+if (arr == NULL)                        // ① 실패 검사 — 항상!
+    return (NULL);
+/* ... 사용 ... */
+free(arr);                              // ② 반환 — 안 하면 누수
+arr = NULL;                             // (선택) 댕글링 방지</code></pre>
+<table><thead><tr><th>단계</th><th>설명</th></tr></thead><tbody><tr><td><code>malloc(크기)</code></td><td>바이트 수를 받아 힙에서 빌림. 성공 시 시작 주소, 실패 시 <code>NULL</code></td></tr><tr><td>NULL 검사</td><td>메모리가 부족하면 <code>NULL</code>. 검사 없이 쓰면 크래시</td></tr><tr><td><code>free(p)</code></td><td>빌린 메모리를 반환. 안 하면 <strong>메모리 누수</strong></td></tr></tbody></table>
+<h3>2.2 sizeof로 크기 계산</h3>
+<pre><code class="language-c">int    *a = malloc(sizeof(int) * n);     // int n개
+char   *s = malloc(sizeof(char) * (len + 1));  // 문자열 (+1은 \0)
+t_point *p = malloc(sizeof(t_point));    // 구조체 1개</code></pre>
+<blockquote>문자열을 만들 때는 항상 <strong><code>\0</code> 자리 +1</strong>을 잊지 마세요.</blockquote>
+<h3>2.3 흔한 실수</h3>
+<pre><code class="language-c">char *p = malloc(5);
+free(p);
+printf("%c", *p);   // ✗ 이미 free한 메모리 사용 (use-after-free)
+
+free(p);
+free(p);            // ✗ 두 번 free (double free) → 크래시
+
+char *q = malloc(5);
+q = malloc(5);      // ✗ 첫 메모리 주소를 잃음 → 누수</code></pre>
+<hr />
+<h2>3부: 표준 동적 메모리 라이브러리 함수</h2>
+<p><code>&lt;stdlib.h&gt;</code>에 들어 있는 동적 메모리 관련 함수들입니다. 직접 구현하기 전에 표준이 무엇을 제공하는지 알아둡니다.</p>
+<table><thead><tr><th>함수</th><th>역할</th></tr></thead><tbody><tr><td><code>malloc(size)</code></td><td>size바이트 할당 (초기화 안 함)</td></tr><tr><td><code>calloc(n, size)</code></td><td>n×size바이트 할당 + <strong>0으로 초기화</strong></td></tr><tr><td><code>realloc(ptr, size)</code></td><td>기존 블록을 새 크기로 재조정</td></tr><tr><td><code>free(ptr)</code></td><td>할당 해제</td></tr></tbody></table>
+<pre><code class="language-c">/* calloc — 0으로 초기화된 int 배열 */
+int *a = calloc(10, sizeof(int));   // 전부 0
+
+/* realloc — 배열을 키움 */
+int *b = malloc(sizeof(int) * 4);
+b = realloc(b, sizeof(int) * 8);    // 4 → 8칸으로 확장</code></pre>
+<blockquote>오늘은 <code>calloc</code>을 직접 구현하고, <code>malloc</code>으로 <strong>문자열을 만드는</strong> 함수들(<code>substr</code>, <code>strjoin</code>, <code>itoa</code>)을 만듭니다. 모두 "새 메모리를 만들어 반환"하는 점이 공통입니다.</blockquote>
+<hr />
+<h2>4부: 4개 함수 명세</h2>
+<h3>4.1 sbs_calloc — 0으로 초기화된 할당</h3>
+<p><code>count × size</code>바이트를 할당하고 0으로 채웁니다. 곱셈 오버플로를 방어합니다.</p>
+<pre><code class="language-c">void *sbs_calloc(size_t count, size_t size)
+{
+    void   *ptr;
+    size_t  total;
+
+    total = count * size;
+    if (count != 0 &amp;&amp; total / count != size)   // 오버플로 방어
+        return (NULL);
+    ptr = malloc(total);
+    if (ptr == NULL)
+        return (NULL);
+    sbs_memset(ptr, 0, total);                  // 0 초기화 (10차시 재사용)
+    return (ptr);
+}</code></pre>
+<h3>4.2 sbs_substr — 부분 문자열을 새 메모리에</h3>
+<p>문자열 <code>s</code>의 <code>start</code>부터 최대 <code>len</code>글자를 잘라 <strong>새 메모리</strong>에 복제합니다.</p>
+<pre><code class="language-c">char *sbs_substr(char const *s, unsigned int start, size_t len)
+{
+    size_t slen;
+    size_t i;
+    char  *sub;
+
+    if (s == NULL)
+        return (NULL);
+    slen = sbs_strlen(s);
+    if (start &gt;= slen)          // 시작이 길이 넘으면 빈 문자열
+        len = 0;
+    else if (len &gt; slen - start)// 남은 길이보다 크면 자름
+        len = slen - start;
+    sub = malloc(len + 1);      // +1은 \0
+    if (sub == NULL)
+        return (NULL);
+    i = 0;
+    while (i &lt; len)
+    {
+        sub[i] = s[start + i];
+        i++;
+    }
+    sub[i] = '\0';
+    return (sub);
+}</code></pre>
+<p>엣지 케이스: <code>start</code>가 길이 이상이면 <code>""</code>, <code>len</code>이 남은 길이보다 크면 끝까지만.</p>
+<h3>4.3 sbs_strjoin — 두 문자열을 합쳐 새 메모리에</h3>
+<p><code>s1</code> + <code>s2</code>를 이어붙인 <strong>새 문자열</strong>을 만듭니다. 이것이 "malloc으로 문자열 만들기"의 대표 예입니다.</p>
+<pre><code class="language-c">char *sbs_strjoin(char const *s1, char const *s2)
+{
+    size_t l1, l2, i = 0, j = 0;
+    char  *res;
+
+    if (s1 == NULL || s2 == NULL)   // NULL 검사를 먼저! (안 하면 아래 strlen에서 크래시)
+        return (NULL);
+    l1 = sbs_strlen(s1);
+    l2 = sbs_strlen(s2);
+    res = malloc(l1 + l2 + 1);      // 두 길이 합 + \0
+    if (res == NULL)
+        return (NULL);
+    while (i &lt; l1) { res[i] = s1[i]; i++; }
+    while (j &lt; l2) { res[i + j] = s2[j]; j++; }
+    res[i + j] = '\0';
+    return (res);
+}</code></pre>
+<blockquote>원본 <code>s1</code>, <code>s2</code>는 건드리지 않고 <strong>새 메모리</strong>에 결과를 만듭니다. 이 함수는 12차시 <code>strlcat</code>(고정 버퍼)과 대조됩니다 — strjoin은 필요한 만큼 새로 할당.</blockquote>
+<h3>4.4 sbs_itoa — 숫자를 문자열로</h3>
+<p>정수 <code>n</code>을 사람이 읽는 문자열로 만듭니다. 자릿수만큼 메모리를 할당하는 것이 핵심.</p>
+<pre><code class="language-c">char *sbs_itoa(int n)
+{
+    long  nb = n;
+    int   sign = 0;
+    int   len = 1;
+    long  tmp;
+    char *str;
+
+    if (nb &lt; 0) { sign = 1; nb = -nb; }   // INT_MIN 위해 long
+    tmp = nb;
+    while (tmp &gt;= 10) { tmp /= 10; len++; }  // 자릿수 세기
+    len += sign;                             // 부호 자리
+    str = malloc(len + 1);
+    if (str == NULL)
+        return (NULL);
+    str[len] = '\0';
+    len--;
+    while (nb &gt;= 10) { str[len--] = nb % 10 + '0'; nb /= 10; }
+    str[len] = nb + '0';
+    if (sign) str[0] = '-';
+    return (str);
+}</code></pre>
+<p>핵심: 먼저 <strong>자릿수를 세어</strong> 정확한 크기를 malloc. <code>INT_MIN</code>은 <code>long</code>으로 받아 부호 처리(14차시 atoi와 같은 함정).</p>
+<h3>4.5 sbs_strdup — 문자열 복제</h3>
+<p>기존 문자열을 <strong>새 메모리에 그대로 복사</strong>해 돌려줍니다. "원본과 똑같지만 독립된 복사본"이 필요할 때 씁니다.</p>
+<pre><code class="language-c">char *sbs_strdup(const char *s)
+{
+    size_t len = sbs_strlen(s);
+    size_t i = 0;
+    char  *dup = malloc(len + 1);   // 원본 길이 + \0
+
+    if (dup == NULL)
+        return (NULL);
+    while (i &lt; len)
+    {
+        dup[i] = s[i];
+        i++;
+    }
+    dup[len] = '\0';
+    return (dup);
+}</code></pre>
+<p>핵심 포인트:</p>
+<ul><li><code>malloc(len + 1)</code> — <code>\0</code> 자리까지 +1</li><li>NULL 검사 필수, 복사 후 <code>\0</code> 종결</li><li>반환 메모리는 <strong>원본과 다른 독립 주소</strong> — 호출자가 free</li></ul>
+<blockquote><code>strjoin</code>이 "두 문자열을 합쳐 새로" 만든다면, <code>strdup</code>은 "한 문자열을 그대로 새로" 만듭니다. 둘 다 malloc으로 새 메모리를 반환하는 한 묶음입니다.</blockquote>
+<hr />
+<h2>5부: 메모리 누수와 free 책임</h2>
+<p><code>malloc</code>으로 만든 메모리는 <strong>호출자가 free</strong>해야 합니다.</p>
+<pre><code class="language-c">char *full = sbs_strjoin("Hello, ", "world!");
+printf("%s\n", full);
+free(full);            // 호출자 책임!</code></pre>
+<p>누수 점검:</p>
+<pre><code class="language-bash">$ gcc -g main.c sbs_strjoin.c sbs_strlen.c -o test
+$ valgrind --leak-check=full ./test    # leak 0 bytes 목표</code></pre>
+<blockquote>함수가 malloc한 메모리를 누가 free할지 <strong>문서로 명시</strong>하는 것이 좋은 습관입니다(이 과정은 "호출자가 free").</blockquote>
+<hr />
+<h2>핵심 정리</h2>
+<ol><li>스택은 크기 고정·자동 소멸, 힙은 실행 중 할당·<code>free</code>까지 유지</li><li><code>malloc(size)</code> → NULL 검사 → 사용 → <code>free</code> (누수 방지)</li><li>문자열 만들 때 크기는 <code>길이 + 1</code>(\0 자리)</li><li><code>calloc</code>은 할당 + 0 초기화 + 오버플로 방어</li><li><code>substr</code>/<code>strjoin</code>/<code>itoa</code>/<code>strdup</code>는 모두 <strong>새 메모리를 만들어 반환</strong></li><li>malloc한 메모리는 <strong>호출자가 free</strong> (use-after-free·double-free·누수 주의)</li></ol>
+<hr />
+<h2>다음 차시 예고</h2>
+<p>12차시부터 문자열 함수입니다. <code>sbs_strlen</code>으로 시작해 <code>sbs_strlcpy</code>, <code>sbs_strlcat</code>의 버퍼 안전 처리를 다룹니다. 오늘 만든 malloc 감각(strjoin)과 대조하며, 고정 버퍼 vs 동적 할당의 차이를 익힙니다.</p>
+<div class="section-split"><h2>실습</h2><p>아래 문제를 직접 풀어본 뒤, 맨 아래 정답 코드로 확인하세요.</p></div>
+<h2>실습 목표</h2>
+<ul><li><code>malloc</code> / <code>free</code>로 동적 메모리를 다룬다.</li><li><code>sbs_calloc</code>(0 초기화 할당)을 구현한다.</li><li><code>malloc</code>으로 <strong>새 문자열을 만드는</strong> 함수 <code>substr</code>, <code>strjoin</code>, <code>itoa</code>를 구현한다.</li><li><code>valgrind</code>로 메모리 누수를 점검한다.</li></ul>
+<blockquote><strong>금지</strong>: <code>&lt;string.h&gt;</code>, <code>&lt;strings.h&gt;</code>. 동적 메모리에 필요한 <code>&lt;stdlib.h&gt;</code>(malloc/free)는 허용.</blockquote>
+<hr />
+<h2>준비: libsbs.h에 추가</h2>
+<pre><code class="language-c">void	*sbs_calloc(size_t count, size_t size);
+char	*sbs_substr(char const *s, unsigned int start, size_t len);
+char	*sbs_strjoin(char const *s1, char const *s2);
+char	*sbs_itoa(int n);
+char	*sbs_strdup(const char *s);</code></pre>
+<blockquote>의존 함수 <code>sbs_memset</code>(calloc용), <code>sbs_strlen</code>(substr/strjoin용)도 같은 폴더에 둡니다(제공됨).</blockquote>
+<hr />
+<h2>과제 1: sbs_calloc</h2>
+<p><code>sbs_calloc.c</code> — <code>count × size</code>바이트 할당 + 0 초기화.</p>
+<p>요구사항:</p>
+<ul><li>곱셈 오버플로 방어 (<code>total / count != size</code>면 NULL)</li><li><code>malloc</code> 실패 시 NULL</li><li><code>sbs_memset</code>으로 0 초기화</li></ul>
+<p>힌트:</p>
+<pre><code class="language-c">#include &lt;stdlib.h&gt;
+
+total = count * size;
+if (count != 0 &amp;&amp; total / count != size)
+    return (NULL);
+ptr = malloc(total);
+if (ptr == NULL)
+    return (NULL);
+sbs_memset(ptr, 0, total);
+return (ptr);</code></pre>
+<hr />
+<h2>과제 2: sbs_substr</h2>
+<p><code>sbs_substr.c</code> — <code>s</code>의 <code>start</code>부터 최대 <code>len</code>글자를 새 메모리에 복제.</p>
+<p>요구사항:</p>
+<ul><li><code>s</code>가 NULL이면 NULL</li><li><code>start</code>가 문자열 길이 이상이면 빈 문자열(<code>""</code>)</li><li><code>len</code>이 남은 길이보다 크면 끝까지만</li><li><code>malloc(len + 1)</code> (\0 자리)</li></ul>
+<p>힌트:</p>
+<pre><code class="language-c">slen = sbs_strlen(s);
+if (start &gt;= slen)
+    len = 0;
+else if (len &gt; slen - start)
+    len = slen - start;
+sub = malloc(len + 1);
+/* s[start + i]를 복사, 끝에 \0 */</code></pre>
+<p>출력 예시:</p>
+<pre><code class="nohighlight">substr("hello world", 6, 5) → "world"
+substr("hello", 10, 5)      → ""</code></pre>
+<hr />
+<h2>과제 3: sbs_strjoin</h2>
+<p><code>sbs_strjoin.c</code> — 두 문자열을 이어붙인 <strong>새 메모리</strong>를 만든다.</p>
+<p>요구사항:</p>
+<ul><li><code>s1</code> 또는 <code>s2</code>가 NULL이면 NULL</li><li>크기 = <code>len(s1) + len(s2) + 1</code></li><li>원본은 건드리지 않음</li></ul>
+<p>힌트:</p>
+<pre><code class="language-c">l1 = sbs_strlen(s1);
+l2 = sbs_strlen(s2);
+res = malloc(l1 + l2 + 1);
+/* s1 복사 후 이어서 s2 복사, 끝에 \0 */</code></pre>
+<p>출력 예시:</p>
+<pre><code class="nohighlight">strjoin("Hello, ", "world!") → "Hello, world!"
+strjoin("42", "seoul")       → "42seoul"</code></pre>
+<blockquote>이것이 "malloc으로 문자열 만들기"의 핵심 예제. 새 메모리에 결과를 만듭니다.</blockquote>
+<hr />
+<h2>과제 4: sbs_itoa</h2>
+<p><code>sbs_itoa.c</code> — 정수 <code>n</code>을 문자열로 변환해 새 메모리에 만든다.</p>
+<p>요구사항:</p>
+<ul><li>음수 부호 처리</li><li><strong><code>INT_MIN(-2147483648)</code></strong> 까지 (long으로 받아 부호 뒤집기)</li><li>먼저 자릿수를 세어 정확한 크기 malloc</li></ul>
+<p>힌트:</p>
+<pre><code class="language-c">long nb = n;
+if (nb &lt; 0) { sign = 1; nb = -nb; }   // long이라 안전
+tmp = nb;
+while (tmp &gt;= 10) { tmp /= 10; len++; }   // 자릿수
+len += sign;
+str = malloc(len + 1);
+str[len] = '\0';
+len--;
+while (nb &gt;= 10) { str[len--] = nb % 10 + '0'; nb /= 10; }
+str[len] = nb + '0';
+if (sign) str[0] = '-';</code></pre>
+<p>출력 예시:</p>
+<pre><code class="nohighlight">itoa(42)          → "42"
+itoa(-42)         → "-42"
+itoa(-2147483648) → "-2147483648"</code></pre>
+<blockquote>14차시 atoi와 정반대(문자열→숫자 vs 숫자→문자열). INT_MIN 함정도 같습니다.</blockquote>
+<hr />
+<h2>과제 5: sbs_strdup</h2>
+<p><code>sbs_strdup.c</code> — 문자열을 새 메모리에 그대로 복제한다.</p>
+<p>요구사항:</p>
+<ul><li>길이를 재서 <code>malloc(len + 1)</code> (\0 자리)</li><li><code>malloc</code> 실패 시 NULL</li><li>복사 후 <code>\0</code> 종결, 원본과 <strong>다른 독립 주소</strong></li></ul>
+<p>힌트:</p>
+<pre><code class="language-c">size_t len = sbs_strlen(s);
+char  *dup = malloc(len + 1);
+if (dup == NULL)
+    return (NULL);
+/* s를 dup로 한 글자씩 복사, 끝에 \0 */</code></pre>
+<p>출력 예시:</p>
+<pre><code class="nohighlight">strdup("hello") → "hello" (원본과 다른 주소의 복사본)
+strdup("")      → "" (빈 문자열도 복제)</code></pre>
+<blockquote><code>strjoin</code>은 둘을 합쳐 새로, <code>strdup</code>은 하나를 그대로 새로. 둘 다 malloc 문자열 만들기.</blockquote>
+<hr />
+<h2>과제 6: 채점 + 누수 점검</h2>
+<pre><code class="language-bash">$ bash grade.sh
+=== libsbs 11차시 채점 ===
+✓ sbs_calloc    (...)
+✓ sbs_substr    (6/6)
+✓ sbs_strjoin   (5/5)
+✓ sbs_itoa      (6/6)
+✓ sbs_strdup    (5/5)
+결과: 5 / 5 통과</code></pre>
+<p>메모리 누수 점검(권장):</p>
+<pre><code class="language-bash">$ valgrind --leak-check=full ./a.out    # leak 0 bytes</code></pre>
+<blockquote>채점은 결과 문자열 일치 + <strong>원본과 다른 독립 메모리</strong>인지 확인합니다.</blockquote>
+<hr />
+<h2>제출 확인 사항</h2>
+<ul><li>[ ] <code>libsbs.h</code>에 5개 프로토타입 추가</li><li>[ ] <code>sbs_calloc.c</code> - 오버플로 방어 + 0 초기화</li><li>[ ] <code>sbs_substr.c</code> - 부분 문자열, 엣지(start/len 초과)</li><li>[ ] <code>sbs_strjoin.c</code> - 두 문자열 합쳐 새 메모리</li><li>[ ] <code>sbs_itoa.c</code> - 숫자→문자열, INT_MIN 처리</li><li>[ ] <code>sbs_strdup.c</code> - 문자열 복제, 독립 메모리</li><li>[ ] 모든 malloc에 NULL 검사</li><li>[ ] <code>&lt;string.h&gt;</code> 미사용 (stdlib 허용)</li><li>[ ] <code>bash grade.sh</code> → 5 / 5 통과</li></ul>
+<hr />
+<h2>더 생각해볼 거리</h2>
+<ol><li><code>substr</code>/<code>strjoin</code>이 만든 메모리는 누가 free해야 하나? (호출자)</li><li><code>strjoin</code>과 12차시 <code>strlcat</code>의 차이는? (새 할당 vs 고정 버퍼)</li><li><code>itoa</code>에서 <code>long</code>을 안 쓰면 어떤 입력에서 깨질까? (<code>-2147483648</code>)</li><li><code>malloc</code> 후 <code>free</code>를 빠뜨리면 무슨 일이? (메모리 누수 — valgrind로 확인)</li></ol>
+<div class="section-split"><h2>정답 코드</h2><p>각 항목의 "정답 보기"를 눌러 펼치세요. 먼저 직접 풀어본 뒤 확인하는 것을 권장합니다.</p></div>
+<div class="answer"><div class="answer-head"><span class="answer-name">📄 <span class="file">libsbs.h</span></span><button class="answer-toggle">정답 보기</button></div><div class="answer-body"><pre><code class="language-c">#ifndef LIBSBS_H
+# define LIBSBS_H
+
+# include &lt;stddef.h&gt;
+
+/* 10차시에서 가져온 의존 함수 (calloc / 문자열 함수가 내부에서 사용) */
+void	*sbs_memset(void *b, int c, size_t len);
+size_t	sbs_strlen(const char *s);
+
+/* 11차시 — 동적 메모리(malloc) 함수 */
+void	*sbs_calloc(size_t count, size_t size);
+char	*sbs_substr(char const *s, unsigned int start, size_t len);
+char	*sbs_strjoin(char const *s1, char const *s2);
+char	*sbs_itoa(int n);
+char	*sbs_strdup(const char *s);
+
+#endif</code></pre></div></div>
+<div class="answer"><div class="answer-head"><span class="answer-name">📄 <span class="file">sbs_calloc.c</span></span><button class="answer-toggle">정답 보기</button></div><div class="answer-body"><pre><code class="language-c">#include "libsbs.h"
+#include &lt;stdlib.h&gt;
+
+void	*sbs_calloc(size_t count, size_t size)
+{
+	void	*ptr;
+	size_t	total;
+
+	total = count * size;
+	if (count != 0 &amp;&amp; total / count != size)
+		return (NULL);
+	ptr = malloc(total);
+	if (ptr == NULL)
+		return (NULL);
+	sbs_memset(ptr, 0, total);
+	return (ptr);
+}</code></pre></div></div>
+<div class="answer"><div class="answer-head"><span class="answer-name">📄 <span class="file">sbs_itoa.c</span></span><button class="answer-toggle">정답 보기</button></div><div class="answer-body"><pre><code class="language-c">#include "libsbs.h"
+#include &lt;stdlib.h&gt;
+
+/*
+ * 정수 n을 사람이 읽는 문자열로 변환해 새 메모리에 만든다.
+ *  - 음수 부호, INT_MIN(-2147483648)까지 처리 (long 사용)
+ *  - 반환 메모리는 호출자가 free
+ */
+char	*sbs_itoa(int n)
+{
+	long	nb;
+	long	tmp;
+	int		sign;
+	int		len;
+	char	*str;
+
+	nb = n;
+	sign = 0;
+	if (nb &lt; 0)
+	{
+		sign = 1;
+		nb = -nb;
+	}
+	len = 1;
+	tmp = nb;
+	while (tmp &gt;= 10)
+	{
+		tmp /= 10;
+		len++;
+	}
+	len += sign;
+	str = (char *)malloc(len + 1);
+	if (str == NULL)
+		return (NULL);
+	str[len] = '\0';
+	len--;
+	while (nb &gt;= 10)
+	{
+		str[len--] = (char)(nb % 10) + '0';
+		nb /= 10;
+	}
+	str[len] = (char)nb + '0';
+	if (sign)
+		str[0] = '-';
+	return (str);
+}</code></pre></div></div>
+<div class="answer"><div class="answer-head"><span class="answer-name">📄 <span class="file">sbs_memset.c</span></span><button class="answer-toggle">정답 보기</button></div><div class="answer-body"><pre><code class="language-c">#include "libsbs.h"
+
+/* 10차시에서 구현한 sbs_memset (calloc이 내부에서 사용) */
+void	*sbs_memset(void *b, int c, size_t len)
+{
+	unsigned char	*p;
+	size_t			i;
+
+	p = (unsigned char *)b;
+	i = 0;
+	while (i &lt; len)
+	{
+		p[i] = (unsigned char)c;
+		i++;
+	}
+	return (b);
+}</code></pre></div></div>
+<div class="answer"><div class="answer-head"><span class="answer-name">📄 <span class="file">sbs_strdup.c</span></span><button class="answer-toggle">정답 보기</button></div><div class="answer-body"><pre><code class="language-c">#include "libsbs.h"
+#include &lt;stdlib.h&gt;
+
+char	*sbs_strdup(const char *s)
+{
+	size_t	len;
+	size_t	i;
+	char	*dup;
+
+	len = 0;
+	while (s[len])
+		len++;
+	dup = (char *)malloc(len + 1);
+	if (dup == NULL)
+		return (NULL);
+	i = 0;
+	while (i &lt; len)
+	{
+		dup[i] = s[i];
+		i++;
+	}
+	dup[len] = '\0';
+	return (dup);
+}</code></pre></div></div>
+<div class="answer"><div class="answer-head"><span class="answer-name">📄 <span class="file">sbs_strjoin.c</span></span><button class="answer-toggle">정답 보기</button></div><div class="answer-body"><pre><code class="language-c">#include "libsbs.h"
+#include &lt;stdlib.h&gt;
+
+/*
+ * 두 문자열 s1, s2를 이어붙여 새 메모리에 만든다.
+ *  - s1 또는 s2가 NULL이면 NULL
+ *  - 새 메모리 크기 = len(s1) + len(s2) + 1(\0)
+ *  - 반환 메모리는 호출자가 free
+ */
+char	*sbs_strjoin(char const *s1, char const *s2)
+{
+	size_t	l1;
+	size_t	l2;
+	size_t	i;
+	size_t	j;
+	char	*res;
+
+	if (s1 == NULL || s2 == NULL)
+		return (NULL);
+	l1 = sbs_strlen(s1);
+	l2 = sbs_strlen(s2);
+	res = (char *)malloc(l1 + l2 + 1);
+	if (res == NULL)
+		return (NULL);
+	i = 0;
+	while (i &lt; l1)
+	{
+		res[i] = s1[i];
+		i++;
+	}
+	j = 0;
+	while (j &lt; l2)
+	{
+		res[i + j] = s2[j];
+		j++;
+	}
+	res[i + j] = '\0';
+	return (res);
+}</code></pre></div></div>
+<div class="answer"><div class="answer-head"><span class="answer-name">📄 <span class="file">sbs_strlen.c</span></span><button class="answer-toggle">정답 보기</button></div><div class="answer-body"><pre><code class="language-c">#include "libsbs.h"
+
+/* 12차시에서 정식으로 다룸. 여기서는 substr/strjoin이 길이 계산에 사용. */
+size_t	sbs_strlen(const char *s)
+{
+	size_t	len;
+
+	len = 0;
+	while (s[len])
+		len++;
+	return (len);
+}</code></pre></div></div>
+<div class="answer"><div class="answer-head"><span class="answer-name">📄 <span class="file">sbs_substr.c</span></span><button class="answer-toggle">정답 보기</button></div><div class="answer-body"><pre><code class="language-c">#include "libsbs.h"
+#include &lt;stdlib.h&gt;
+
+/*
+ * 문자열 s의 start 위치부터 최대 len글자를 잘라 새 메모리에 복제.
+ *  - s가 NULL이면 NULL
+ *  - start가 문자열 길이 이상이면 빈 문자열("") 반환
+ *  - len이 남은 길이보다 크면 남은 길이까지만
+ *  - 반환 메모리는 호출자가 free
+ */
+char	*sbs_substr(char const *s, unsigned int start, size_t len)
+{
+	size_t	slen;
+	size_t	i;
+	char	*sub;
+
+	if (s == NULL)
+		return (NULL);
+	slen = sbs_strlen(s);
+	if (start &gt;= slen)
+		len = 0;
+	else if (len &gt; slen - start)
+		len = slen - start;
+	sub = (char *)malloc(len + 1);
+	if (sub == NULL)
+		return (NULL);
+	i = 0;
+	while (i &lt; len)
+	{
+		sub[i] = s[start + i];
+		i++;
+	}
+	sub[i] = '\0';
+	return (sub);
+}</code></pre></div></div>
+
+      </article>
+    </main>
+    <button id="toTop" class="to-top" aria-label="맨 위로">↑</button>
+    <script>
+      document.querySelectorAll(".answer-head").forEach(function (h) {
+        h.addEventListener("click", function () {
+          var card = h.parentElement;
+          card.classList.toggle("open");
+          h.querySelector(".answer-toggle").textContent =
+            card.classList.contains("open") ? "정답 숨기기" : "정답 보기";
+        });
+      });
+      var bar = document.getElementById("readbar");
+      var toTopBtn = document.getElementById("toTop");
+      function onScroll() {
+        var y = window.scrollY || document.documentElement.scrollTop;
+        var dh = document.documentElement.scrollHeight - window.innerHeight;
+        var r = dh > 0 ? y / dh : 0;
+        bar.style.width = (Math.min(1, Math.max(0, r)) * 100) + "%";
+        toTopBtn.classList.toggle("show", y > 400);
+      }
+      window.addEventListener("scroll", onScroll, { passive: true });
+      toTopBtn.addEventListener("click", function () { window.scrollTo({ top: 0, behavior: "smooth" }); });
+      onScroll();
+    </script>
+    <script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/highlight.min.js"></script>
+    <script>
+      if (window.hljs) {
+        document.querySelectorAll("pre code:not(.nohighlight)").forEach(function (el) { hljs.highlightElement(el); });
+      }
+    </script>
+  </body>
+</html>

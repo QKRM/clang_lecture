@@ -1,0 +1,436 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>3차시 · 조건문과 반복문 — C언어 입문 강의</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/styles/atom-one-dark.min.css" />
+    <link rel="stylesheet" href="../lesson.css" />
+  </head>
+  <body>
+    <div id="readbar" class="readbar"></div>
+    <nav class="topnav">
+      <a class="back" href="../index.html">← 강의 목록</a>
+      <span class="crumb">C언어 입문 강의 · 3 / 16</span>
+    </nav>
+    <header class="lesson-hero">
+      <div class="lesson-hero-inner">
+        <span class="badge">C 기초 · 3차시</span>
+        <h1>조건문과 반복문</h1>
+      </div>
+    </header>
+    <main class="wrap">
+      <article class="md">
+<h2>학습 목표</h2>
+<ol><li><code>if / else if / else</code>로 조건 분기를 구현할 수 있다.</li><li><code>switch</code> 문의 동작과 <code>break</code>의 역할을 설명할 수 있다.</li><li><code>for</code>, <code>while</code>, <code>do-while</code>을 상황에 맞게 선택해 사용할 수 있다.</li><li><code>break</code>, <code>continue</code>로 반복 흐름을 제어할 수 있다.</li><li>중첩 반복문으로 2차원 패턴을 출력할 수 있다.</li></ol>
+<hr />
+<h2>1부: 조건문 (Conditional Statements)</h2>
+<h3>1.1 if 문</h3>
+<p>조건이 참(0이 아닌 값)이면 블록을 실행합니다.</p>
+<pre><code class="language-c">int score = 85;
+
+if (score &gt;= 60)
+    printf("합격\n");</code></pre>
+<p>C언어에는 별도의 boolean 타입이 기본으로 없습니다. <strong>0은 거짓, 0이 아닌 모든 값은 참</strong>입니다.</p>
+<pre><code class="language-c">if (1)      printf("항상 실행\n");   // 참
+if (0)      printf("절대 실행 안 됨\n"); // 거짓
+if (-5)     printf("실행됨\n");      // 0이 아니므로 참</code></pre>
+<h3>1.2 if / else</h3>
+<pre><code class="language-c">int n = 7;
+
+if (n % 2 == 0)
+    printf("짝수\n");
+else
+    printf("홀수\n");</code></pre>
+<h3>1.3 if / else if / else</h3>
+<p>여러 조건을 순서대로 검사합니다. 위에서부터 처음으로 참이 되는 가지만 실행됩니다.</p>
+<pre><code class="language-c">int score = 85;
+
+if (score &gt;= 90)
+    printf("A\n");
+else if (score &gt;= 80)
+    printf("B\n");        // 여기 실행
+else if (score &gt;= 70)
+    printf("C\n");
+else
+    printf("F\n");</code></pre>
+<h3>1.4 중괄호 주의</h3>
+<p>중괄호를 생략하면 <strong>바로 다음 한 문장만</strong> 조건에 묶입니다. 버그의 단골 원인입니다.</p>
+<pre><code class="language-c">// 위험: printf 두 줄 다 묶인 것처럼 보이지만...
+if (x &gt; 0)
+    printf("양수\n");
+    printf("이 줄은 조건과 무관하게 항상 실행\n");  // 함정!
+
+// 안전: 항상 중괄호를 쓰는 습관
+if (x &gt; 0)
+{
+    printf("양수\n");
+    printf("두 줄 모두 조건 안\n");
+}</code></pre>
+<blockquote>libsbs 코드 규칙에서도 블록은 중괄호로 명확히 감싸는 것을 권장합니다.</blockquote>
+<h3>1.5 switch 문</h3>
+<p>하나의 변수를 여러 상수값과 비교할 때 사용합니다.</p>
+<pre><code class="language-c">int day = 3;
+
+switch (day)
+{
+    case 1:
+        printf("월요일\n");
+        break;
+    case 2:
+        printf("화요일\n");
+        break;
+    case 3:
+        printf("수요일\n");
+        break;
+    default:
+        printf("기타\n");
+        break;
+}</code></pre>
+<p><strong>핵심: <code>break</code>가 없으면 다음 case로 그대로 흘러내립니다 (fall-through).</strong></p>
+<pre><code class="language-c">switch (n)
+{
+    case 1:
+    case 2:
+    case 3:
+        printf("1~3\n");   // 1, 2, 3 모두 여기로
+        break;
+    default:
+        printf("그 외\n");
+}</code></pre>
+<p><code>switch</code>는 정수형(<code>int</code>, <code>char</code> 등)만 비교할 수 있고, <code>case</code> 라벨은 상수여야 합니다.</p>
+<hr />
+<h2>2부: 반복문 (Loops)</h2>
+<h3>2.1 while 문</h3>
+<p>조건이 참인 동안 반복합니다. 반복 횟수가 미리 정해지지 않은 경우에 적합합니다.</p>
+<pre><code class="language-c">int i = 0;
+
+while (i &lt; 5)
+{
+    printf("%d ", i);   // 0 1 2 3 4
+    i++;
+}</code></pre>
+<p><strong>무한 루프 주의</strong>: 조건을 거짓으로 만드는 코드(<code>i++</code>)를 빠뜨리면 영원히 돕니다.</p>
+<h3>2.2 for 문</h3>
+<p>반복 횟수가 정해진 경우에 적합합니다. 초기화·조건·증감을 한 줄에 모읍니다.</p>
+<pre><code class="language-c">//      초기화;   조건;    증감
+for (int i = 0; i &lt; 5; i++)
+{
+    printf("%d ", i);   // 0 1 2 3 4
+}</code></pre>
+<p>실행 순서: <code>초기화</code> → <code>조건 검사</code> → <code>본문</code> → <code>증감</code> → <code>조건 검사</code> → ... (조건이 거짓이면 종료)</p>
+<h3>2.3 do-while 문</h3>
+<p>본문을 <strong>먼저 한 번 실행한 뒤</strong> 조건을 검사합니다. 최소 1회는 반드시 실행됩니다.</p>
+<pre><code class="language-c">int i = 10;
+
+do {
+    printf("%d ", i);   // 10 (조건이 거짓이어도 한 번은 출력)
+    i++;
+} while (i &lt; 5);</code></pre>
+<blockquote>끝에 세미콜론(<code>;</code>)이 붙는 것에 주의.</blockquote>
+<h3>2.4 while vs for vs do-while</h3>
+<table><thead><tr><th>상황</th><th>추천</th></tr></thead><tbody><tr><td>반복 횟수가 정해짐 (0~n)</td><td><code>for</code></td></tr><tr><td>조건에 따라 반복 (입력, 탐색)</td><td><code>while</code></td></tr><tr><td>최소 1회 실행 보장 (메뉴 출력)</td><td><code>do-while</code></td></tr></tbody></table>
+<p>libsbs의 문자열/메모리 함수는 대부분 <code>while (s[i])</code> 형태를 씁니다 — 길이를 미리 모르기 때문입니다.</p>
+<hr />
+<h2>3부: 흐름 제어 — break, continue</h2>
+<h3>3.1 break</h3>
+<p>가장 가까운 반복문(또는 switch)을 즉시 빠져나갑니다.</p>
+<pre><code class="language-c">for (int i = 0; i &lt; 100; i++)
+{
+    if (i == 5)
+        break;          // i가 5가 되면 반복 종료
+    printf("%d ", i);   // 0 1 2 3 4
+}</code></pre>
+<h3>3.2 continue</h3>
+<p>이번 반복의 나머지를 건너뛰고 다음 반복으로 넘어갑니다.</p>
+<pre><code class="language-c">for (int i = 0; i &lt; 10; i++)
+{
+    if (i % 2 == 0)
+        continue;       // 짝수면 아래 건너뜀
+    printf("%d ", i);   // 1 3 5 7 9
+}</code></pre>
+<table><thead><tr><th>키워드</th><th>동작</th></tr></thead><tbody><tr><td><code>break</code></td><td>반복문 전체 종료</td></tr><tr><td><code>continue</code></td><td>현재 회차만 건너뛰고 다음 회차로</td></tr></tbody></table>
+<hr />
+<h2>4부: 중첩 반복문 (Nested Loops)</h2>
+<p>반복문 안에 반복문을 넣습니다. 바깥 루프가 1번 돌 때 안쪽 루프가 전부 돕니다.</p>
+<pre><code class="language-c">// 구구단 2~9단
+for (int dan = 2; dan &lt;= 9; dan++)
+{
+    for (int i = 1; i &lt;= 9; i++)
+    {
+        printf("%d x %d = %d\n", dan, i, dan * i);
+    }
+    printf("\n");   // 단 사이 줄바꿈
+}</code></pre>
+<p>별 삼각형 패턴:</p>
+<pre><code class="language-c">for (int row = 1; row &lt;= 5; row++)
+{
+    for (int col = 0; col &lt; row; col++)
+        printf("*");
+    printf("\n");
+}
+// *
+// **
+// ***
+// ****
+// *****</code></pre>
+<blockquote>중첩이 깊어지면 가독성이 떨어집니다. libsbs 코드 규칙에서는 중첩 깊이를 제한하기도 합니다.</blockquote>
+<hr />
+<h2>핵심 정리</h2>
+<ol><li>C에서 <strong>0은 거짓, 나머지는 모두 참</strong></li><li><code>if / else if / else</code>는 위에서부터 처음 참인 가지만 실행</li><li><code>switch</code>는 <code>break</code>를 빠뜨리면 fall-through 발생</li><li>반복 횟수가 정해지면 <code>for</code>, 조건 기반이면 <code>while</code>, 최소 1회면 <code>do-while</code></li><li><code>break</code>는 반복 종료, <code>continue</code>는 현재 회차만 건너뜀</li><li>항상 중괄호를 쓰는 습관이 버그를 막는다</li></ol>
+<hr />
+<h2>다음 차시 예고</h2>
+<p>4차시에서는 함수(function)와 재귀(recursion)를 학습합니다. 함수 프로토타입, 값에 의한 전달, 스택 프레임을 다루고 팩토리얼·피보나치를 반복문 버전과 재귀 버전으로 각각 구현합니다.</p>
+<div class="section-split"><h2>실습</h2><p>아래 문제를 직접 풀어본 뒤, 맨 아래 정답 코드로 확인하세요.</p></div>
+<h2>실습 목표</h2>
+<ul><li>중첩 반복문으로 구구단을 출력한다.</li><li>조건문과 나머지 연산자를 조합해 FizzBuzz를 구현한다.</li><li><code>while</code> 반복과 조건 분기로 숫자 맞추기 게임을 만든다.</li></ul>
+<hr />
+<h2>과제 1: 구구단 출력</h2>
+<p><code>gugudan.c</code> 파일을 만들고 2단부터 9단까지 출력하는 프로그램을 작성하세요.</p>
+<p>요구사항:</p>
+<ul><li>바깥 반복문: 단(2~9)</li><li>안쪽 반복문: 곱하는 수(1~9)</li><li>각 단 사이에 빈 줄 한 개</li></ul>
+<p>출력 예시 (일부):</p>
+<pre><code class="nohighlight">2단
+2 x 1 = 2
+2 x 2 = 4
+...
+2 x 9 = 18
+
+3단
+3 x 1 = 3
+...</code></pre>
+<p>힌트:</p>
+<pre><code class="language-c">for (int dan = 2; dan &lt;= 9; dan++)
+{
+    printf("%d단\n", dan);
+    for (int i = 1; i &lt;= 9; i++)
+        printf("%d x %d = %d\n", dan, i, dan * i);
+    printf("\n");
+}</code></pre>
+<hr />
+<h2>과제 2: FizzBuzz</h2>
+<p><code>fizzbuzz.c</code> 파일을 만들고 1부터 30까지 출력하되, 규칙에 따라 단어로 바꾸는 프로그램을 작성하세요.</p>
+<p>규칙:</p>
+<ul><li>3의 배수 → <code>Fizz</code></li><li>5의 배수 → <code>Buzz</code></li><li>3과 5의 공배수(15의 배수) → <code>FizzBuzz</code></li><li>그 외 → 숫자 그대로</li></ul>
+<p>출력 예시:</p>
+<pre><code class="nohighlight">1
+2
+Fizz
+4
+Buzz
+Fizz
+7
+8
+Fizz
+Buzz
+11
+Fizz
+13
+14
+FizzBuzz
+...</code></pre>
+<p><strong>주의</strong>: 15의 배수 검사를 먼저 해야 합니다. 순서를 틀리면 15에서 <code>Fizz</code>만 출력됩니다.</p>
+<p>힌트:</p>
+<pre><code class="language-c">if (i % 15 == 0)
+    printf("FizzBuzz\n");
+else if (i % 3 == 0)
+    printf("Fizz\n");
+else if (i % 5 == 0)
+    printf("Buzz\n");
+else
+    printf("%d\n", i);</code></pre>
+<hr />
+<h2>과제 3: 숫자 맞추기 게임</h2>
+<p><code>guess_number.c</code> 파일을 만들고 정답을 맞출 때까지 반복 입력받는 프로그램을 작성하세요.</p>
+<p>요구사항:</p>
+<ul><li>정답을 코드에 상수로 정함 (예: <code>const int answer = 42;</code>)</li><li><code>scanf</code>로 사용자 입력을 받음</li><li>입력이 정답보다 크면 "더 작게", 작으면 "더 크게" 출력</li><li>맞히면 시도 횟수를 출력하고 종료 (<code>while</code> + <code>break</code> 사용)</li></ul>
+<p>출력 예시:</p>
+<pre><code class="nohighlight">숫자를 맞춰보세요 (1~100): 50
+더 작게!
+숫자를 맞춰보세요 (1~100): 25
+더 크게!
+숫자를 맞춰보세요 (1~100): 42
+정답! 3번 만에 맞혔습니다.</code></pre>
+<p>힌트:</p>
+<pre><code class="language-c">#include &lt;stdio.h&gt;
+
+int main(void)
+{
+    const int answer = 42;
+    int guess = 0;
+    int tries = 0;
+
+    while (1)
+    {
+        printf("숫자를 맞춰보세요 (1~100): ");
+        scanf("%d", &amp;guess);
+        tries++;
+
+        if (guess &gt; answer)
+            printf("더 작게!\n");
+        else if (guess &lt; answer)
+            printf("더 크게!\n");
+        else
+        {
+            printf("정답! %d번 만에 맞혔습니다.\n", tries);
+            break;
+        }
+    }
+    return (0);
+}</code></pre>
+<blockquote><code>scanf</code>의 <code>&amp;guess</code>에서 <code>&amp;</code>(주소 연산자)는 5차시 포인터에서 자세히 다룹니다. 지금은 "입력값을 변수에 저장하는 문법"으로 받아들이세요.</blockquote>
+<hr />
+<h2>과제 4: 별 피라미드 (심화, 20분)</h2>
+<p><code>pyramid.c</code> 파일을 만들고 중첩 반복문으로 아래 패턴을 출력하세요.</p>
+<pre><code class="nohighlight">    *
+   ***
+  *****
+ *******
+*********</code></pre>
+<p>힌트:</p>
+<ul><li>행(row) 1~5에 대해</li><li>공백을 <code>(5 - row)</code>개 출력</li><li>별을 <code>(2 * row - 1)</code>개 출력</li><li>줄바꿈</li></ul>
+<pre><code class="language-c">for (int row = 1; row &lt;= 5; row++)
+{
+    for (int s = 0; s &lt; 5 - row; s++)
+        printf(" ");
+    for (int star = 0; star &lt; 2 * row - 1; star++)
+        printf("*");
+    printf("\n");
+}</code></pre>
+<hr />
+<h2>제출 확인 사항</h2>
+<ul><li>[ ] <code>gugudan.c</code> - 2~9단 중첩 반복문 출력</li><li>[ ] <code>fizzbuzz.c</code> - 1~30, 15의 배수 우선 검사</li><li>[ ] <code>guess_number.c</code> - while + break, 시도 횟수 출력</li><li>[ ] <code>pyramid.c</code> - 별 피라미드 (심화)</li><li>[ ] 모든 파일: <code>gcc -Wall -Wextra -Werror</code> 경고 없이 컴파일</li></ul>
+<div class="section-split"><h2>정답 코드</h2><p>각 항목의 "정답 보기"를 눌러 펼치세요. 먼저 직접 풀어본 뒤 확인하는 것을 권장합니다.</p></div>
+<div class="answer"><div class="answer-head"><span class="answer-name">📄 <span class="file">fizzbuzz.c</span></span><button class="answer-toggle">정답 보기</button></div><div class="answer-body"><pre><code class="language-c">#include &lt;stdio.h&gt;
+
+int main(void)
+{
+	int i;
+
+	i = 1;
+	while (i &lt;= 30)
+	{
+		if (i % 15 == 0)
+			printf("FizzBuzz\n");
+		else if (i % 3 == 0)
+			printf("Fizz\n");
+		else if (i % 5 == 0)
+			printf("Buzz\n");
+		else
+			printf("%d\n", i);
+		i++;
+	}
+	return (0);
+}</code></pre></div></div>
+<div class="answer"><div class="answer-head"><span class="answer-name">📄 <span class="file">guess_number.c</span></span><button class="answer-toggle">정답 보기</button></div><div class="answer-body"><pre><code class="language-c">#include &lt;stdio.h&gt;
+
+int main(void)
+{
+	const int	answer = 42;
+	int			guess;
+	int			tries;
+
+	guess = 0;
+	tries = 0;
+	while (1)
+	{
+		printf("숫자를 맞춰보세요 (1~100): ");
+		if (scanf("%d", &amp;guess) != 1)
+			break;
+		tries++;
+		if (guess &gt; answer)
+			printf("더 작게!\n");
+		else if (guess &lt; answer)
+			printf("더 크게!\n");
+		else
+		{
+			printf("정답! %d번 만에 맞혔습니다.\n", tries);
+			break;
+		}
+	}
+	return (0);
+}</code></pre></div></div>
+<div class="answer"><div class="answer-head"><span class="answer-name">📄 <span class="file">gugudan.c</span></span><button class="answer-toggle">정답 보기</button></div><div class="answer-body"><pre><code class="language-c">#include &lt;stdio.h&gt;
+
+int main(void)
+{
+	int dan;
+	int i;
+
+	dan = 2;
+	while (dan &lt;= 9)
+	{
+		printf("%d단\n", dan);
+		i = 1;
+		while (i &lt;= 9)
+		{
+			printf("%d x %d = %d\n", dan, i, dan * i);
+			i++;
+		}
+		printf("\n");
+		dan++;
+	}
+	return (0);
+}</code></pre></div></div>
+<div class="answer"><div class="answer-head"><span class="answer-name">📄 <span class="file">pyramid.c</span></span><button class="answer-toggle">정답 보기</button></div><div class="answer-body"><pre><code class="language-c">#include &lt;stdio.h&gt;
+
+int main(void)
+{
+	int row;
+	int s;
+	int star;
+
+	row = 1;
+	while (row &lt;= 5)
+	{
+		s = 0;
+		while (s &lt; 5 - row)
+		{
+			printf(" ");
+			s++;
+		}
+		star = 0;
+		while (star &lt; 2 * row - 1)
+		{
+			printf("*");
+			star++;
+		}
+		printf("\n");
+		row++;
+	}
+	return (0);
+}</code></pre></div></div>
+
+      </article>
+    </main>
+    <button id="toTop" class="to-top" aria-label="맨 위로">↑</button>
+    <script>
+      document.querySelectorAll(".answer-head").forEach(function (h) {
+        h.addEventListener("click", function () {
+          var card = h.parentElement;
+          card.classList.toggle("open");
+          h.querySelector(".answer-toggle").textContent =
+            card.classList.contains("open") ? "정답 숨기기" : "정답 보기";
+        });
+      });
+      var bar = document.getElementById("readbar");
+      var toTopBtn = document.getElementById("toTop");
+      function onScroll() {
+        var y = window.scrollY || document.documentElement.scrollTop;
+        var dh = document.documentElement.scrollHeight - window.innerHeight;
+        var r = dh > 0 ? y / dh : 0;
+        bar.style.width = (Math.min(1, Math.max(0, r)) * 100) + "%";
+        toTopBtn.classList.toggle("show", y > 400);
+      }
+      window.addEventListener("scroll", onScroll, { passive: true });
+      toTopBtn.addEventListener("click", function () { window.scrollTo({ top: 0, behavior: "smooth" }); });
+      onScroll();
+    </script>
+    <script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/highlight.min.js"></script>
+    <script>
+      if (window.hljs) {
+        document.querySelectorAll("pre code:not(.nohighlight)").forEach(function (el) { hljs.highlightElement(el); });
+      }
+    </script>
+  </body>
+</html>

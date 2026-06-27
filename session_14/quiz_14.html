@@ -1,0 +1,112 @@
+<!--
+Quiz page for C Language Session 14 (문자열 함수 III).
+15 multiple-choice questions, instant feedback, final score. Cyan & Amber palette.
+NEITHER Mermaid JS NOR SVG were used anywhere in this output.
+-->
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>14차시 퀴즈: 문자열 함수 III</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+      @import url("https://fonts.googleapis.com/css2?family=Pretendard:wght@400;500;600;700;800;900&display=swap");
+      body { font-family: "Pretendard", sans-serif; background-color: #0f172a; color: #f8fafc; }
+      pre, code { font-family: 'Courier New', Courier, monospace; }
+    </style>
+  </head>
+  <body class="min-h-screen">
+    <div class="bg-slate-900 border-b border-slate-800 px-6 py-4 flex flex-wrap items-center justify-between gap-4 sticky top-0 z-50">
+      <div class="flex items-center gap-3">
+        <span class="bg-cyan-600 text-white text-xs font-bold px-2.5 py-1 rounded-full uppercase tracking-wider">Quiz 14</span>
+        <h1 class="text-sm md:text-base font-bold text-slate-200">14차시 퀴즈 — 문자열 함수 III</h1>
+      </div>
+      <div class="flex items-center gap-2 bg-slate-800 px-3 py-1.5 rounded-lg border border-slate-700">
+        <span class="text-xs text-slate-400">진행:</span>
+        <span id="progress" class="text-xs font-bold text-cyan-400">0 / 15</span>
+      </div>
+    </div>
+
+    <div class="max-w-3xl mx-auto p-4 md:p-8">
+      <div id="intro" class="bg-slate-900 rounded-3xl p-8 border border-slate-800 mb-6">
+        <h2 class="text-2xl font-black text-white mb-2">수업 마무리 퀴즈</h2>
+        <p class="text-slate-400 text-sm mb-4">strncmp, atoi, strdup과 엣지 케이스를 점검합니다. 총 15문항. 답을 고르면 바로 정답·해설이 표시됩니다.</p>
+        <button onclick="startQuiz()" class="bg-cyan-600 hover:bg-cyan-700 text-white text-sm font-semibold px-5 py-2.5 rounded-lg transition-colors">퀴즈 시작</button>
+      </div>
+      <div id="quizArea" class="hidden space-y-4"></div>
+      <div id="result" class="hidden bg-slate-900 rounded-3xl p-8 border border-slate-800 text-center mt-6">
+        <h2 class="text-2xl font-black text-white mb-2">결과</h2>
+        <p id="scoreText" class="text-4xl font-black mb-3"></p>
+        <p id="scoreMsg" class="text-slate-400 text-sm mb-5"></p>
+        <button onclick="location.reload()" class="bg-slate-800 hover:bg-slate-700 text-slate-200 text-sm font-semibold px-5 py-2.5 rounded-lg border border-slate-700 transition-colors">다시 풀기</button>
+      </div>
+    </div>
+
+    <script>
+      const QUESTIONS = [
+        { q: "sbs_strncmp이 최대 비교하는 글자 수는?", opts: ["문자열 끝까지", "n글자", "1글자", "256"], answer: 1, why: "strncmp는 최대 n글자까지 비교합니다." },
+        { q: "strncmp이 memcmp와 다른 점은?", opts: ["없음", "\\0을 만나면 멈춘다", "더 느리다", "void를 받는다"], answer: 1, why: "strncmp는 문자열용이라 \\0을 만나면 그 자리에서 멈춥니다. memcmp는 n바이트를 무조건 봅니다." },
+        { q: "strncmp에서 차이를 계산할 때 캐스팅은?", opts: ["int", "unsigned char", "char", "size_t"], answer: 1, why: "unsigned char로 캐스팅해야 표준과 부호가 일치합니다." },
+        { q: "두 문자열이 n글자까지 같으면 strncmp 반환값은?", opts: ["1", "0", "-1", "n"], answer: 1, why: "같으면 0을 반환합니다." },
+        { q: "sbs_atoi의 처리 순서로 올바른 것은?", opts: ["숫자 → 부호 → 공백", "공백 → 부호 → 숫자", "부호 → 숫자 → 공백", "숫자만"], answer: 1, why: "선행 공백을 건너뛰고, 부호를 처리한 뒤, 숫자를 누적합니다." },
+        { q: 'atoi("   123")의 결과는?', opts: ["0", "123", "-123", "에러"], answer: 1, why: "선행 공백을 건너뛰고 123을 읽습니다." },
+        { q: 'atoi("12ab")의 결과는?', opts: ["0", "12", "12ab", "에러"], answer: 1, why: "숫자가 아닌 문자(a)를 만나면 중단하므로 12." },
+        { q: 'atoi("+-5")의 결과는?', opts: ["5", "-5", "0", "에러"], answer: 2, why: "부호는 한 개만 처리. 두 번째 기호에서 숫자가 아니므로 0." },
+        { q: "문자 '7'을 정수 7로 바꾸는 식은?", opts: ["'7'", "'7' - '0'", "'7' + 0", "(int)'7'"], answer: 1, why: "'7' - '0' = 55 - 48 = 7. ASCII 차이를 이용합니다." },
+        { q: "숫자 누적 공식으로 올바른 것은?", opts: ["result + digit", "result * 10 + digit", "result * digit", "digit - result"], answer: 1, why: "한 자리씩 읽으며 result = result*10 + 새 자릿값." },
+        { q: "sbs_strdup이 malloc하는 크기는?", opts: ["len", "len + 1", "len * 2", "len - 1"], answer: 1, why: "\\0 자리를 위해 len + 1바이트를 할당합니다." },
+        { q: "strdup에서 malloc 직후 해야 하는 것은?", opts: ["free", "NULL 검사", "memset", "재할당"], answer: 1, why: "할당 실패(NULL)를 검사한 뒤 복사를 진행합니다." },
+        { q: "strdup이 반환한 메모리는 누가 free하나?", opts: ["strdup 자신", "호출자", "운영체제", "free 불필요"], answer: 1, why: "동적 할당한 메모리는 호출자가 다 쓴 뒤 free해야 누수가 없습니다." },
+        { q: "strdup 결과 메모리와 원본의 관계는?", opts: ["같은 주소", "독립된 다른 주소", "원본을 가리킴", "NULL"], answer: 1, why: "복제본은 원본과 다른 독립 메모리. 채점이 이를 확인합니다." },
+        { q: "14차시 채점에서 strncmp/atoi의 정답 기준은?", opts: ["강사 코드", "표준 라이브러리 함수", "랜덤", "다른 학생"], answer: 1, why: "표준 strncmp/atoi와 비교합니다. strdup은 내용+독립성+free 가능을 확인." }
+      ];
+
+      let current = 0, score = 0;
+      function startQuiz() { document.getElementById("intro").classList.add("hidden"); document.getElementById("quizArea").classList.remove("hidden"); renderQuestion(); }
+      function renderQuestion() {
+        const area = document.getElementById("quizArea");
+        const item = QUESTIONS[current];
+        document.getElementById("progress").innerText = (current + 1) + " / " + QUESTIONS.length;
+        const card = document.createElement("div");
+        card.className = "bg-slate-900 rounded-3xl p-6 md:p-8 border border-slate-800";
+        let html = '<div class="flex items-start gap-3 mb-5"><span class="bg-cyan-600 text-white text-sm font-black w-7 h-7 rounded-full flex items-center justify-center shrink-0">' + (current + 1) + '</span><p class="text-white text-base font-semibold">' + item.q + '</p></div><div class="space-y-2">';
+        item.opts.forEach(function (opt, idx) { html += '<button data-idx="' + idx + '" class="optBtn w-full text-left bg-slate-800/50 hover:bg-slate-800 text-slate-200 text-sm px-4 py-3 rounded-xl border border-slate-700 transition-colors"><span class="text-cyan-400 font-bold mr-2">' + String.fromCharCode(65 + idx) + '</span>' + opt + '</button>'; });
+        html += '</div><div class="feedback hidden mt-4 p-4 rounded-xl text-sm"></div><div class="nextWrap hidden mt-4 text-right"><button onclick="nextQuestion()" class="bg-cyan-600 hover:bg-cyan-700 text-white text-sm font-semibold px-5 py-2.5 rounded-lg transition-colors">' + (current === QUESTIONS.length - 1 ? "결과 보기" : "다음 문제") + '</button></div>';
+        card.innerHTML = html;
+        area.appendChild(card);
+        card.querySelectorAll(".optBtn").forEach(function (btn) { btn.addEventListener("click", function () { selectAnswer(card, parseInt(btn.dataset.idx)); }); });
+        card.scrollIntoView({ behavior: "smooth", block: "start" });
+      }
+      function selectAnswer(card, idx) {
+        const item = QUESTIONS[current];
+        const btns = card.querySelectorAll(".optBtn");
+        btns.forEach(function (b) { b.disabled = true; b.classList.add("cursor-default"); });
+        const correct = item.answer;
+        if (idx === correct) score++;
+        btns[correct].className = "optBtn w-full text-left bg-emerald-600/20 text-emerald-200 text-sm px-4 py-3 rounded-xl border border-emerald-500/50";
+        if (idx !== correct) btns[idx].className = "optBtn w-full text-left bg-rose-600/20 text-rose-200 text-sm px-4 py-3 rounded-xl border border-rose-500/50";
+        const fb = card.querySelector(".feedback");
+        fb.classList.remove("hidden");
+        if (idx === correct) { fb.className = "feedback mt-4 p-4 rounded-xl text-sm bg-emerald-950/40 border border-emerald-500/30 text-emerald-200"; fb.innerHTML = "<span class='font-bold'>정답!</span> " + item.why; }
+        else { fb.className = "feedback mt-4 p-4 rounded-xl text-sm bg-rose-950/40 border border-rose-500/30 text-rose-200"; fb.innerHTML = "<span class='font-bold'>오답.</span> 정답: " + String.fromCharCode(65 + correct) + ". " + item.why; }
+        card.querySelector(".nextWrap").classList.remove("hidden");
+      }
+      function nextQuestion() { current++; if (current < QUESTIONS.length) renderQuestion(); else showResult(); }
+      function showResult() {
+        document.getElementById("quizArea").classList.add("hidden");
+        const res = document.getElementById("result"); res.classList.remove("hidden");
+        const pct = Math.round((score / QUESTIONS.length) * 100);
+        const st = document.getElementById("scoreText"); st.innerText = score + " / " + QUESTIONS.length;
+        st.className = "text-4xl font-black mb-3 " + (pct >= 70 ? "text-emerald-400" : pct >= 40 ? "text-amber-400" : "text-rose-400");
+        let msg;
+        if (pct === 100) msg = "완벽합니다! 문자열 함수 III을 확실히 이해했네요.";
+        else if (pct >= 70) msg = "잘했어요. 틀린 문항의 해설을 다시 확인하세요.";
+        else if (pct >= 40) msg = "절반 정도입니다. 강의 노트를 복습하고 다시 도전하세요.";
+        else msg = "복습이 필요합니다. lecture.md를 다시 읽어보세요.";
+        document.getElementById("scoreMsg").innerText = msg;
+        res.scrollIntoView({ behavior: "smooth" });
+      }
+    </script>
+  </body>
+</html>

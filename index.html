@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>C언어 입문 강의 — libsbs 구현 과정</title>
+    <link rel="stylesheet" href="site.css" />
+  </head>
+  <body>
+    <header class="hero">
+      <div class="hero-inner">
+        <span class="hero-kicker">C LANGUAGE · libsbs IMPLEMENTATION</span>
+        <h1>C언어 입문 강의</h1>
+        <p class="hero-sub">Hello World부터 표준 C 라이브러리 직접 구현까지 — 16차시 전 과정</p>
+
+        <div class="hero-stats">
+          <div class="stat"><span class="stat-num">16</span><span class="stat-label">전체 강의</span></div>
+          <div class="stat"><span class="stat-num">8</span><span class="stat-label">C 기초 (1~8)</span></div>
+          <div class="stat"><span class="stat-num">8</span><span class="stat-label">libsbs 구현 (9~16)</span></div>
+        </div>
+      </div>
+    </header>
+
+    <main class="container">
+      <div class="toolbar">
+        <div class="search">
+          <span class="search-ico">⌕</span>
+          <input id="search" type="text" placeholder="강의 검색 (예: 포인터, malloc, 구조체...)" />
+        </div>
+        <div class="filters" id="filters">
+          <button class="filter active" data-group="all">전체</button>
+          <button class="filter" data-group="basic">C 기초 (1~8)</button>
+          <button class="filter" data-group="impl">libsbs 구현 (9~16)</button>
+        </div>
+      </div>
+
+      <p id="emptyMsg" class="empty hidden">검색 결과가 없습니다.</p>
+
+      <ul id="lessonList" class="lessons"></ul>
+    </main>
+
+    <footer class="site-foot">
+      <p>C언어 입문 강의 · libsbs 구현 과정 · 16차시</p>
+      <p class="foot-sub">각 강의는 강의노트 + 실습 문제 + 정답 코드를 한 페이지에 담았습니다.</p>
+    </footer>
+
+    <button id="toTop" class="to-top" aria-label="맨 위로">↑</button>
+
+    <script src="site.js"></script>
+  </body>
+</html>

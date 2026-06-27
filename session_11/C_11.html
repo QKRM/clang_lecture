@@ -1,0 +1,440 @@
+<!--
+Palette: Cyan & Amber (same as C_01..C_16 — consistent course design)
+Plan Summary: 16-slide interactive presentation for C Language Session 11 (reworked).
+Focus: dynamic memory with malloc/free — stack vs heap, why malloc, standard dynamic functions,
+and building NEW strings via malloc: calloc, substr, strjoin, itoa, strdup. (memmove/memchr/memcmp moved to session 10.)
+NEITHER Mermaid JS NOR SVG were used anywhere in this output.
+-->
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>11차시 강의자료: 동적 메모리와 malloc</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+      @import url("https://fonts.googleapis.com/css2?family=Pretendard:wght@400;500;600;700;800;900&display=swap");
+      body { font-family: "Pretendard", sans-serif; background-color: #0f172a; color: #f8fafc; overflow-x: hidden; }
+      pre, code { font-family: 'Courier New', Courier, monospace; }
+    </style>
+  </head>
+  <body class="min-h-screen flex flex-col justify-between">
+    <div class="bg-slate-900 border-b border-slate-800 px-6 py-4 flex flex-wrap items-center justify-between gap-4 sticky top-0 z-50">
+      <div class="flex items-center gap-3">
+        <span class="bg-cyan-600 text-white text-xs font-bold px-2.5 py-1 rounded-full uppercase tracking-wider">Session 11</span>
+        <h1 class="text-sm md:text-base font-bold text-slate-200">C언어 기초 — libsbs 구현 과정</h1>
+      </div>
+      <div class="flex items-center gap-4">
+        <div class="flex items-center gap-2 bg-slate-800 px-3 py-1.5 rounded-lg border border-slate-700">
+          <span class="text-xs text-slate-400">슬라이드:</span>
+          <span id="slideCounter" class="text-xs font-bold text-cyan-400">1 / 16</span>
+        </div>
+      </div>
+    </div>
+
+    <div id="deckContainer" class="flex-grow flex items-center justify-center p-4 md:p-8">
+
+      <!-- 01 Cover -->
+      <div id="slide1" class="bg-gradient-to-br from-slate-900 via-cyan-950 to-slate-900 w-full max-w-5xl aspect-[16/9] rounded-3xl p-8 md:p-12 shadow-2xl border border-slate-800 flex flex-col justify-between">
+        <div class="flex justify-between items-start"><span class="text-cyan-400 font-bold tracking-wider text-sm uppercase">Slide 01 / Cover</span><span class="text-slate-500 text-sm">11차시: 동적 메모리와 malloc</span></div>
+        <div class="my-auto">
+          <span class="inline-block bg-amber-500/20 text-amber-300 text-xs font-extrabold px-3 py-1.5 rounded-md mb-4 border border-amber-500/30">11차시 · malloc/free · 새 문자열 만들기</span>
+          <h2 class="text-3xl md:text-5xl font-black text-white leading-tight mb-4">동적 메모리와 <span class="text-transparent bg-clip-text bg-gradient-to-r from-amber-400 to-orange-300">malloc</span></h2>
+          <p class="text-slate-400 text-base md:text-lg max-w-2xl">실행 중에 메모리를 빌리는 <code class="text-cyan-300">malloc</code> / 돌려주는 <code class="text-cyan-300">free</code>. <code class="text-cyan-300">calloc · substr · strjoin · itoa · strdup</code>로 새 문자열을 만든다.</p>
+        </div>
+        <div class="flex justify-between items-center text-xs text-slate-500 border-t border-slate-800/80 pt-4"><span>C Language — libsbs Implementation Course</span><span>Time Frame: 3 Hours</span></div>
+      </div>
+
+      <!-- 02 Goal -->
+      <div id="slide2" class="bg-slate-900 w-full max-w-5xl aspect-[16/9] rounded-3xl p-8 md:p-12 shadow-2xl border border-slate-800 flex flex-col justify-between hidden">
+        <div class="flex justify-between items-start"><span class="text-cyan-400 font-bold tracking-wider text-sm uppercase">Slide 02 / Goal</span><span class="text-slate-500 text-sm">11차시: 동적 메모리와 malloc</span></div>
+        <div class="my-auto">
+          <h3 class="text-2xl md:text-3xl font-bold text-white mb-6 border-b border-slate-800 pb-3">오늘의 목표</h3>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <div class="space-y-3">
+              <div class="p-4 bg-slate-800/30 rounded-xl border-l-4 border-cyan-500"><h4 class="font-bold text-white text-sm mb-1">1부 — 강사 설명</h4><p class="text-slate-400 text-xs">스택 vs 힙, malloc/free, 표준 동적 함수, 4개 명세</p></div>
+              <div class="p-4 bg-slate-800/30 rounded-xl border-l-4 border-amber-500"><h4 class="font-bold text-white text-sm mb-1">2부 — 직접 구현</h4><p class="text-slate-400 text-xs">calloc + substr + strjoin + itoa + strdup + 누수 체크</p></div>
+            </div>
+            <div class="bg-slate-800/50 p-6 rounded-xl border border-slate-700">
+              <h4 class="font-bold text-amber-400 text-sm mb-3">오늘 수업이 끝나면</h4>
+              <ul class="space-y-2 text-xs text-slate-300">
+                <li class="flex items-start gap-2"><span class="text-emerald-400 font-bold mt-0.5">1</span><span>malloc이 왜 필요한지 안다</span></li>
+                <li class="flex items-start gap-2"><span class="text-emerald-400 font-bold mt-0.5">2</span><span>malloc/free를 안전하게 쓴다</span></li>
+                <li class="flex items-start gap-2"><span class="text-emerald-400 font-bold mt-0.5">3</span><span>malloc으로 새 문자열을 만든다</span></li>
+              </ul>
+              <div class="mt-4 bg-amber-950/40 p-3 rounded-lg border border-amber-500/20"><p class="text-amber-300 text-xs font-semibold">10차시 연계</p><p class="text-slate-400 text-[10px] mt-1">memchr·memcmp는 10차시로 이동. 11차시는 동적 메모리 집중.</p></div>
+            </div>
+          </div>
+        </div>
+        <div class="flex justify-between items-center text-xs text-slate-500 border-t border-slate-800/80 pt-4"><span>Today's Goal</span><span>Session 11</span></div>
+      </div>
+
+      <!-- 03 stack limits -->
+      <div id="slide3" class="bg-slate-900 w-full max-w-5xl aspect-[16/9] rounded-3xl p-8 md:p-12 shadow-2xl border border-slate-800 flex flex-col justify-between hidden">
+        <div class="flex justify-between items-start"><span class="text-cyan-400 font-bold tracking-wider text-sm uppercase">Slide 03 / Stack Limits</span><span class="text-slate-500 text-sm">11차시: 동적 메모리와 malloc</span></div>
+        <div class="my-auto">
+          <h3 class="text-2xl md:text-3xl font-bold text-white mb-4 border-b border-slate-800 pb-3">왜 malloc인가 — 스택의 한계</h3>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <pre class="bg-slate-950 text-slate-200 p-4 rounded-xl text-[11px] leading-relaxed border border-slate-700"><code><span class="text-cyan-300">char</span> *make_name(<span class="text-cyan-300">void</span>)
+{
+    <span class="text-cyan-300">char</span> name[20] = <span class="text-emerald-300">"Kim"</span>;
+    <span class="text-amber-300">return</span> (name);
+    <span class="text-rose-400">// 위험! 함수 끝나면 사라짐</span>
+}</code></pre>
+            </div>
+            <div class="space-y-3">
+              <div class="bg-rose-950/20 p-4 rounded-xl border border-rose-500/20"><p class="text-rose-400 text-xs font-semibold mb-2">스택의 두 한계</p><ul class="space-y-1 text-[10px] text-slate-300"><li>① 크기를 컴파일 시점에 정해야 함</li><li>② 함수 끝나면 자동 소멸</li></ul></div>
+              <div class="bg-cyan-950/30 p-4 rounded-xl border border-cyan-500/20"><p class="text-cyan-300 text-xs font-semibold mb-1">힙(heap)이 해결</p><p class="text-slate-400 text-[10px]">실행 중 원하는 크기를 빌리고, free 할 때까지 유지된다.</p></div>
+            </div>
+          </div>
+        </div>
+        <div class="flex justify-between items-center text-xs text-slate-500 border-t border-slate-800/80 pt-4"><span>Stack Limits</span><span>Session 11</span></div>
+      </div>
+
+      <!-- 04 stack vs heap -->
+      <div id="slide4" class="bg-slate-900 w-full max-w-5xl aspect-[16/9] rounded-3xl p-8 md:p-12 shadow-2xl border border-slate-800 flex flex-col justify-between hidden">
+        <div class="flex justify-between items-start"><span class="text-cyan-400 font-bold tracking-wider text-sm uppercase">Slide 04 / Stack vs Heap</span><span class="text-slate-500 text-sm">11차시: 동적 메모리와 malloc</span></div>
+        <div class="my-auto">
+          <h3 class="text-2xl md:text-3xl font-bold text-white mb-4 border-b border-slate-800 pb-3">스택 vs 힙</h3>
+          <div class="bg-slate-950 rounded-xl border border-slate-700 overflow-hidden mb-4">
+            <table class="w-full text-xs">
+              <thead><tr class="border-b border-slate-700 bg-slate-800/60"><th class="text-left px-4 py-2 text-cyan-400">구분</th><th class="text-left px-4 py-2 text-amber-400">스택(stack)</th><th class="text-left px-4 py-2 text-amber-400">힙(heap)</th></tr></thead>
+              <tbody class="divide-y divide-slate-800">
+                <tr><td class="px-4 py-2 text-slate-300">크기 결정</td><td class="px-4 py-2 text-slate-400">컴파일 시점</td><td class="px-4 py-2 text-emerald-300">실행 중 자유</td></tr>
+                <tr><td class="px-4 py-2 text-slate-300">수명</td><td class="px-4 py-2 text-slate-400">함수 끝나면 소멸</td><td class="px-4 py-2 text-emerald-300">free 할 때까지</td></tr>
+                <tr><td class="px-4 py-2 text-slate-300">관리</td><td class="px-4 py-2 text-slate-400">자동</td><td class="px-4 py-2 text-emerald-300">malloc/free 직접</td></tr>
+                <tr><td class="px-4 py-2 text-slate-300">초기화</td><td class="px-4 py-2 text-slate-400">안 됨</td><td class="px-4 py-2 text-slate-400">malloc X / calloc 0</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="bg-amber-950/20 p-4 rounded-xl border border-amber-500/20"><p class="text-amber-400 text-xs font-semibold mb-2">malloc을 쓰는 대표 상황</p><p class="text-slate-400 text-[10px]">① 실행 중 크기가 정해질 때 ② 함수가 새 데이터를 만들어 반환할 때 ③ 함수 밖에서도 살아남아야 할 때</p></div>
+        </div>
+        <div class="flex justify-between items-center text-xs text-slate-500 border-t border-slate-800/80 pt-4"><span>Stack vs Heap</span><span>Session 11</span></div>
+      </div>
+
+      <!-- 05 malloc/free -->
+      <div id="slide5" class="bg-slate-900 w-full max-w-5xl aspect-[16/9] rounded-3xl p-8 md:p-12 shadow-2xl border border-slate-800 flex flex-col justify-between hidden">
+        <div class="flex justify-between items-start"><span class="text-cyan-400 font-bold tracking-wider text-sm uppercase">Slide 05 / malloc &amp; free</span><span class="text-slate-500 text-sm">11차시: 동적 메모리와 malloc</span></div>
+        <div class="my-auto">
+          <h3 class="text-2xl md:text-3xl font-bold text-white mb-4 border-b border-slate-800 pb-3">malloc / free 기본 패턴</h3>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <pre class="bg-slate-950 text-slate-200 p-4 rounded-xl text-[11px] leading-relaxed border border-slate-700"><code><span class="text-cyan-300">int</span> *p = malloc(
+    <span class="text-cyan-300">sizeof</span>(<span class="text-cyan-300">int</span>) * 10);
+<span class="text-amber-300">if</span> (p == <span class="text-amber-300">NULL</span>)   <span class="text-slate-500">// ① 실패 검사</span>
+    <span class="text-amber-300">return</span> (<span class="text-amber-300">NULL</span>);
+<span class="text-slate-500">/* ... 사용 ... */</span>
+free(p);          <span class="text-slate-500">// ② 반환 (누수 방지)</span>
+p = <span class="text-amber-300">NULL</span>;        <span class="text-slate-500">// (선택) 댕글링 방지</span></code></pre>
+              <p class="text-slate-500 text-[10px] mt-2">문자열은 <code class="text-white">malloc(len + 1)</code> — \0 자리 +1</p>
+            </div>
+            <div class="space-y-3">
+              <div class="bg-rose-950/20 p-4 rounded-xl border border-rose-500/20"><p class="text-rose-400 text-xs font-semibold mb-2">흔한 실수 3가지</p><ul class="space-y-1 text-[10px] text-slate-300"><li>• use-after-free (free 후 사용)</li><li>• double free (두 번 free)</li><li>• 주소 잃어버려 누수</li></ul></div>
+              <div class="bg-cyan-950/30 p-3 rounded-xl border border-cyan-500/20"><p class="text-slate-400 text-[10px]">malloc 성공 = 시작 주소, 실패 = NULL. <span class="text-white">검사 없이 쓰면 크래시</span>.</p></div>
+            </div>
+          </div>
+        </div>
+        <div class="flex justify-between items-center text-xs text-slate-500 border-t border-slate-800/80 pt-4"><span>malloc / free</span><span>Session 11</span></div>
+      </div>
+
+      <!-- 06 standard funcs -->
+      <div id="slide6" class="bg-slate-900 w-full max-w-5xl aspect-[16/9] rounded-3xl p-8 md:p-12 shadow-2xl border border-slate-800 flex flex-col justify-between hidden">
+        <div class="flex justify-between items-start"><span class="text-cyan-400 font-bold tracking-wider text-sm uppercase">Slide 06 / Standard lib</span><span class="text-slate-500 text-sm">11차시: 동적 메모리와 malloc</span></div>
+        <div class="my-auto">
+          <h3 class="text-2xl md:text-3xl font-bold text-white mb-4 border-b border-slate-800 pb-3">표준 동적 메모리 함수 (&lt;stdlib.h&gt;)</h3>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <div class="bg-slate-950 rounded-xl border border-slate-700 overflow-hidden">
+                <table class="w-full text-xs">
+                  <tbody class="divide-y divide-slate-800">
+                    <tr><td class="px-3 py-1.5"><code class="text-cyan-300">malloc(size)</code></td><td class="px-3 py-1.5 text-slate-400">할당 (초기화 X)</td></tr>
+                    <tr><td class="px-3 py-1.5"><code class="text-cyan-300">calloc(n, size)</code></td><td class="px-3 py-1.5 text-slate-400">할당 + 0 초기화</td></tr>
+                    <tr><td class="px-3 py-1.5"><code class="text-cyan-300">realloc(p, size)</code></td><td class="px-3 py-1.5 text-slate-400">크기 재조정</td></tr>
+                    <tr><td class="px-3 py-1.5"><code class="text-cyan-300">free(p)</code></td><td class="px-3 py-1.5 text-slate-400">해제</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+            <div>
+              <pre class="bg-slate-950 text-slate-200 p-4 rounded-xl text-[11px] leading-relaxed border border-slate-700"><code><span class="text-slate-500">// 0으로 초기화된 배열</span>
+<span class="text-cyan-300">int</span> *a = calloc(10, <span class="text-cyan-300">sizeof</span>(<span class="text-cyan-300">int</span>));
+
+<span class="text-slate-500">// 4 → 8칸으로 확장</span>
+<span class="text-cyan-300">int</span> *b = malloc(<span class="text-cyan-300">sizeof</span>(<span class="text-cyan-300">int</span>)*4);
+b = realloc(b, <span class="text-cyan-300">sizeof</span>(<span class="text-cyan-300">int</span>)*8);</code></pre>
+              <p class="text-slate-400 text-[10px] mt-3">오늘은 <code class="text-white">calloc</code>을 직접 만들고, malloc으로 <span class="text-white">문자열을 만드는</span> 함수들을 구현.</p>
+            </div>
+          </div>
+        </div>
+        <div class="flex justify-between items-center text-xs text-slate-500 border-t border-slate-800/80 pt-4"><span>Standard Dynamic Functions</span><span>Session 11</span></div>
+      </div>
+
+      <!-- 07 calloc -->
+      <div id="slide7" class="bg-slate-900 w-full max-w-5xl aspect-[16/9] rounded-3xl p-8 md:p-12 shadow-2xl border border-slate-800 flex flex-col justify-between hidden">
+        <div class="flex justify-between items-start"><span class="text-cyan-400 font-bold tracking-wider text-sm uppercase">Slide 07 / calloc</span><span class="text-slate-500 text-sm">11차시: 동적 메모리와 malloc</span></div>
+        <div class="my-auto">
+          <h3 class="text-2xl md:text-3xl font-bold text-white mb-4 border-b border-slate-800 pb-3">sbs_calloc — 할당 + 0 초기화</h3>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <pre class="bg-slate-950 text-slate-200 p-4 rounded-xl text-[11px] leading-relaxed border border-slate-700"><code>total = count * size;
+<span class="text-amber-300">if</span> (count != 0
+ &amp;&amp; total / count != size)
+  <span class="text-amber-300">return</span> (<span class="text-amber-300">NULL</span>);  <span class="text-slate-500">// 오버플로</span>
+ptr = malloc(total);
+<span class="text-amber-300">if</span> (ptr == <span class="text-amber-300">NULL</span>)
+  <span class="text-amber-300">return</span> (<span class="text-amber-300">NULL</span>);
+sbs_memset(ptr, 0, total);
+<span class="text-amber-300">return</span> (ptr);</code></pre>
+            </div>
+            <div class="space-y-3">
+              <div class="bg-cyan-950/30 p-4 rounded-xl border border-cyan-500/20"><p class="text-cyan-300 text-xs font-semibold mb-2">오버플로 방어</p><p class="text-slate-400 text-[10px]"><code class="text-white">count * size</code>가 넘치면 작은 값이 된다. <code class="text-white">total / count != size</code>면 NULL.</p></div>
+              <div class="bg-slate-800/40 p-4 rounded-xl border border-slate-700"><p class="text-slate-400 text-[10px]">malloc + 10차시 <code class="text-white">sbs_memset(0)</code> 재사용.</p></div>
+            </div>
+          </div>
+        </div>
+        <div class="flex justify-between items-center text-xs text-slate-500 border-t border-slate-800/80 pt-4"><span>sbs_calloc</span><span>Session 11</span></div>
+      </div>
+
+      <!-- 08 substr -->
+      <div id="slide8" class="bg-slate-900 w-full max-w-5xl aspect-[16/9] rounded-3xl p-8 md:p-12 shadow-2xl border border-slate-800 flex flex-col justify-between hidden">
+        <div class="flex justify-between items-start"><span class="text-cyan-400 font-bold tracking-wider text-sm uppercase">Slide 08 / substr</span><span class="text-slate-500 text-sm">11차시: 동적 메모리와 malloc</span></div>
+        <div class="my-auto">
+          <h3 class="text-2xl md:text-3xl font-bold text-white mb-4 border-b border-slate-800 pb-3">sbs_substr — 부분 문자열을 새 메모리에</h3>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <pre class="bg-slate-950 text-slate-200 p-4 rounded-xl text-[11px] leading-relaxed border border-slate-700"><code>slen = sbs_strlen(s);
+<span class="text-amber-300">if</span> (start &gt;= slen)
+  len = 0;            <span class="text-slate-500">// 빈 문자열</span>
+<span class="text-amber-300">else if</span> (len &gt; slen - start)
+  len = slen - start; <span class="text-slate-500">// 끝까지만</span>
+sub = malloc(len + 1);
+<span class="text-slate-500">/* s[start+i] 복사 + \0 */</span></code></pre>
+            </div>
+            <div class="space-y-3">
+              <div class="bg-slate-950 p-3 rounded-xl border border-slate-700"><pre class="text-emerald-300 text-[10px]"><code>substr("hello world",6,5)
+  → "world"
+substr("hello",10,5)
+  → ""</code></pre></div>
+              <div class="bg-amber-950/20 p-3 rounded-xl border border-amber-500/20"><p class="text-slate-400 text-[10px]">엣지: start 초과 → "", len 초과 → 남은 길이까지. <code class="text-white">+1</code>은 \0 자리.</p></div>
+            </div>
+          </div>
+        </div>
+        <div class="flex justify-between items-center text-xs text-slate-500 border-t border-slate-800/80 pt-4"><span>sbs_substr</span><span>Session 11</span></div>
+      </div>
+
+      <!-- 09 strjoin -->
+      <div id="slide9" class="bg-slate-900 w-full max-w-5xl aspect-[16/9] rounded-3xl p-8 md:p-12 shadow-2xl border border-slate-800 flex flex-col justify-between hidden">
+        <div class="flex justify-between items-start"><span class="text-cyan-400 font-bold tracking-wider text-sm uppercase">Slide 09 / strjoin</span><span class="text-slate-500 text-sm">11차시: 동적 메모리와 malloc</span></div>
+        <div class="my-auto">
+          <h3 class="text-2xl md:text-3xl font-bold text-white mb-4 border-b border-slate-800 pb-3">sbs_strjoin — 문자열 합쳐 새 메모리</h3>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <pre class="bg-slate-950 text-slate-200 p-4 rounded-xl text-[11px] leading-relaxed border border-slate-700"><code>l1 = sbs_strlen(s1);
+l2 = sbs_strlen(s2);
+res = malloc(l1 + l2 + 1);
+<span class="text-amber-300">if</span> (!s1 || !s2 || !res)
+  <span class="text-amber-300">return</span> (<span class="text-amber-300">NULL</span>);
+<span class="text-slate-500">// s1 복사 후 이어서 s2</span>
+<span class="text-slate-500">// 끝에 \0</span></code></pre>
+            </div>
+            <div class="bg-cyan-950/30 p-5 rounded-xl border border-cyan-500/20 self-center"><p class="text-cyan-300 text-sm font-bold mb-2">malloc 문자열 만들기의 대표</p><p class="text-slate-400 text-xs mb-2">원본 s1·s2는 건드리지 않고 <span class="text-white">새 메모리</span>에 결과를 만든다.</p><pre class="bg-slate-950 text-emerald-300 p-2 rounded text-[10px] border border-slate-700"><code>strjoin("Hello, ","world!")
+  → "Hello, world!"</code></pre></div>
+          </div>
+        </div>
+        <div class="flex justify-between items-center text-xs text-slate-500 border-t border-slate-800/80 pt-4"><span>sbs_strjoin</span><span>Session 11</span></div>
+      </div>
+
+      <!-- 10 itoa -->
+      <div id="slide10" class="bg-slate-900 w-full max-w-5xl aspect-[16/9] rounded-3xl p-8 md:p-12 shadow-2xl border border-slate-800 flex flex-col justify-between hidden">
+        <div class="flex justify-between items-start"><span class="text-cyan-400 font-bold tracking-wider text-sm uppercase">Slide 10 / itoa</span><span class="text-slate-500 text-sm">11차시: 동적 메모리와 malloc</span></div>
+        <div class="my-auto">
+          <h3 class="text-2xl md:text-3xl font-bold text-white mb-4 border-b border-slate-800 pb-3">sbs_itoa — 숫자를 문자열로</h3>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <pre class="bg-slate-950 text-slate-200 p-4 rounded-xl text-[11px] leading-relaxed border border-slate-700"><code><span class="text-amber-300">if</span> (nb &lt; 0)
+  { sign=1; nb=-nb; }  <span class="text-slate-500">// long!</span>
+<span class="text-amber-300">while</span> (tmp &gt;= 10)
+  { tmp/=10; len++; }  <span class="text-slate-500">// 자릿수</span>
+str = malloc(len+sign+1);
+<span class="text-slate-500">// 뒤에서부터 채우고</span>
+<span class="text-amber-300">if</span> (sign) str[0] = <span class="text-emerald-300">'-'</span>;</code></pre>
+            </div>
+            <div class="space-y-3">
+              <div class="bg-rose-950/20 p-4 rounded-xl border border-rose-500/20"><p class="text-rose-400 text-xs font-semibold mb-2">INT_MIN 함정</p><p class="text-slate-400 text-[10px]"><code class="text-white">-(-2147483648)</code>은 int 범위 초과. <code class="text-white">long</code>으로 받아 부호를 뒤집는다(14차시 atoi와 같음).</p></div>
+              <div class="bg-slate-950 p-3 rounded-xl border border-slate-700"><pre class="text-emerald-300 text-[10px]"><code>itoa(-42) → "-42"
+itoa(-2147483648)
+  → "-2147483648"</code></pre></div>
+            </div>
+          </div>
+        </div>
+        <div class="flex justify-between items-center text-xs text-slate-500 border-t border-slate-800/80 pt-4"><span>sbs_itoa</span><span>Session 11</span></div>
+      </div>
+
+      <!-- 11 practice 1-2 -->
+      <div id="slide11" class="bg-slate-900 w-full max-w-5xl aspect-[16/9] rounded-3xl p-8 md:p-12 shadow-2xl border border-slate-800 flex flex-col justify-between hidden">
+        <div class="flex justify-between items-start"><span class="text-cyan-400 font-bold tracking-wider text-sm uppercase">Slide 11 / Practice 1-2</span><span class="text-slate-500 text-sm">11차시: 동적 메모리와 malloc</span></div>
+        <div class="my-auto">
+          <h3 class="text-2xl md:text-3xl font-bold text-white mb-4 border-b border-slate-800 pb-3">실습 ①② — calloc &amp; substr</h3>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div><span class="text-cyan-400 text-xs font-bold block mb-2">① sbs_calloc</span><pre class="bg-slate-950 text-slate-200 p-3 rounded-xl text-[11px] leading-relaxed border border-slate-700"><code><span class="text-amber-300">if</span> (오버플로) <span class="text-amber-300">return</span> NULL;
+ptr = malloc(total);
+sbs_memset(ptr,0,total);</code></pre></div>
+            <div><span class="text-cyan-400 text-xs font-bold block mb-2">② sbs_substr</span><pre class="bg-slate-950 text-slate-200 p-3 rounded-xl text-[11px] leading-relaxed border border-slate-700"><code>sub = malloc(len+1);
+<span class="text-slate-500">// s[start+i] 복사</span>
+sub[len] = <span class="text-emerald-300">'\0'</span>;</code></pre></div>
+          </div>
+        </div>
+        <div class="flex justify-between items-center text-xs text-slate-500 border-t border-slate-800/80 pt-4"><span>Practice 1-2</span><span>Session 11</span></div>
+      </div>
+
+      <!-- 12 practice 3-4 -->
+      <div id="slide12" class="bg-slate-900 w-full max-w-5xl aspect-[16/9] rounded-3xl p-8 md:p-12 shadow-2xl border border-slate-800 flex flex-col justify-between hidden">
+        <div class="flex justify-between items-start"><span class="text-cyan-400 font-bold tracking-wider text-sm uppercase">Slide 12 / Practice 3-4</span><span class="text-slate-500 text-sm">11차시: 동적 메모리와 malloc</span></div>
+        <div class="my-auto">
+          <h3 class="text-2xl md:text-3xl font-bold text-white mb-4 border-b border-slate-800 pb-3">실습 ③④ — strjoin &amp; itoa</h3>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div><span class="text-cyan-400 text-xs font-bold block mb-2">③ sbs_strjoin</span><pre class="bg-slate-950 text-slate-200 p-3 rounded-xl text-[11px] leading-relaxed border border-slate-700"><code>res = malloc(l1+l2+1);
+<span class="text-slate-500">// s1 복사 → s2 이어서</span>
+res[i+j] = <span class="text-emerald-300">'\0'</span>;</code></pre></div>
+            <div><span class="text-cyan-400 text-xs font-bold block mb-2">④ sbs_itoa</span><pre class="bg-slate-950 text-slate-200 p-3 rounded-xl text-[11px] leading-relaxed border border-slate-700"><code><span class="text-slate-500">// 자릿수 세고 malloc</span>
+<span class="text-slate-500">// INT_MIN은 long으로!</span></code></pre></div>
+          </div>
+        </div>
+        <div class="flex justify-between items-center text-xs text-slate-500 border-t border-slate-800/80 pt-4"><span>Practice 3-4</span><span>Session 11</span></div>
+      </div>
+
+      <!-- 13 pitfalls -->
+      <div id="slide13" class="bg-slate-900 w-full max-w-5xl aspect-[16/9] rounded-3xl p-8 md:p-12 shadow-2xl border border-slate-800 flex flex-col justify-between hidden">
+        <div class="flex justify-between items-start"><span class="text-cyan-400 font-bold tracking-wider text-sm uppercase">Slide 13 / Pitfalls</span><span class="text-slate-500 text-sm">11차시: 동적 메모리와 malloc</span></div>
+        <div class="my-auto">
+          <h3 class="text-2xl md:text-3xl font-bold text-white mb-4 border-b border-slate-800 pb-3">메모리 실수와 누수</h3>
+          <div class="bg-slate-950 rounded-xl border border-slate-700 overflow-hidden mb-4">
+            <table class="w-full text-xs">
+              <thead><tr class="border-b border-slate-700 bg-slate-800/60"><th class="text-left px-4 py-2 text-rose-400">실수</th><th class="text-left px-4 py-2 text-emerald-400">해결</th></tr></thead>
+              <tbody class="divide-y divide-slate-800">
+                <tr><td class="px-4 py-2 text-slate-300">malloc 후 NULL 미검사</td><td class="px-4 py-2 text-slate-400">if (p == NULL)</td></tr>
+                <tr><td class="px-4 py-2 text-slate-300">free 누락</td><td class="px-4 py-2 text-slate-400">호출자가 free (누수)</td></tr>
+                <tr><td class="px-4 py-2 text-slate-300">free 후 사용</td><td class="px-4 py-2 text-slate-400">use-after-free 금지</td></tr>
+                <tr><td class="px-4 py-2 text-slate-300">문자열 len만 malloc</td><td class="px-4 py-2 text-slate-400">len + 1 (\0)</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="bg-cyan-950/30 p-4 rounded-xl border border-cyan-500/20"><p class="text-cyan-300 text-xs font-semibold mb-1">누수 점검</p><pre class="bg-slate-950 text-slate-200 p-2 rounded text-[10px] border border-slate-700"><code>valgrind --leak-check=full ./a.out  # leak 0 bytes</code></pre></div>
+        </div>
+        <div class="flex justify-between items-center text-xs text-slate-500 border-t border-slate-800/80 pt-4"><span>Common Pitfalls</span><span>Session 11</span></div>
+      </div>
+
+      <!-- 14 summary -->
+      <div id="slide14" class="bg-slate-900 w-full max-w-5xl aspect-[16/9] rounded-3xl p-8 md:p-12 shadow-2xl border border-slate-800 flex flex-col justify-between hidden">
+        <div class="flex justify-between items-start"><span class="text-cyan-400 font-bold tracking-wider text-sm uppercase">Slide 14 / Summary</span><span class="text-slate-500 text-sm">11차시: 동적 메모리와 malloc</span></div>
+        <div class="my-auto">
+          <h3 class="text-2xl md:text-3xl font-bold text-white mb-5 border-b border-slate-800 pb-3">11차시 핵심 정리</h3>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+            <div class="space-y-2.5">
+              <div class="flex gap-3 items-start p-3 bg-slate-800/30 rounded-xl"><span class="bg-cyan-600 text-white text-sm font-black w-7 h-7 rounded-full flex items-center justify-center shrink-0">1</span><div><p class="text-white text-sm font-semibold">스택은 고정·자동, 힙은 실행 중 할당</p></div></div>
+              <div class="flex gap-3 items-start p-3 bg-slate-800/30 rounded-xl"><span class="bg-cyan-600 text-white text-sm font-black w-7 h-7 rounded-full flex items-center justify-center shrink-0">2</span><div><p class="text-white text-sm font-semibold">malloc → NULL 검사 → 사용 → free</p></div></div>
+              <div class="flex gap-3 items-start p-3 bg-slate-800/30 rounded-xl"><span class="bg-cyan-600 text-white text-sm font-black w-7 h-7 rounded-full flex items-center justify-center shrink-0">3</span><div><p class="text-white text-sm font-semibold">문자열은 malloc(len + 1)</p></div></div>
+            </div>
+            <div class="space-y-2.5">
+              <div class="flex gap-3 items-start p-3 bg-slate-800/30 rounded-xl"><span class="bg-amber-500 text-white text-sm font-black w-7 h-7 rounded-full flex items-center justify-center shrink-0">4</span><div><p class="text-white text-sm font-semibold">calloc = 할당 + 0 + 오버플로 방어</p></div></div>
+              <div class="flex gap-3 items-start p-3 bg-slate-800/30 rounded-xl"><span class="bg-amber-500 text-white text-sm font-black w-7 h-7 rounded-full flex items-center justify-center shrink-0">5</span><div><p class="text-white text-sm font-semibold">substr/strjoin/itoa/strdup = 새 메모리 반환</p><p class="text-slate-400 text-xs mt-0.5">호출자가 free</p></div></div>
+              <div class="bg-amber-950/30 p-3 rounded-xl border border-amber-500/20"><p class="text-amber-300 text-xs font-semibold">다음 차시 예고</p><p class="text-slate-400 text-[10px] mt-1">12차시: 문자열 함수 I — strlen, strlcpy, strlcat (고정 버퍼)</p></div>
+            </div>
+          </div>
+        </div>
+        <div class="flex justify-between items-center text-xs text-slate-500 border-t border-slate-800/80 pt-4"><span>Session 11 — Key Takeaways</span><span>Session 11</span></div>
+      </div>
+
+      <!-- 15 checklist -->
+      <div id="slide15" class="bg-slate-900 w-full max-w-5xl aspect-[16/9] rounded-3xl p-8 md:p-12 shadow-2xl border border-slate-800 flex flex-col justify-between hidden">
+        <div class="flex justify-between items-start"><span class="text-cyan-400 font-bold tracking-wider text-sm uppercase">Slide 15 / Checklist</span><span class="text-slate-500 text-sm">11차시: 동적 메모리와 malloc</span></div>
+        <div class="my-auto">
+          <h3 class="text-2xl md:text-3xl font-bold text-white mb-4 border-b border-slate-800 pb-3">제출 확인</h3>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="bg-slate-800/40 p-4 rounded-xl border border-slate-700">
+              <h4 class="font-bold text-amber-400 text-sm mb-3">작성 파일</h4>
+              <ul class="space-y-1 text-[10px] text-slate-300">
+                <li class="flex gap-2"><span class="text-emerald-400">✓</span><code class="text-cyan-300">libsbs.h</code> (4 프로토타입 추가)</li>
+                <li class="flex gap-2"><span class="text-emerald-400">✓</span><code class="text-cyan-300">sbs_calloc/substr/strjoin/itoa/strdup.c</code></li>
+                <li class="flex gap-2"><span class="text-emerald-400">✓</span>모든 malloc에 NULL 검사</li>
+                <li class="flex gap-2"><span class="text-amber-400">★</span><code class="text-amber-300">bash grade.sh</code> → 5 / 5</li>
+              </ul>
+            </div>
+            <div class="bg-rose-950/20 p-4 rounded-xl border border-rose-500/20">
+              <h4 class="font-bold text-rose-400 text-sm mb-2">자주 막히는 부분</h4>
+              <div class="space-y-1.5 text-[10px] text-slate-300">
+                <div><p class="font-semibold text-slate-200">문자열 끝 깨짐?</p><p class="text-slate-400">malloc(len + 1), 마지막 \0</p></div>
+                <div><p class="font-semibold text-slate-200">itoa INT_MIN?</p><p class="text-slate-400">long으로 받기</p></div>
+                <div><p class="font-semibold text-slate-200">누수?</p><p class="text-slate-400">valgrind 확인</p></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="flex justify-between items-center text-xs text-slate-500 border-t border-slate-800/80 pt-4"><span>Session 11 Checklist</span><span>Session 11</span></div>
+      </div>
+
+      <!-- 16 Q&A -->
+      <div id="slide16" class="bg-slate-900 w-full max-w-5xl aspect-[16/9] rounded-3xl p-8 md:p-12 shadow-2xl border border-slate-800 flex flex-col justify-between hidden">
+        <div class="flex justify-between items-start"><span class="text-cyan-400 font-bold tracking-wider text-sm uppercase">Slide 16 / Q&amp;A</span><span class="text-slate-500 text-sm">11차시: 동적 메모리와 malloc</span></div>
+        <div class="my-auto text-center">
+          <div class="text-4xl mb-4 font-bold text-cyan-400">?</div>
+          <h3 class="text-3xl font-black text-white mb-4">Q&amp;A 및 실습 점검</h3>
+          <p class="text-slate-400 text-sm max-w-lg mx-auto mb-6">malloc/free, 새 문자열 만들기에서 막히는 부분을 함께 해결합니다.</p>
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-4 max-w-2xl mx-auto">
+            <div class="bg-slate-800/50 px-4 py-3 rounded-xl border border-slate-700 text-xs text-slate-300"><p class="font-bold text-slate-200 mb-1">왜 malloc?</p><p class="text-[10px]">실행 중 크기 결정·함수 밖 생존</p></div>
+            <div class="bg-slate-800/50 px-4 py-3 rounded-xl border border-slate-700 text-xs text-slate-300"><p class="font-bold text-slate-200 mb-1">free 누가?</p><p class="text-[10px]">메모리를 받은 호출자가 책임</p></div>
+            <div class="bg-slate-800/50 px-4 py-3 rounded-xl border border-slate-700 text-xs text-slate-300"><p class="font-bold text-slate-200 mb-1">왜 len + 1?</p><p class="text-[10px]">문자열 끝 \0 자리</p></div>
+          </div>
+          <div class="mt-6 inline-block bg-slate-800/50 px-6 py-3 rounded-full border border-slate-700 text-xs text-amber-300 font-medium">"malloc으로 새 데이터를 만드는 순간, 진짜 C 프로그래머."</div>
+        </div>
+        <div class="flex justify-between items-center text-xs text-slate-500 border-t border-slate-800/80 pt-4"><span>Session 11 Completion</span><span>Session 11</span></div>
+      </div>
+
+    </div>
+
+    <div class="bg-slate-950 border-t border-slate-800 px-6 py-4 flex items-center justify-between">
+      <button id="prevBtn" onclick="prevSlide()" class="bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold px-4 py-2 rounded-lg transition-colors border border-slate-700">&larr; 이전 슬라이드</button>
+      <div class="hidden md:flex gap-1.5" id="dotsContainer"></div>
+      <button id="nextBtn" onclick="nextSlide()" class="bg-cyan-600 hover:bg-cyan-700 text-white text-xs font-semibold px-4 py-2 rounded-lg transition-colors">다음 슬라이드 &rarr;</button>
+    </div>
+
+    <script>
+      const totalSlides = 16;
+      let currentSlide = 1;
+      function updateSlideVisibility() {
+        for (let i = 1; i <= totalSlides; i++) {
+          const slide = document.getElementById("slide" + i);
+          if (i === currentSlide) slide.classList.remove("hidden");
+          else slide.classList.add("hidden");
+        }
+        document.getElementById("slideCounter").innerText = currentSlide + " / " + totalSlides;
+        updateDots();
+      }
+      function nextSlide() { if (currentSlide < totalSlides) { currentSlide++; updateSlideVisibility(); } }
+      function prevSlide() { if (currentSlide > 1) { currentSlide--; updateSlideVisibility(); } }
+      function jumpToSlide(index) { currentSlide = index; updateSlideVisibility(); }
+      function buildDots() {
+        const container = document.getElementById("dotsContainer");
+        container.innerHTML = "";
+        for (let i = 1; i <= totalSlides; i++) {
+          const dot = document.createElement("button");
+          dot.id = "dot" + i;
+          dot.onclick = () => jumpToSlide(i);
+          dot.className = "w-2 h-2 rounded-full transition-colors";
+          container.appendChild(dot);
+        }
+      }
+      function updateDots() {
+        for (let i = 1; i <= totalSlides; i++) {
+          const dot = document.getElementById("dot" + i);
+          if (!dot) continue;
+          dot.className = i === currentSlide ? "w-2 h-2 rounded-full transition-colors bg-cyan-500" : "w-2 h-2 rounded-full transition-colors bg-slate-700 hover:bg-slate-500";
+        }
+      }
+      document.addEventListener("keydown", function(e) { if (e.key === "ArrowRight" || e.key === " ") nextSlide(); if (e.key === "ArrowLeft") prevSlide(); });
+      buildDots();
+      updateSlideVisibility();
+    </script>
+  </body>
+</html>

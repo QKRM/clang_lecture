@@ -1,0 +1,693 @@
+<!--
+Palette: Cyan & Amber (same as C_01..C_07 — consistent course design)
+Plan Summary: 16-slide interactive presentation for C Language Session 8.
+Covers struct declaration, member access (. and ->), typedef aliases, struct pointers, struct arrays, passing structs to functions. Practice load doubled (8 tasks).
+NEITHER Mermaid JS NOR SVG were used anywhere in this output.
+-->
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>8차시 강의자료: 구조체와 typedef</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+      @import url("https://fonts.googleapis.com/css2?family=Pretendard:wght@400;500;600;700;800;900&display=swap");
+      body {
+        font-family: "Pretendard", sans-serif;
+        background-color: #0f172a;
+        color: #f8fafc;
+        overflow-x: hidden;
+      }
+      pre, code { font-family: 'Courier New', Courier, monospace; }
+    </style>
+  </head>
+  <body class="min-h-screen flex flex-col justify-between">
+
+    <!-- Top Nav -->
+    <div class="bg-slate-900 border-b border-slate-800 px-6 py-4 flex flex-wrap items-center justify-between gap-4 sticky top-0 z-50">
+      <div class="flex items-center gap-3">
+        <span class="bg-cyan-600 text-white text-xs font-bold px-2.5 py-1 rounded-full uppercase tracking-wider">Session 8</span>
+        <h1 class="text-sm md:text-base font-bold text-slate-200">C언어 기초 — libsbs 구현 과정</h1>
+      </div>
+      <div class="flex items-center gap-4">
+        <div class="flex items-center gap-2 bg-slate-800 px-3 py-1.5 rounded-lg border border-slate-700">
+          <span class="text-xs text-slate-400">슬라이드:</span>
+          <span id="slideCounter" class="text-xs font-bold text-cyan-400">1 / 16</span>
+        </div>
+      </div>
+    </div>
+
+    <div id="deckContainer" class="flex-grow flex items-center justify-center p-4 md:p-8">
+
+      <!-- Slide 01: Cover -->
+      <div id="slide1" class="bg-gradient-to-br from-slate-900 via-cyan-950 to-slate-900 w-full max-w-5xl aspect-[16/9] rounded-3xl p-8 md:p-12 shadow-2xl border border-slate-800 flex flex-col justify-between">
+        <div class="flex justify-between items-start">
+          <span class="text-cyan-400 font-bold tracking-wider text-sm uppercase">Slide 01 / Cover</span>
+          <span class="text-slate-500 text-sm">8차시: 구조체와 typedef</span>
+        </div>
+        <div class="my-auto">
+          <span class="inline-block bg-cyan-500/20 text-cyan-300 text-xs font-extrabold px-3 py-1.5 rounded-md mb-4 border border-cyan-500/30">8차시 · 3시간 · 구조체 + typedef + 포인터</span>
+          <h2 class="text-3xl md:text-5xl font-black text-white leading-tight mb-4">
+            구조체와<br /><span class="text-transparent bg-clip-text bg-gradient-to-r from-amber-400 to-orange-300">typedef</span>
+          </h2>
+          <p class="text-slate-400 text-base md:text-lg max-w-2xl">
+            서로 다른 데이터를 하나로 묶는 <code class="text-cyan-300">struct</code>, 별칭을 다는 <code class="text-cyan-300">typedef</code>, 포인터 접근 <code class="text-cyan-300">-&gt;</code>. 학생 정보를 구조체 배열로 관리합니다.
+          </p>
+        </div>
+        <div class="flex justify-between items-center text-xs text-slate-500 border-t border-slate-800/80 pt-4">
+          <span>C Language — libsbs Implementation Course</span>
+          <span>Time Frame: 3 Hours</span>
+        </div>
+      </div>
+
+      <!-- Slide 02: 오늘의 목표 -->
+      <div id="slide2" class="bg-slate-900 w-full max-w-5xl aspect-[16/9] rounded-3xl p-8 md:p-12 shadow-2xl border border-slate-800 flex flex-col justify-between hidden">
+        <div class="flex justify-between items-start">
+          <span class="text-cyan-400 font-bold tracking-wider text-sm uppercase">Slide 02 / Goal</span>
+          <span class="text-slate-500 text-sm">8차시: 구조체와 typedef</span>
+        </div>
+        <div class="my-auto">
+          <h3 class="text-2xl md:text-3xl font-bold text-white mb-6 border-b border-slate-800 pb-3">오늘의 목표</h3>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <div class="space-y-3">
+              <div class="p-4 bg-slate-800/30 rounded-xl border-l-4 border-cyan-500">
+                <h4 class="font-bold text-white text-sm mb-1">1부 — 강사 설명</h4>
+                <p class="text-slate-400 text-xs">struct 선언, 멤버 접근(`.`/`->`), typedef, 포인터/배열, 함수 전달</p>
+              </div>
+              <div class="p-4 bg-slate-800/30 rounded-xl border-l-4 border-amber-500">
+                <h4 class="font-bold text-white text-sm mb-1">2부 — 직접 구현 <span class="text-amber-300">(2배 분량)</span></h4>
+                <p class="text-slate-400 text-xs">점·학생·포인터·함수·배열·사각형 + 심화(최고점·거리) = 8과제</p>
+              </div>
+            </div>
+            <div class="bg-slate-800/50 p-6 rounded-xl border border-slate-700">
+              <h4 class="font-bold text-amber-400 text-sm mb-3">오늘 수업이 끝나면</h4>
+              <ul class="space-y-2 text-xs text-slate-300">
+                <li class="flex items-start gap-2"><span class="text-emerald-400 font-bold mt-0.5">1</span><span>구조체를 선언하고 멤버에 접근한다</span></li>
+                <li class="flex items-start gap-2"><span class="text-emerald-400 font-bold mt-0.5">2</span><span><code class="text-cyan-300 bg-slate-950 px-1 rounded">.</code>와 <code class="text-cyan-300 bg-slate-950 px-1 rounded">-&gt;</code>를 구분한다</span></li>
+                <li class="flex items-start gap-2"><span class="text-emerald-400 font-bold mt-0.5">3</span><span>typedef로 별칭을 만든다</span></li>
+                <li class="flex items-start gap-2"><span class="text-emerald-400 font-bold mt-0.5">4</span><span>구조체 배열·포인터를 다룬다</span></li>
+              </ul>
+              <div class="mt-4 bg-cyan-950/40 p-3 rounded-lg border border-cyan-500/20">
+                <p class="text-cyan-300 text-xs font-semibold">기초 과정의 마지막</p>
+                <p class="text-slate-400 text-[10px] mt-1">9차시부터 본격 libsbs 함수 구현. 오늘로 문법 기초 완성.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="flex justify-between items-center text-xs text-slate-500 border-t border-slate-800/80 pt-4">
+          <span>Today's Goal</span><span>Session 8</span>
+        </div>
+      </div>
+
+      <!-- Slide 03: 구조체란 -->
+      <div id="slide3" class="bg-slate-900 w-full max-w-5xl aspect-[16/9] rounded-3xl p-8 md:p-12 shadow-2xl border border-slate-800 flex flex-col justify-between hidden">
+        <div class="flex justify-between items-start">
+          <span class="text-cyan-400 font-bold tracking-wider text-sm uppercase">Slide 03 / What is a Struct</span>
+          <span class="text-slate-500 text-sm">8차시: 구조체와 typedef</span>
+        </div>
+        <div class="my-auto">
+          <h3 class="text-2xl md:text-3xl font-bold text-white mb-4 border-b border-slate-800 pb-3">구조체 — 데이터를 하나로 묶기</h3>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="space-y-4">
+              <div class="bg-slate-800/40 p-5 rounded-xl border border-slate-700">
+                <h4 class="font-bold text-cyan-400 text-sm mb-3">여러 값을 한 묶음으로</h4>
+                <p class="text-white text-base font-semibold mb-2">학생 = 이름 + 나이 + 점수</p>
+                <p class="text-slate-400 text-xs">관련 데이터를 한 덩어리로 다루면 코드가 명확해진다.</p>
+              </div>
+              <div class="bg-amber-950/20 p-4 rounded-xl border border-amber-500/20">
+                <p class="text-amber-400 text-xs font-semibold mb-2">설계도 → 변수</p>
+                <p class="text-slate-400 text-[10px]">struct 정의는 설계도. 변수를 만들어야 메모리를 차지한다.</p>
+              </div>
+            </div>
+            <div>
+              <pre class="bg-slate-950 text-slate-200 p-4 rounded-xl text-[11px] leading-relaxed border border-slate-700"><code><span class="text-amber-300">struct</span> student {
+    <span class="text-cyan-300">char</span> name[20];
+    <span class="text-cyan-300">int</span>  age;
+    <span class="text-cyan-300">int</span>  score;
+};  <span class="text-slate-500">// ← 세미콜론 필수!</span>
+
+<span class="text-amber-300">struct</span> student s1;
+<span class="text-amber-300">struct</span> student s2 =
+    {<span class="text-emerald-300">"Kim"</span>, 20, 95};</code></pre>
+            </div>
+          </div>
+        </div>
+        <div class="flex justify-between items-center text-xs text-slate-500 border-t border-slate-800/80 pt-4">
+          <span>What is a Struct</span><span>Session 8</span>
+        </div>
+      </div>
+
+      <!-- Slide 04: 멤버 접근 . -->
+      <div id="slide4" class="bg-slate-900 w-full max-w-5xl aspect-[16/9] rounded-3xl p-8 md:p-12 shadow-2xl border border-slate-800 flex flex-col justify-between hidden">
+        <div class="flex justify-between items-start">
+          <span class="text-cyan-400 font-bold tracking-wider text-sm uppercase">Slide 04 / Member Access .</span>
+          <span class="text-slate-500 text-sm">8차시: 구조체와 typedef</span>
+        </div>
+        <div class="my-auto">
+          <h3 class="text-2xl md:text-3xl font-bold text-white mb-4 border-b border-slate-800 pb-3">멤버 접근 — <code class="text-amber-400">.</code> 연산자</h3>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <pre class="bg-slate-950 text-slate-200 p-4 rounded-xl text-[11px] leading-relaxed border border-slate-700"><code><span class="text-amber-300">struct</span> student s1;
+
+s1.age = 20;        <span class="text-slate-500">// 쓰기</span>
+s1.score = 95;
+printf(<span class="text-emerald-300">"%d\n"</span>, s1.age);  <span class="text-slate-500">// 읽기</span></code></pre>
+            </div>
+            <div class="space-y-3">
+              <div class="bg-rose-950/20 p-4 rounded-xl border border-rose-500/20">
+                <p class="text-rose-400 text-xs font-semibold mb-2">문자열 멤버는 복사</p>
+                <pre class="bg-slate-950 text-slate-200 p-2 rounded text-[10px] border border-slate-700"><code><span class="text-slate-500">// s1.name = "Kim"; 에러!</span>
+strcpy(s1.name, <span class="text-emerald-300">"Kim"</span>);</code></pre>
+                <p class="text-slate-400 text-[10px] mt-2">배열은 통째 대입 불가 (7차시). 복사로 채운다.</p>
+              </div>
+              <div class="bg-slate-800/40 p-4 rounded-xl border border-slate-700">
+                <p class="text-amber-400 text-xs font-semibold mb-2">초기화 순서</p>
+                <pre class="bg-slate-950 text-slate-200 p-2 rounded text-[10px] border border-slate-700"><code>{<span class="text-emerald-300">"Lee"</span>, 21, 88}
+<span class="text-slate-500">// name, age, score 순</span></code></pre>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="flex justify-between items-center text-xs text-slate-500 border-t border-slate-800/80 pt-4">
+          <span>Member Access</span><span>Session 8</span>
+        </div>
+      </div>
+
+      <!-- Slide 05: typedef -->
+      <div id="slide5" class="bg-slate-900 w-full max-w-5xl aspect-[16/9] rounded-3xl p-8 md:p-12 shadow-2xl border border-slate-800 flex flex-col justify-between hidden">
+        <div class="flex justify-between items-start">
+          <span class="text-cyan-400 font-bold tracking-wider text-sm uppercase">Slide 05 / typedef</span>
+          <span class="text-slate-500 text-sm">8차시: 구조체와 typedef</span>
+        </div>
+        <div class="my-auto">
+          <h3 class="text-2xl md:text-3xl font-bold text-white mb-4 border-b border-slate-800 pb-3">typedef — 타입에 별칭 달기</h3>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <pre class="bg-slate-950 text-slate-200 p-4 rounded-xl text-[11px] leading-relaxed border border-slate-700"><code><span class="text-amber-300">typedef struct</span> s_student {
+    <span class="text-cyan-300">char</span> name[20];
+    <span class="text-cyan-300">int</span>  age;
+    <span class="text-cyan-300">int</span>  score;
+} <span class="text-amber-300">t_student</span>;
+
+<span class="text-slate-500">// struct 없이 짧게</span>
+<span class="text-amber-300">t_student</span> s1;
+<span class="text-amber-300">t_student</span> s2 = {<span class="text-emerald-300">"Park"</span>, 22, 77};</code></pre>
+            </div>
+            <div class="space-y-3">
+              <div class="bg-slate-950 rounded-xl border border-slate-700 overflow-hidden">
+                <table class="w-full text-xs">
+                  <tbody class="divide-y divide-slate-800">
+                    <tr><td class="px-3 py-1.5"><code class="text-slate-300">struct student s;</code></td><td class="px-3 py-1.5 text-slate-400">typedef 없이</td></tr>
+                    <tr><td class="px-3 py-1.5"><code class="text-amber-300">t_student s;</code></td><td class="px-3 py-1.5 text-slate-400">짧게</td></tr>
+                  </tbody>
+                </table>
+              </div>
+              <div class="bg-cyan-950/30 p-4 rounded-xl border border-cyan-500/20">
+                <p class="text-cyan-300 text-xs font-semibold mb-2">익명 + typedef</p>
+                <pre class="bg-slate-950 text-slate-200 p-2 rounded text-[10px] border border-slate-700"><code><span class="text-amber-300">typedef struct</span> {
+    <span class="text-cyan-300">int</span> x;
+    <span class="text-cyan-300">int</span> y;
+} <span class="text-amber-300">t_point</span>;</code></pre>
+                <p class="text-slate-400 text-[10px] mt-2">libsbs 관례: <code class="text-white">t_</code> 접두사</p>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="flex justify-between items-center text-xs text-slate-500 border-t border-slate-800/80 pt-4">
+          <span>typedef Alias</span><span>Session 8</span>
+        </div>
+      </div>
+
+      <!-- Slide 06: 구조체 포인터 -> -->
+      <div id="slide6" class="bg-slate-900 w-full max-w-5xl aspect-[16/9] rounded-3xl p-8 md:p-12 shadow-2xl border border-slate-800 flex flex-col justify-between hidden">
+        <div class="flex justify-between items-start">
+          <span class="text-cyan-400 font-bold tracking-wider text-sm uppercase">Slide 06 / Pointer -&gt;</span>
+          <span class="text-slate-500 text-sm">8차시: 구조체와 typedef</span>
+        </div>
+        <div class="my-auto">
+          <h3 class="text-2xl md:text-3xl font-bold text-white mb-4 border-b border-slate-800 pb-3">구조체 포인터 — <code class="text-amber-400">-&gt;</code> 연산자</h3>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <pre class="bg-slate-950 text-slate-200 p-4 rounded-xl text-[11px] leading-relaxed border border-slate-700"><code><span class="text-amber-300">t_student</span> s = {<span class="text-emerald-300">"Kim"</span>, 20, 95};
+<span class="text-amber-300">t_student</span> *p = &amp;s;
+
+printf(<span class="text-emerald-300">"%d"</span>, (*p).age);
+<span class="text-slate-500">// 방법1: 역참조 후 점</span>
+printf(<span class="text-emerald-300">"%d"</span>, p-&gt;age);
+<span class="text-slate-500">// 방법2: 화살표 (간결)</span></code></pre>
+              <p class="text-slate-500 text-[10px] mt-2"><code class="text-white">p-&gt;age</code> = <code class="text-white">(*p).age</code>. 거의 항상 <code class="text-white">-&gt;</code>를 쓴다.</p>
+            </div>
+            <div class="space-y-3">
+              <div class="bg-slate-950 rounded-xl border border-slate-700 overflow-hidden">
+                <table class="w-full text-xs">
+                  <thead><tr class="border-b border-slate-700 bg-slate-800/60">
+                    <th class="text-left px-3 py-1.5 text-cyan-400">대상</th>
+                    <th class="text-left px-3 py-1.5 text-amber-400">연산자</th>
+                  </tr></thead>
+                  <tbody class="divide-y divide-slate-800">
+                    <tr><td class="px-3 py-1.5 text-slate-300">구조체 변수</td><td class="px-3 py-1.5"><code class="text-emerald-300">s.age</code></td></tr>
+                    <tr><td class="px-3 py-1.5 text-slate-300">구조체 포인터</td><td class="px-3 py-1.5"><code class="text-emerald-300">p-&gt;age</code></td></tr>
+                  </tbody>
+                </table>
+              </div>
+              <div class="bg-amber-950/20 p-4 rounded-xl border border-amber-500/20">
+                <p class="text-amber-400 text-xs font-semibold mb-2">왜 포인터?</p>
+                <p class="text-slate-400 text-[10px]">큰 구조체를 함수에 복사하면 비싸다. 포인터(주소)를 넘기면 복사 없이 원본 접근 (5~6차시).</p>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="flex justify-between items-center text-xs text-slate-500 border-t border-slate-800/80 pt-4">
+          <span>Struct Pointer</span><span>Session 8</span>
+        </div>
+      </div>
+
+      <!-- Slide 07: 구조체 배열 -->
+      <div id="slide7" class="bg-slate-900 w-full max-w-5xl aspect-[16/9] rounded-3xl p-8 md:p-12 shadow-2xl border border-slate-800 flex flex-col justify-between hidden">
+        <div class="flex justify-between items-start">
+          <span class="text-cyan-400 font-bold tracking-wider text-sm uppercase">Slide 07 / Struct Array</span>
+          <span class="text-slate-500 text-sm">8차시: 구조체와 typedef</span>
+        </div>
+        <div class="my-auto">
+          <h3 class="text-2xl md:text-3xl font-bold text-white mb-4 border-b border-slate-800 pb-3">구조체 배열 — 여러 개를 한꺼번에</h3>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <pre class="bg-slate-950 text-slate-200 p-4 rounded-xl text-[11px] leading-relaxed border border-slate-700"><code><span class="text-amber-300">t_student</span> class[3] = {
+    {<span class="text-emerald-300">"Kim"</span>,  20, 95},
+    {<span class="text-emerald-300">"Lee"</span>,  21, 88},
+    {<span class="text-emerald-300">"Park"</span>, 22, 77}
+};
+
+<span class="text-amber-300">for</span> (<span class="text-cyan-300">int</span> i = 0; i &lt; 3; i++)
+    printf(<span class="text-emerald-300">"%s %d\n"</span>,
+        class[i].name, class[i].score);</code></pre>
+            </div>
+            <div class="space-y-3">
+              <div class="bg-cyan-950/30 p-4 rounded-xl border border-cyan-500/20">
+                <p class="text-cyan-300 text-xs font-semibold mb-2">왜 좋은가</p>
+                <p class="text-slate-400 text-[10px]">학생 100명을 <code class="text-white">name[100]</code>, <code class="text-white">age[100]</code>, <code class="text-white">score[100]</code> 세 배열 대신 <code class="text-white">class[100]</code> 하나로.</p>
+              </div>
+              <div class="bg-slate-800/40 p-4 rounded-xl border border-slate-700">
+                <p class="text-amber-400 text-xs font-semibold mb-2">접근은 점</p>
+                <p class="text-slate-400 text-[10px]"><code class="text-white">class[i]</code>는 구조체 변수 → <code class="text-white">.</code>로 접근. <code class="text-white">class[i].name</code></p>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="flex justify-between items-center text-xs text-slate-500 border-t border-slate-800/80 pt-4">
+          <span>Struct Array</span><span>Session 8</span>
+        </div>
+      </div>
+
+      <!-- Slide 08: 함수 전달 -->
+      <div id="slide8" class="bg-slate-900 w-full max-w-5xl aspect-[16/9] rounded-3xl p-8 md:p-12 shadow-2xl border border-slate-800 flex flex-col justify-between hidden">
+        <div class="flex justify-between items-start">
+          <span class="text-cyan-400 font-bold tracking-wider text-sm uppercase">Slide 08 / Passing Structs</span>
+          <span class="text-slate-500 text-sm">8차시: 구조체와 typedef</span>
+        </div>
+        <div class="my-auto">
+          <h3 class="text-2xl md:text-3xl font-bold text-white mb-4 border-b border-slate-800 pb-3">구조체를 함수에 — 값 vs 포인터</h3>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <span class="text-cyan-400 text-xs font-bold block mb-2">값 전달 (복사, 읽기)</span>
+              <pre class="bg-slate-950 text-slate-200 p-3 rounded-xl text-[11px] leading-relaxed border border-slate-700"><code><span class="text-cyan-300">void</span> print_student(<span class="text-amber-300">t_student</span> s)
+{
+    printf(<span class="text-emerald-300">"%s\n"</span>, s.name);
+}
+<span class="text-slate-500">// 원본 못 바꿈</span></code></pre>
+            </div>
+            <div>
+              <span class="text-cyan-400 text-xs font-bold block mb-2">포인터 전달 (원본 수정)</span>
+              <pre class="bg-slate-950 text-slate-200 p-3 rounded-xl text-[11px] leading-relaxed border border-slate-700"><code><span class="text-cyan-300">void</span> update_score(<span class="text-amber-300">t_student</span> *p,
+                  <span class="text-cyan-300">int</span> sc)
+{
+    p-&gt;score = sc;  <span class="text-slate-500">// 원본 수정</span>
+}</code></pre>
+            </div>
+          </div>
+          <div class="mt-4 bg-cyan-950/30 p-3 rounded-xl border border-cyan-500/20">
+            <p class="text-slate-400 text-[10px]">읽기만 하면 값(또는 <code class="text-white">const</code> 포인터), 바꾸려면 포인터. 5~6차시 원리가 구조체에도 그대로 적용된다.</p>
+          </div>
+        </div>
+        <div class="flex justify-between items-center text-xs text-slate-500 border-t border-slate-800/80 pt-4">
+          <span>Passing Structs</span><span>Session 8</span>
+        </div>
+      </div>
+
+      <!-- Slide 09: 실습 안내 -->
+      <div id="slide9" class="bg-slate-900 w-full max-w-5xl aspect-[16/9] rounded-3xl p-8 md:p-12 shadow-2xl border border-slate-800 flex flex-col justify-between hidden">
+        <div class="flex justify-between items-start">
+          <span class="text-cyan-400 font-bold tracking-wider text-sm uppercase">Slide 09 / Practice Overview</span>
+          <span class="text-slate-500 text-sm">8차시: 구조체와 typedef</span>
+        </div>
+        <div class="my-auto">
+          <h3 class="text-2xl md:text-3xl font-bold text-white mb-4 border-b border-slate-800 pb-3">실습 8과제 <span class="text-amber-400 text-base">(2배 분량)</span></h3>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="bg-slate-800/40 p-4 rounded-xl border border-slate-700">
+              <h4 class="font-bold text-cyan-400 text-sm mb-3">기본 6과제</h4>
+              <ul class="space-y-1.5 text-[11px] text-slate-300">
+                <li class="flex gap-2"><span class="text-emerald-400">①</span><code class="text-cyan-300">point</code> — 점 구조체</li>
+                <li class="flex gap-2"><span class="text-emerald-400">②</span><code class="text-cyan-300">student</code> — 학생 구조체</li>
+                <li class="flex gap-2"><span class="text-emerald-400">③</span><code class="text-cyan-300">student_ptr</code> — `->` 접근</li>
+                <li class="flex gap-2"><span class="text-emerald-400">④</span><code class="text-cyan-300">student_func</code> — 함수 전달</li>
+                <li class="flex gap-2"><span class="text-emerald-400">⑤</span><code class="text-cyan-300">class_list</code> — 구조체 배열</li>
+                <li class="flex gap-2"><span class="text-emerald-400">⑥</span><code class="text-cyan-300">rectangle</code> — 넓이/둘레</li>
+              </ul>
+            </div>
+            <div class="space-y-3">
+              <div class="bg-amber-950/20 p-4 rounded-xl border border-amber-500/20">
+                <h4 class="font-bold text-amber-400 text-sm mb-3">심화 2과제</h4>
+                <ul class="space-y-1.5 text-[11px] text-slate-300">
+                  <li class="flex gap-2"><span class="text-amber-400">★</span><code class="text-cyan-300">top_student</code> — 최고 점수 주소</li>
+                  <li class="flex gap-2"><span class="text-amber-400">★</span><code class="text-cyan-300">distance</code> — 두 점 거리²</li>
+                </ul>
+              </div>
+              <div class="bg-cyan-950/30 p-3 rounded-xl border border-cyan-500/20">
+                <p class="text-slate-400 text-[10px]">구조체 정의 끝 <code class="text-white">};</code> 세미콜론 잊지 말 것. 문자열 멤버는 <code class="text-white">strcpy</code>로.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="flex justify-between items-center text-xs text-slate-500 border-t border-slate-800/80 pt-4">
+          <span>Practice Overview</span><span>Session 8</span>
+        </div>
+      </div>
+
+      <!-- Slide 10: 실습 1-2 -->
+      <div id="slide10" class="bg-slate-900 w-full max-w-5xl aspect-[16/9] rounded-3xl p-8 md:p-12 shadow-2xl border border-slate-800 flex flex-col justify-between hidden">
+        <div class="flex justify-between items-start">
+          <span class="text-cyan-400 font-bold tracking-wider text-sm uppercase">Slide 10 / Practice 1-2</span>
+          <span class="text-slate-500 text-sm">8차시: 구조체와 typedef</span>
+        </div>
+        <div class="my-auto">
+          <h3 class="text-2xl md:text-3xl font-bold text-white mb-4 border-b border-slate-800 pb-3">실습 ①② — 점 &amp; 학생 구조체</h3>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <span class="text-cyan-400 text-xs font-bold block mb-2">① point.c</span>
+              <pre class="bg-slate-950 text-slate-200 p-3 rounded-xl text-[11px] leading-relaxed border border-slate-700"><code><span class="text-amber-300">typedef struct</span> {
+    <span class="text-cyan-300">int</span> x;
+    <span class="text-cyan-300">int</span> y;
+} <span class="text-amber-300">t_point</span>;
+
+<span class="text-amber-300">t_point</span> p = {3, 4};
+printf(<span class="text-emerald-300">"(%d, %d)\n"</span>, p.x, p.y);</code></pre>
+            </div>
+            <div>
+              <span class="text-cyan-400 text-xs font-bold block mb-2">② student.c</span>
+              <pre class="bg-slate-950 text-slate-200 p-3 rounded-xl text-[11px] leading-relaxed border border-slate-700"><code><span class="text-amber-300">t_student</span> s =
+    {<span class="text-emerald-300">"Kim"</span>, 20, 95};
+printf(<span class="text-emerald-300">"%s %d %d\n"</span>,
+    s.name, s.age, s.score);</code></pre>
+              <p class="text-slate-500 text-[10px] mt-2">이름은 strcpy로도 채워보기</p>
+            </div>
+          </div>
+        </div>
+        <div class="flex justify-between items-center text-xs text-slate-500 border-t border-slate-800/80 pt-4">
+          <span>Practice 1-2</span><span>Session 8</span>
+        </div>
+      </div>
+
+      <!-- Slide 11: 실습 3-4 -->
+      <div id="slide11" class="bg-slate-900 w-full max-w-5xl aspect-[16/9] rounded-3xl p-8 md:p-12 shadow-2xl border border-slate-800 flex flex-col justify-between hidden">
+        <div class="flex justify-between items-start">
+          <span class="text-cyan-400 font-bold tracking-wider text-sm uppercase">Slide 11 / Practice 3-4</span>
+          <span class="text-slate-500 text-sm">8차시: 구조체와 typedef</span>
+        </div>
+        <div class="my-auto">
+          <h3 class="text-2xl md:text-3xl font-bold text-white mb-4 border-b border-slate-800 pb-3">실습 ③④ — 포인터 &amp; 함수 전달</h3>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <span class="text-cyan-400 text-xs font-bold block mb-2">③ student_ptr.c</span>
+              <pre class="bg-slate-950 text-slate-200 p-3 rounded-xl text-[11px] leading-relaxed border border-slate-700"><code><span class="text-amber-300">t_student</span> *p = &amp;s;
+printf(<span class="text-emerald-300">"%d\n"</span>, p-&gt;age);
+p-&gt;age++;
+<span class="text-slate-500">// 원본 s.age가 증가</span></code></pre>
+            </div>
+            <div>
+              <span class="text-cyan-400 text-xs font-bold block mb-2">④ student_func.c</span>
+              <pre class="bg-slate-950 text-slate-200 p-3 rounded-xl text-[11px] leading-relaxed border border-slate-700"><code><span class="text-cyan-300">void</span> set_score(<span class="text-amber-300">t_student</span> *p,
+               <span class="text-cyan-300">int</span> sc)
+{
+    p-&gt;score = sc;
+}
+<span class="text-slate-500">// 90 → 100 확인</span></code></pre>
+            </div>
+          </div>
+        </div>
+        <div class="flex justify-between items-center text-xs text-slate-500 border-t border-slate-800/80 pt-4">
+          <span>Practice 3-4</span><span>Session 8</span>
+        </div>
+      </div>
+
+      <!-- Slide 12: 실습 5-6 -->
+      <div id="slide12" class="bg-slate-900 w-full max-w-5xl aspect-[16/9] rounded-3xl p-8 md:p-12 shadow-2xl border border-slate-800 flex flex-col justify-between hidden">
+        <div class="flex justify-between items-start">
+          <span class="text-cyan-400 font-bold tracking-wider text-sm uppercase">Slide 12 / Practice 5-6</span>
+          <span class="text-slate-500 text-sm">8차시: 구조체와 typedef</span>
+        </div>
+        <div class="my-auto">
+          <h3 class="text-2xl md:text-3xl font-bold text-white mb-4 border-b border-slate-800 pb-3">실습 ⑤⑥ — 배열 &amp; 사각형</h3>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <span class="text-cyan-400 text-xs font-bold block mb-2">⑤ class_list.c</span>
+              <pre class="bg-slate-950 text-slate-200 p-3 rounded-xl text-[11px] leading-relaxed border border-slate-700"><code><span class="text-amber-300">t_student</span> class[3] = {
+  {<span class="text-emerald-300">"Kim"</span>, 20, 95},
+  {<span class="text-emerald-300">"Lee"</span>, 21, 88},
+  {<span class="text-emerald-300">"Park"</span>,22, 77}
+};
+<span class="text-slate-500">// 반복문으로 명단 출력</span></code></pre>
+            </div>
+            <div>
+              <span class="text-cyan-400 text-xs font-bold block mb-2">⑥ rectangle.c</span>
+              <pre class="bg-slate-950 text-slate-200 p-3 rounded-xl text-[11px] leading-relaxed border border-slate-700"><code><span class="text-cyan-300">int</span> area(<span class="text-amber-300">t_rect</span> r)
+{
+  <span class="text-amber-300">return</span> (r.width * r.height);
+}
+<span class="text-slate-500">// 5x3 → 넓이15 둘레16</span></code></pre>
+            </div>
+          </div>
+        </div>
+        <div class="flex justify-between items-center text-xs text-slate-500 border-t border-slate-800/80 pt-4">
+          <span>Practice 5-6</span><span>Session 8</span>
+        </div>
+      </div>
+
+      <!-- Slide 13: 심화 7-8 -->
+      <div id="slide13" class="bg-slate-900 w-full max-w-5xl aspect-[16/9] rounded-3xl p-8 md:p-12 shadow-2xl border border-slate-800 flex flex-col justify-between hidden">
+        <div class="flex justify-between items-start">
+          <span class="text-cyan-400 font-bold tracking-wider text-sm uppercase">Slide 13 / Advanced 7-8</span>
+          <span class="text-slate-500 text-sm">8차시: 구조체와 typedef</span>
+        </div>
+        <div class="my-auto">
+          <h3 class="text-2xl md:text-3xl font-bold text-white mb-4 border-b border-slate-800 pb-3">심화 ⑦⑧ — 최고점 학생 &amp; 거리</h3>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <span class="text-amber-400 text-xs font-bold block mb-2">⑦ top_student.c</span>
+              <pre class="bg-slate-950 text-slate-200 p-3 rounded-xl text-[11px] leading-relaxed border border-slate-700"><code><span class="text-amber-300">t_student</span> *find_top(
+    <span class="text-amber-300">t_student</span> *arr, <span class="text-cyan-300">int</span> n)
+{
+  <span class="text-amber-300">t_student</span> *top = &amp;arr[0];
+  <span class="text-amber-300">for</span> (i=1; i&lt;n; i++)
+    <span class="text-amber-300">if</span> (arr[i].score &gt; top-&gt;score)
+      top = &amp;arr[i];
+  <span class="text-amber-300">return</span> (top);
+}</code></pre>
+            </div>
+            <div>
+              <span class="text-amber-400 text-xs font-bold block mb-2">⑧ distance.c</span>
+              <pre class="bg-slate-950 text-slate-200 p-3 rounded-xl text-[11px] leading-relaxed border border-slate-700"><code><span class="text-cyan-300">int</span> dist_squared(
+    <span class="text-amber-300">t_point</span> a, <span class="text-amber-300">t_point</span> b)
+{
+  <span class="text-cyan-300">int</span> dx = b.x - a.x;
+  <span class="text-cyan-300">int</span> dy = b.y - a.y;
+  <span class="text-amber-300">return</span> (dx*dx + dy*dy);
+}
+<span class="text-slate-500">// (0,0)~(3,4) → 25</span></code></pre>
+            </div>
+          </div>
+        </div>
+        <div class="flex justify-between items-center text-xs text-slate-500 border-t border-slate-800/80 pt-4">
+          <span>Advanced Practice 7-8</span><span>Session 8</span>
+        </div>
+      </div>
+
+      <!-- Slide 14: 핵심 정리 -->
+      <div id="slide14" class="bg-slate-900 w-full max-w-5xl aspect-[16/9] rounded-3xl p-8 md:p-12 shadow-2xl border border-slate-800 flex flex-col justify-between hidden">
+        <div class="flex justify-between items-start">
+          <span class="text-cyan-400 font-bold tracking-wider text-sm uppercase">Slide 14 / Summary</span>
+          <span class="text-slate-500 text-sm">8차시: 구조체와 typedef</span>
+        </div>
+        <div class="my-auto">
+          <h3 class="text-2xl md:text-3xl font-bold text-white mb-5 border-b border-slate-800 pb-3">8차시 핵심 정리</h3>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+            <div class="space-y-2.5">
+              <div class="flex gap-3 items-start p-3 bg-slate-800/30 rounded-xl">
+                <span class="bg-cyan-600 text-white text-sm font-black w-7 h-7 rounded-full flex items-center justify-center shrink-0">1</span>
+                <div><p class="text-white text-sm font-semibold">구조체 = 데이터 묶음 설계도</p><p class="text-slate-400 text-xs mt-0.5">정의 끝 `};` 세미콜론</p></div>
+              </div>
+              <div class="flex gap-3 items-start p-3 bg-slate-800/30 rounded-xl">
+                <span class="bg-cyan-600 text-white text-sm font-black w-7 h-7 rounded-full flex items-center justify-center shrink-0">2</span>
+                <div><p class="text-white text-sm font-semibold">변수 멤버는 `.`, 포인터는 `->`</p><p class="text-slate-400 text-xs mt-0.5"><code class="text-cyan-300">p->age == (*p).age</code></p></div>
+              </div>
+              <div class="flex gap-3 items-start p-3 bg-slate-800/30 rounded-xl">
+                <span class="bg-cyan-600 text-white text-sm font-black w-7 h-7 rounded-full flex items-center justify-center shrink-0">3</span>
+                <div><p class="text-white text-sm font-semibold">typedef로 별칭 (`t_student`)</p><p class="text-slate-400 text-xs mt-0.5">struct 생략 가능</p></div>
+              </div>
+            </div>
+            <div class="space-y-2.5">
+              <div class="flex gap-3 items-start p-3 bg-slate-800/30 rounded-xl">
+                <span class="bg-amber-500 text-white text-sm font-black w-7 h-7 rounded-full flex items-center justify-center shrink-0">4</span>
+                <div><p class="text-white text-sm font-semibold">문자열 멤버는 strcpy로 채운다</p><p class="text-slate-400 text-xs mt-0.5">배열은 대입 불가</p></div>
+              </div>
+              <div class="flex gap-3 items-start p-3 bg-slate-800/30 rounded-xl">
+                <span class="bg-amber-500 text-white text-sm font-black w-7 h-7 rounded-full flex items-center justify-center shrink-0">5</span>
+                <div><p class="text-white text-sm font-semibold">수정하려면 포인터로 전달</p><p class="text-slate-400 text-xs mt-0.5">읽기는 값, 변경은 포인터</p></div>
+              </div>
+              <div class="bg-cyan-950/30 p-3 rounded-xl border border-cyan-500/20">
+                <p class="text-cyan-300 text-xs font-semibold">다음 차시 예고</p>
+                <p class="text-slate-400 text-[10px] mt-1">9차시: 문자 분류 함수 구현 — libsbs 본격 시작!</p>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="flex justify-between items-center text-xs text-slate-500 border-t border-slate-800/80 pt-4">
+          <span>Session 8 — Key Takeaways</span><span>Session 8</span>
+        </div>
+      </div>
+
+      <!-- Slide 15: 제출 체크 -->
+      <div id="slide15" class="bg-slate-900 w-full max-w-5xl aspect-[16/9] rounded-3xl p-8 md:p-12 shadow-2xl border border-slate-800 flex flex-col justify-between hidden">
+        <div class="flex justify-between items-start">
+          <span class="text-cyan-400 font-bold tracking-wider text-sm uppercase">Slide 15 / Checklist</span>
+          <span class="text-slate-500 text-sm">8차시: 구조체와 typedef</span>
+        </div>
+        <div class="my-auto">
+          <h3 class="text-2xl md:text-3xl font-bold text-white mb-4 border-b border-slate-800 pb-3">제출 확인 (8과제)</h3>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="space-y-3">
+              <div class="bg-slate-800/40 p-4 rounded-xl border border-slate-700">
+                <h4 class="font-bold text-amber-400 text-sm mb-3">파일 8개</h4>
+                <ul class="space-y-1 text-[10px] text-slate-300">
+                  <li class="flex gap-2"><span class="text-emerald-400">✓</span><code class="text-cyan-300">point / student / student_ptr</code></li>
+                  <li class="flex gap-2"><span class="text-emerald-400">✓</span><code class="text-cyan-300">student_func / class_list / rectangle</code></li>
+                  <li class="flex gap-2"><span class="text-amber-400">★</span><code class="text-cyan-300">top_student / distance</code></li>
+                </ul>
+              </div>
+              <div class="bg-slate-800/40 p-3 rounded-xl border border-slate-700 text-[10px] text-slate-400">
+                모든 파일: <code class="text-amber-300">gcc -Wall -Wextra -Werror</code> 경고 없이 컴파일
+              </div>
+            </div>
+            <div class="space-y-3">
+              <div class="bg-rose-950/20 p-4 rounded-xl border border-rose-500/20">
+                <h4 class="font-bold text-rose-400 text-sm mb-2">자주 막히는 부분</h4>
+                <div class="space-y-1.5 text-[10px] text-slate-300">
+                  <div><p class="font-semibold text-slate-200">정의 후 에러?</p><p class="text-slate-400">구조체 끝 `};` 세미콜론</p></div>
+                  <div><p class="font-semibold text-slate-200">name 대입 에러?</p><p class="text-slate-400">strcpy로 복사</p></div>
+                  <div><p class="font-semibold text-slate-200">포인터 멤버 에러?</p><p class="text-slate-400">`p.age` 아니라 `p->age`</p></div>
+                </div>
+              </div>
+              <div class="bg-cyan-950/30 p-3 rounded-xl border border-cyan-500/20 text-center">
+                <p class="text-cyan-300 text-sm font-bold">"문법 기초 완성!"</p>
+                <p class="text-slate-400 text-[10px] mt-1">9차시부터 libsbs 함수 구현</p>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="flex justify-between items-center text-xs text-slate-500 border-t border-slate-800/80 pt-4">
+          <span>Session 8 Checklist</span><span>Session 8</span>
+        </div>
+      </div>
+
+      <!-- Slide 16: Q&A -->
+      <div id="slide16" class="bg-slate-900 w-full max-w-5xl aspect-[16/9] rounded-3xl p-8 md:p-12 shadow-2xl border border-slate-800 flex flex-col justify-between hidden">
+        <div class="flex justify-between items-start">
+          <span class="text-cyan-400 font-bold tracking-wider text-sm uppercase">Slide 16 / Q&amp;A</span>
+          <span class="text-slate-500 text-sm">8차시: 구조체와 typedef</span>
+        </div>
+        <div class="my-auto text-center">
+          <div class="text-4xl mb-4 font-bold text-cyan-400">?</div>
+          <h3 class="text-3xl font-black text-white mb-4">Q&amp;A 및 실습 점검</h3>
+          <p class="text-slate-400 text-sm max-w-lg mx-auto mb-6">오늘 다룬 구조체, typedef, 포인터 접근에서 막히는 부분을 함께 해결합니다.</p>
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-4 max-w-2xl mx-auto">
+            <div class="bg-slate-800/50 px-4 py-3 rounded-xl border border-slate-700 text-xs text-slate-300">
+              <p class="font-bold text-slate-200 mb-1">. 과 -&gt; 차이는?</p>
+              <p class="text-[10px]">변수는 점, 포인터는 화살표. p->x = (*p).x</p>
+            </div>
+            <div class="bg-slate-800/50 px-4 py-3 rounded-xl border border-slate-700 text-xs text-slate-300">
+              <p class="font-bold text-slate-200 mb-1">name이 대입이 안 돼요</p>
+              <p class="text-[10px]">배열이라 strcpy로 복사해야 함</p>
+            </div>
+            <div class="bg-slate-800/50 px-4 py-3 rounded-xl border border-slate-700 text-xs text-slate-300">
+              <p class="font-bold text-slate-200 mb-1">typedef 꼭 써야 하나요?</p>
+              <p class="text-[10px]">필수는 아니지만 코드가 짧고 깔끔해진다</p>
+            </div>
+          </div>
+          <div class="mt-6 inline-block bg-slate-800/50 px-6 py-3 rounded-full border border-slate-700 text-xs text-cyan-300 font-medium">
+            "구조체로 데이터를 묶는 감각이 실전 프로그램의 출발입니다."
+          </div>
+        </div>
+        <div class="flex justify-between items-center text-xs text-slate-500 border-t border-slate-800/80 pt-4">
+          <span>Session 8 Completion</span><span>Session 8</span>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Bottom Nav -->
+    <div class="bg-slate-950 border-t border-slate-800 px-6 py-4 flex items-center justify-between">
+      <button id="prevBtn" onclick="prevSlide()" class="bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold px-4 py-2 rounded-lg transition-colors border border-slate-700">&larr; 이전 슬라이드</button>
+      <div class="hidden md:flex gap-1.5" id="dotsContainer"></div>
+      <button id="nextBtn" onclick="nextSlide()" class="bg-cyan-600 hover:bg-cyan-700 text-white text-xs font-semibold px-4 py-2 rounded-lg transition-colors">다음 슬라이드 &rarr;</button>
+    </div>
+
+    <script>
+      const totalSlides = 16;
+      let currentSlide = 1;
+
+      function updateSlideVisibility() {
+        for (let i = 1; i <= totalSlides; i++) {
+          const slide = document.getElementById("slide" + i);
+          if (i === currentSlide) slide.classList.remove("hidden");
+          else slide.classList.add("hidden");
+        }
+        document.getElementById("slideCounter").innerText = currentSlide + " / " + totalSlides;
+        updateDots();
+      }
+
+      function nextSlide() { if (currentSlide < totalSlides) { currentSlide++; updateSlideVisibility(); } }
+      function prevSlide() { if (currentSlide > 1) { currentSlide--; updateSlideVisibility(); } }
+      function jumpToSlide(index) { currentSlide = index; updateSlideVisibility(); }
+
+      function buildDots() {
+        const container = document.getElementById("dotsContainer");
+        container.innerHTML = "";
+        for (let i = 1; i <= totalSlides; i++) {
+          const dot = document.createElement("button");
+          dot.id = "dot" + i;
+          dot.onclick = () => jumpToSlide(i);
+          dot.className = "w-2 h-2 rounded-full transition-colors";
+          container.appendChild(dot);
+        }
+      }
+
+      function updateDots() {
+        for (let i = 1; i <= totalSlides; i++) {
+          const dot = document.getElementById("dot" + i);
+          if (!dot) continue;
+          dot.className = i === currentSlide
+            ? "w-2 h-2 rounded-full transition-colors bg-cyan-500"
+            : "w-2 h-2 rounded-full transition-colors bg-slate-700 hover:bg-slate-500";
+        }
+      }
+
+      document.addEventListener("keydown", function(e) {
+        if (e.key === "ArrowRight" || e.key === " ") nextSlide();
+        if (e.key === "ArrowLeft") prevSlide();
+      });
+
+      buildDots();
+      updateSlideVisibility();
+    </script>
+  </body>
+</html>

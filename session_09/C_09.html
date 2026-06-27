@@ -1,0 +1,710 @@
+<!--
+Palette: Cyan & Amber (same as C_01..C_08 — consistent course design)
+Plan Summary: 16-slide interactive presentation for C Language Session 9.
+Covers header files (declaration vs definition, "" vs <>, include guard), ASCII recap, 7 character functions (is*/toupper/tolower), and the grade.sh auto-grader workflow. First libsbs implementation session.
+NEITHER Mermaid JS NOR SVG were used anywhere in this output.
+-->
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>9차시 강의자료: 헤더 파일 + 문자 분류 함수</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+      @import url("https://fonts.googleapis.com/css2?family=Pretendard:wght@400;500;600;700;800;900&display=swap");
+      body {
+        font-family: "Pretendard", sans-serif;
+        background-color: #0f172a;
+        color: #f8fafc;
+        overflow-x: hidden;
+      }
+      pre, code { font-family: 'Courier New', Courier, monospace; }
+    </style>
+  </head>
+  <body class="min-h-screen flex flex-col justify-between">
+
+    <!-- Top Nav -->
+    <div class="bg-slate-900 border-b border-slate-800 px-6 py-4 flex flex-wrap items-center justify-between gap-4 sticky top-0 z-50">
+      <div class="flex items-center gap-3">
+        <span class="bg-cyan-600 text-white text-xs font-bold px-2.5 py-1 rounded-full uppercase tracking-wider">Session 9</span>
+        <h1 class="text-sm md:text-base font-bold text-slate-200">C언어 기초 — libsbs 구현 과정</h1>
+      </div>
+      <div class="flex items-center gap-4">
+        <div class="flex items-center gap-2 bg-slate-800 px-3 py-1.5 rounded-lg border border-slate-700">
+          <span class="text-xs text-slate-400">슬라이드:</span>
+          <span id="slideCounter" class="text-xs font-bold text-cyan-400">1 / 16</span>
+        </div>
+      </div>
+    </div>
+
+    <div id="deckContainer" class="flex-grow flex items-center justify-center p-4 md:p-8">
+
+      <!-- Slide 01: Cover -->
+      <div id="slide1" class="bg-gradient-to-br from-slate-900 via-cyan-950 to-slate-900 w-full max-w-5xl aspect-[16/9] rounded-3xl p-8 md:p-12 shadow-2xl border border-slate-800 flex flex-col justify-between">
+        <div class="flex justify-between items-start">
+          <span class="text-cyan-400 font-bold tracking-wider text-sm uppercase">Slide 01 / Cover</span>
+          <span class="text-slate-500 text-sm">9차시: 헤더 파일 + 문자 분류 함수</span>
+        </div>
+        <div class="my-auto">
+          <span class="inline-block bg-amber-500/20 text-amber-300 text-xs font-extrabold px-3 py-1.5 rounded-md mb-4 border border-amber-500/30">9차시 · libsbs 구현 시작 · 헤더 + 7함수</span>
+          <h2 class="text-3xl md:text-5xl font-black text-white leading-tight mb-4">
+            헤더 파일과<br /><span class="text-transparent bg-clip-text bg-gradient-to-r from-amber-400 to-orange-300">문자 분류 함수</span>
+          </h2>
+          <p class="text-slate-400 text-base md:text-lg max-w-2xl">
+            드디어 <code class="text-cyan-300">libsbs</code> 본격 구현 시작. 헤더 파일로 선언을 모으고, ASCII 범위 판별로 <code class="text-cyan-300">sbs_isalpha</code> 7형제를 만든 뒤 <code class="text-amber-300">grade.sh</code>로 자동 채점합니다.
+          </p>
+        </div>
+        <div class="flex justify-between items-center text-xs text-slate-500 border-t border-slate-800/80 pt-4">
+          <span>C Language — libsbs Implementation Course</span>
+          <span>Time Frame: 3 Hours</span>
+        </div>
+      </div>
+
+      <!-- Slide 02: 오늘의 목표 -->
+      <div id="slide2" class="bg-slate-900 w-full max-w-5xl aspect-[16/9] rounded-3xl p-8 md:p-12 shadow-2xl border border-slate-800 flex flex-col justify-between hidden">
+        <div class="flex justify-between items-start">
+          <span class="text-cyan-400 font-bold tracking-wider text-sm uppercase">Slide 02 / Goal</span>
+          <span class="text-slate-500 text-sm">9차시: 헤더 파일 + 문자 분류 함수</span>
+        </div>
+        <div class="my-auto">
+          <h3 class="text-2xl md:text-3xl font-bold text-white mb-6 border-b border-slate-800 pb-3">오늘의 목표</h3>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <div class="space-y-3">
+              <div class="p-4 bg-slate-800/30 rounded-xl border-l-4 border-cyan-500">
+                <h4 class="font-bold text-white text-sm mb-1">1부 — 강사 설명</h4>
+                <p class="text-slate-400 text-xs">헤더 파일 개념, include 가드, ASCII, 7개 함수 명세 분석</p>
+              </div>
+              <div class="p-4 bg-slate-800/30 rounded-xl border-l-4 border-amber-500">
+                <h4 class="font-bold text-white text-sm mb-1">2부 — 직접 구현</h4>
+                <p class="text-slate-400 text-xs">libsbs.h 작성 + 7개 함수 구현 + grade.sh 자동 채점</p>
+              </div>
+            </div>
+            <div class="bg-slate-800/50 p-6 rounded-xl border border-slate-700">
+              <h4 class="font-bold text-amber-400 text-sm mb-3">오늘 수업이 끝나면</h4>
+              <ul class="space-y-2 text-xs text-slate-300">
+                <li class="flex items-start gap-2"><span class="text-emerald-400 font-bold mt-0.5">1</span><span>헤더 파일로 선언/정의를 나눈다</span></li>
+                <li class="flex items-start gap-2"><span class="text-emerald-400 font-bold mt-0.5">2</span><span>인클루드 가드를 쓴다</span></li>
+                <li class="flex items-start gap-2"><span class="text-emerald-400 font-bold mt-0.5">3</span><span>문자 함수 7개를 구현한다</span></li>
+                <li class="flex items-start gap-2"><span class="text-emerald-400 font-bold mt-0.5">4</span><span><code class="text-amber-300">grade.sh</code>로 자동 채점한다</span></li>
+              </ul>
+              <div class="mt-4 bg-amber-950/40 p-3 rounded-lg border border-amber-500/20">
+                <p class="text-amber-300 text-xs font-semibold">libsbs 구현 1일차</p>
+                <p class="text-slate-400 text-[10px] mt-1">9~16차시는 강의 + 채점 스크립트가 한 세트. 오늘 만든 libsbs.h가 16차시까지 누적됩니다.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="flex justify-between items-center text-xs text-slate-500 border-t border-slate-800/80 pt-4">
+          <span>Today's Goal</span><span>Session 9</span>
+        </div>
+      </div>
+
+      <!-- Slide 03: 헤더 파일 개념 -->
+      <div id="slide3" class="bg-slate-900 w-full max-w-5xl aspect-[16/9] rounded-3xl p-8 md:p-12 shadow-2xl border border-slate-800 flex flex-col justify-between hidden">
+        <div class="flex justify-between items-start">
+          <span class="text-cyan-400 font-bold tracking-wider text-sm uppercase">Slide 03 / Header File</span>
+          <span class="text-slate-500 text-sm">9차시: 헤더 파일 + 문자 분류 함수</span>
+        </div>
+        <div class="my-auto">
+          <h3 class="text-2xl md:text-3xl font-bold text-white mb-4 border-b border-slate-800 pb-3">헤더 파일 — 선언과 정의의 분리</h3>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <span class="text-cyan-400 text-xs font-bold block mb-2">libsbs.h — 선언만</span>
+              <pre class="bg-slate-950 text-slate-200 p-3 rounded-xl text-[11px] leading-relaxed border border-slate-700"><code><span class="text-cyan-300">int</span> sbs_isalpha(<span class="text-cyan-300">int</span> c);
+<span class="text-cyan-300">int</span> sbs_toupper(<span class="text-cyan-300">int</span> c);
+<span class="text-slate-500">// 프로토타입(선언)만 모음</span></code></pre>
+              <span class="text-cyan-400 text-xs font-bold block mb-2 mt-3">sbs_isalpha.c — 정의</span>
+              <pre class="bg-slate-950 text-slate-200 p-3 rounded-xl text-[11px] leading-relaxed border border-slate-700"><code><span class="text-amber-300">#include</span> <span class="text-emerald-300">"libsbs.h"</span>
+
+<span class="text-cyan-300">int</span> sbs_isalpha(<span class="text-cyan-300">int</span> c)
+{
+    ...
+}</code></pre>
+            </div>
+            <div class="space-y-3">
+              <div class="bg-slate-800/40 p-4 rounded-xl border border-slate-700">
+                <p class="text-amber-400 text-xs font-semibold mb-2">왜 나누나?</p>
+                <ul class="space-y-1.5 text-[10px] text-slate-300">
+                  <li class="flex gap-2"><span class="text-cyan-400">→</span><span>여러 .c가 헤더 하나만 include</span></li>
+                  <li class="flex gap-2"><span class="text-cyan-400">→</span><span>API(함수 목록)를 헤더로 한눈에</span></li>
+                  <li class="flex gap-2"><span class="text-cyan-400">→</span><span>16차시에 libsbs.h로 전체 통합</span></li>
+                </ul>
+              </div>
+              <div class="bg-cyan-950/30 p-4 rounded-xl border border-cyan-500/20">
+                <p class="text-slate-400 text-[10px]">4차시에선 프로토타입과 본문이 한 파일이었다. 함수가 많아지면 <span class="text-white">선언은 .h, 정의는 .c</span>로 나눈다.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="flex justify-between items-center text-xs text-slate-500 border-t border-slate-800/80 pt-4">
+          <span>Header File — Declaration vs Definition</span><span>Session 9</span>
+        </div>
+      </div>
+
+      <!-- Slide 04: include 두 형식 -->
+      <div id="slide4" class="bg-slate-900 w-full max-w-5xl aspect-[16/9] rounded-3xl p-8 md:p-12 shadow-2xl border border-slate-800 flex flex-col justify-between hidden">
+        <div class="flex justify-between items-start">
+          <span class="text-cyan-400 font-bold tracking-wider text-sm uppercase">Slide 04 / include "" vs &lt;&gt;</span>
+          <span class="text-slate-500 text-sm">9차시: 헤더 파일 + 문자 분류 함수</span>
+        </div>
+        <div class="my-auto">
+          <h3 class="text-2xl md:text-3xl font-bold text-white mb-4 border-b border-slate-800 pb-3"><code class="text-amber-400">#include "..."</code> vs <code class="text-amber-400">&lt;...&gt;</code></h3>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <pre class="bg-slate-950 text-slate-200 p-4 rounded-xl text-[11px] leading-relaxed border border-slate-700"><code><span class="text-amber-300">#include</span> <span class="text-emerald-300">&lt;stdio.h&gt;</span>
+<span class="text-slate-500">// 시스템 헤더 — 표준 경로</span>
+
+<span class="text-amber-300">#include</span> <span class="text-emerald-300">"libsbs.h"</span>
+<span class="text-slate-500">// 내 헤더 — 현재 폴더 우선</span></code></pre>
+            </div>
+            <div>
+              <div class="bg-slate-950 rounded-xl border border-slate-700 overflow-hidden">
+                <table class="w-full text-xs">
+                  <thead><tr class="border-b border-slate-700 bg-slate-800/60">
+                    <th class="text-left px-3 py-2 text-cyan-400">형식</th>
+                    <th class="text-left px-3 py-2 text-amber-400">찾는 위치</th>
+                  </tr></thead>
+                  <tbody class="divide-y divide-slate-800">
+                    <tr><td class="px-3 py-2"><code class="text-slate-300">&lt;stdio.h&gt;</code></td><td class="px-3 py-2 text-slate-400">시스템 표준 경로</td></tr>
+                    <tr><td class="px-3 py-2"><code class="text-slate-300">"libsbs.h"</code></td><td class="px-3 py-2 text-slate-400">현재 디렉토리 우선</td></tr>
+                  </tbody>
+                </table>
+              </div>
+              <div class="mt-3 bg-amber-950/20 p-3 rounded-xl border border-amber-500/20">
+                <p class="text-slate-400 text-[10px]">내가 만든 헤더는 <span class="text-white">큰따옴표</span>로. 표준 라이브러리는 <span class="text-white">꺾쇠</span>로.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="flex justify-between items-center text-xs text-slate-500 border-t border-slate-800/80 pt-4">
+          <span>include Forms</span><span>Session 9</span>
+        </div>
+      </div>
+
+      <!-- Slide 05: 인클루드 가드 -->
+      <div id="slide5" class="bg-slate-900 w-full max-w-5xl aspect-[16/9] rounded-3xl p-8 md:p-12 shadow-2xl border border-slate-800 flex flex-col justify-between hidden">
+        <div class="flex justify-between items-start">
+          <span class="text-cyan-400 font-bold tracking-wider text-sm uppercase">Slide 05 / Include Guard</span>
+          <span class="text-slate-500 text-sm">9차시: 헤더 파일 + 문자 분류 함수</span>
+        </div>
+        <div class="my-auto">
+          <h3 class="text-2xl md:text-3xl font-bold text-white mb-4 border-b border-slate-800 pb-3">인클루드 가드 — 중복 포함 방지</h3>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <pre class="bg-slate-950 text-slate-200 p-4 rounded-xl text-[11px] leading-relaxed border border-slate-700"><code><span class="text-amber-300">#ifndef</span> LIBSBS_H
+<span class="text-amber-300"># define</span> LIBSBS_H
+
+<span class="text-cyan-300">int</span> sbs_isalpha(<span class="text-cyan-300">int</span> c);
+<span class="text-cyan-300">int</span> sbs_isdigit(<span class="text-cyan-300">int</span> c);
+<span class="text-slate-500">/* ... 나머지 프로토타입 ... */</span>
+
+<span class="text-amber-300">#endif</span></code></pre>
+            </div>
+            <div class="space-y-3">
+              <div class="bg-rose-950/20 p-4 rounded-xl border border-rose-500/20">
+                <p class="text-rose-400 text-xs font-semibold mb-2">가드가 없으면?</p>
+                <p class="text-slate-400 text-[10px]">같은 헤더가 두 번 include되면 선언이 중복되어 <span class="text-rose-300">redefinition 에러</span>. 큰 프로젝트에서 흔히 발생.</p>
+              </div>
+              <div class="bg-slate-800/40 p-4 rounded-xl border border-slate-700">
+                <p class="text-amber-400 text-xs font-semibold mb-2">동작 원리</p>
+                <p class="text-slate-400 text-[10px]">처음엔 <code class="text-white">LIBSBS_H</code>가 없어 정의 → 내용 포함. 두 번째부터는 이미 정의되어 <code class="text-white">#endif</code>까지 건너뜀.</p>
+              </div>
+              <p class="text-slate-500 text-[10px]">매크로 이름은 보통 파일명 대문자 (LIBSBS_H)</p>
+            </div>
+          </div>
+        </div>
+        <div class="flex justify-between items-center text-xs text-slate-500 border-t border-slate-800/80 pt-4">
+          <span>Include Guard</span><span>Session 9</span>
+        </div>
+      </div>
+
+      <!-- Slide 06: ASCII 복습 -->
+      <div id="slide6" class="bg-slate-900 w-full max-w-5xl aspect-[16/9] rounded-3xl p-8 md:p-12 shadow-2xl border border-slate-800 flex flex-col justify-between hidden">
+        <div class="flex justify-between items-start">
+          <span class="text-cyan-400 font-bold tracking-wider text-sm uppercase">Slide 06 / ASCII Recap</span>
+          <span class="text-slate-500 text-sm">9차시: 헤더 파일 + 문자 분류 함수</span>
+        </div>
+        <div class="my-auto">
+          <h3 class="text-2xl md:text-3xl font-bold text-white mb-4 border-b border-slate-800 pb-3">ASCII 복습 — 문자는 정수</h3>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <div class="bg-slate-950 rounded-xl border border-slate-700 overflow-hidden">
+                <table class="w-full text-xs">
+                  <thead><tr class="border-b border-slate-700 bg-slate-800/60">
+                    <th class="text-left px-3 py-2 text-cyan-400">범위</th>
+                    <th class="text-left px-3 py-2 text-amber-400">의미</th>
+                  </tr></thead>
+                  <tbody class="divide-y divide-slate-800">
+                    <tr><td class="px-3 py-1.5 text-slate-300">0–31, 127</td><td class="px-3 py-1.5 text-slate-400">제어 문자</td></tr>
+                    <tr><td class="px-3 py-1.5 text-slate-300">32–126</td><td class="px-3 py-1.5 text-slate-400">출력 가능 (isprint)</td></tr>
+                    <tr><td class="px-3 py-1.5 text-slate-300">48–57</td><td class="px-3 py-1.5 text-slate-400">'0'–'9'</td></tr>
+                    <tr><td class="px-3 py-1.5 text-slate-300">65–90</td><td class="px-3 py-1.5 text-slate-400">'A'–'Z'</td></tr>
+                    <tr><td class="px-3 py-1.5 text-slate-300">97–122</td><td class="px-3 py-1.5 text-slate-400">'a'–'z'</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+            <div>
+              <pre class="bg-slate-950 text-slate-200 p-4 rounded-xl text-[11px] leading-relaxed border border-slate-700"><code>c &gt;= <span class="text-emerald-300">'a'</span> &amp;&amp; c &lt;= <span class="text-emerald-300">'z'</span>
+<span class="text-slate-500">// 소문자 판별</span>
+c &gt;= <span class="text-emerald-300">'0'</span> &amp;&amp; c &lt;= <span class="text-emerald-300">'9'</span>
+<span class="text-slate-500">// 숫자 판별</span>
+c - 32   <span class="text-slate-500">// 소 → 대</span>
+c + 32   <span class="text-slate-500">// 대 → 소</span></code></pre>
+              <div class="mt-3 bg-cyan-950/30 p-3 rounded-xl border border-cyan-500/20">
+                <p class="text-slate-400 text-[10px]"><code class="text-white">man 3 isalpha</code>로 표준 명세 확인 (1차시 man 사용법).</p>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="flex justify-between items-center text-xs text-slate-500 border-t border-slate-800/80 pt-4">
+          <span>ASCII Recap</span><span>Session 9</span>
+        </div>
+      </div>
+
+      <!-- Slide 07: is* 함수 -->
+      <div id="slide7" class="bg-slate-900 w-full max-w-5xl aspect-[16/9] rounded-3xl p-8 md:p-12 shadow-2xl border border-slate-800 flex flex-col justify-between hidden">
+        <div class="flex justify-between items-start">
+          <span class="text-cyan-400 font-bold tracking-wider text-sm uppercase">Slide 07 / is* Functions</span>
+          <span class="text-slate-500 text-sm">9차시: 헤더 파일 + 문자 분류 함수</span>
+        </div>
+        <div class="my-auto">
+          <h3 class="text-2xl md:text-3xl font-bold text-white mb-4 border-b border-slate-800 pb-3">분류 함수 — 참이면 0이 아닌 값</h3>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <pre class="bg-slate-950 text-slate-200 p-4 rounded-xl text-[11px] leading-relaxed border border-slate-700"><code><span class="text-cyan-300">int</span> sbs_isalpha(<span class="text-cyan-300">int</span> c)
+{
+  <span class="text-amber-300">return</span> ((c&gt;=<span class="text-emerald-300">'a'</span>&amp;&amp;c&lt;=<span class="text-emerald-300">'z'</span>)
+       || (c&gt;=<span class="text-emerald-300">'A'</span>&amp;&amp;c&lt;=<span class="text-emerald-300">'Z'</span>));
+}
+
+<span class="text-cyan-300">int</span> sbs_isalnum(<span class="text-cyan-300">int</span> c)
+{
+  <span class="text-amber-300">return</span> (sbs_isalpha(c)
+       || sbs_isdigit(c));
+}</code></pre>
+            </div>
+            <div class="space-y-3">
+              <div class="bg-slate-950 rounded-xl border border-slate-700 overflow-hidden">
+                <table class="w-full text-xs">
+                  <tbody class="divide-y divide-slate-800">
+                    <tr><td class="px-3 py-1.5"><code class="text-cyan-300">isdigit</code></td><td class="px-3 py-1.5 text-slate-400">'0'-'9'</td></tr>
+                    <tr><td class="px-3 py-1.5"><code class="text-cyan-300">isascii</code></td><td class="px-3 py-1.5 text-slate-400">0~127</td></tr>
+                    <tr><td class="px-3 py-1.5"><code class="text-cyan-300">isprint</code></td><td class="px-3 py-1.5 text-slate-400">32~126</td></tr>
+                  </tbody>
+                </table>
+              </div>
+              <div class="bg-amber-950/20 p-4 rounded-xl border border-amber-500/20">
+                <p class="text-amber-400 text-xs font-semibold mb-2">함수 재사용</p>
+                <p class="text-slate-400 text-[10px]"><code class="text-white">isalnum</code>은 이미 만든 <code class="text-white">isalpha</code>, <code class="text-white">isdigit</code>를 조합. 작은 함수를 엮는 감각이 라이브러리의 핵심.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="flex justify-between items-center text-xs text-slate-500 border-t border-slate-800/80 pt-4">
+          <span>Classification Functions</span><span>Session 9</span>
+        </div>
+      </div>
+
+      <!-- Slide 08: 변환 함수 -->
+      <div id="slide8" class="bg-slate-900 w-full max-w-5xl aspect-[16/9] rounded-3xl p-8 md:p-12 shadow-2xl border border-slate-800 flex flex-col justify-between hidden">
+        <div class="flex justify-between items-start">
+          <span class="text-cyan-400 font-bold tracking-wider text-sm uppercase">Slide 08 / Conversion</span>
+          <span class="text-slate-500 text-sm">9차시: 헤더 파일 + 문자 분류 함수</span>
+        </div>
+        <div class="my-auto">
+          <h3 class="text-2xl md:text-3xl font-bold text-white mb-4 border-b border-slate-800 pb-3">변환 함수 — 대상 아니면 그대로</h3>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <pre class="bg-slate-950 text-slate-200 p-4 rounded-xl text-[11px] leading-relaxed border border-slate-700"><code><span class="text-cyan-300">int</span> sbs_toupper(<span class="text-cyan-300">int</span> c)
+{
+  <span class="text-amber-300">if</span> (c &gt;= <span class="text-emerald-300">'a'</span> &amp;&amp; c &lt;= <span class="text-emerald-300">'z'</span>)
+    <span class="text-amber-300">return</span> (c - 32);
+  <span class="text-amber-300">return</span> (c);  <span class="text-slate-500">// 그대로!</span>
+}
+
+<span class="text-cyan-300">int</span> sbs_tolower(<span class="text-cyan-300">int</span> c)
+{
+  <span class="text-amber-300">if</span> (c &gt;= <span class="text-emerald-300">'A'</span> &amp;&amp; c &lt;= <span class="text-emerald-300">'Z'</span>)
+    <span class="text-amber-300">return</span> (c + 32);
+  <span class="text-amber-300">return</span> (c);
+}</code></pre>
+            </div>
+            <div class="bg-rose-950/20 p-5 rounded-xl border border-rose-500/20 self-center">
+              <h4 class="text-rose-400 text-sm font-bold mb-3">자주 하는 실수</h4>
+              <p class="text-slate-300 text-xs mb-2">변환 대상이 아닐 때 <code class="text-white">return (c);</code>를 빠뜨림.</p>
+              <p class="text-slate-400 text-[10px]">숫자·기호·공백도 그대로 반환해야 표준 <code class="text-white">toupper</code>와 일치합니다. 빠뜨리면 0이 반환되어 대량 오답.</p>
+            </div>
+          </div>
+        </div>
+        <div class="flex justify-between items-center text-xs text-slate-500 border-t border-slate-800/80 pt-4">
+          <span>Conversion Functions</span><span>Session 9</span>
+        </div>
+      </div>
+
+      <!-- Slide 09: 파일 구조 -->
+      <div id="slide9" class="bg-slate-900 w-full max-w-5xl aspect-[16/9] rounded-3xl p-8 md:p-12 shadow-2xl border border-slate-800 flex flex-col justify-between hidden">
+        <div class="flex justify-between items-start">
+          <span class="text-cyan-400 font-bold tracking-wider text-sm uppercase">Slide 09 / File Layout</span>
+          <span class="text-slate-500 text-sm">9차시: 헤더 파일 + 문자 분류 함수</span>
+        </div>
+        <div class="my-auto">
+          <h3 class="text-2xl md:text-3xl font-bold text-white mb-4 border-b border-slate-800 pb-3">실습 파일 구조</h3>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <pre class="bg-slate-950 text-slate-200 p-4 rounded-xl text-[11px] leading-relaxed border border-slate-700"><code>session_09/
+├── <span class="text-cyan-300">libsbs.h</span>        <span class="text-slate-500"># 직접 작성</span>
+├── <span class="text-cyan-300">sbs_isalpha.c</span>   <span class="text-slate-500"># 7개</span>
+├── sbs_isdigit.c
+├── ...
+├── <span class="text-amber-300">grade.sh</span>        <span class="text-slate-500"># 채점</span>
+└── tests/          <span class="text-slate-500"># 수정 금지</span>
+    ├── test_isalpha.c
+    └── ...</code></pre>
+            </div>
+            <div class="space-y-3">
+              <div class="bg-emerald-950/20 p-4 rounded-xl border border-emerald-500/20">
+                <p class="text-emerald-400 text-xs font-semibold mb-2">직접 작성</p>
+                <p class="text-slate-400 text-[10px]"><code class="text-white">libsbs.h</code> + <code class="text-white">sbs_*.c</code> 7개. 각 .c 첫 줄에 <code class="text-white">#include "libsbs.h"</code></p>
+              </div>
+              <div class="bg-slate-800/40 p-4 rounded-xl border border-slate-700">
+                <p class="text-amber-400 text-xs font-semibold mb-2">건드리지 말 것</p>
+                <p class="text-slate-400 text-[10px]"><code class="text-white">grade.sh</code>, <code class="text-white">tests/</code>는 제공됨. 수정하면 채점이 무효.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="flex justify-between items-center text-xs text-slate-500 border-t border-slate-800/80 pt-4">
+          <span>File Layout</span><span>Session 9</span>
+        </div>
+      </div>
+
+      <!-- Slide 10: grade.sh 사용법 -->
+      <div id="slide10" class="bg-slate-900 w-full max-w-5xl aspect-[16/9] rounded-3xl p-8 md:p-12 shadow-2xl border border-slate-800 flex flex-col justify-between hidden">
+        <div class="flex justify-between items-start">
+          <span class="text-cyan-400 font-bold tracking-wider text-sm uppercase">Slide 10 / grade.sh</span>
+          <span class="text-slate-500 text-sm">9차시: 헤더 파일 + 문자 분류 함수</span>
+        </div>
+        <div class="my-auto">
+          <h3 class="text-2xl md:text-3xl font-bold text-white mb-4 border-b border-slate-800 pb-3">채점 스크립트 <code class="text-amber-400">grade.sh</code></h3>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <pre class="bg-slate-950 text-slate-200 p-4 rounded-xl text-[11px] leading-relaxed border border-slate-700"><code><span class="text-emerald-300">$</span> bash grade.sh
+
+=== libsbs 9차시 채점 ===
+<span class="text-emerald-300">✓ sbs_isalpha   (256/256)</span>
+<span class="text-emerald-300">✓ sbs_isdigit   (256/256)</span>
+<span class="text-rose-400">✗ sbs_toupper   (254/256)</span>
+...
+결과: 6 / 7 통과</code></pre>
+              <pre class="bg-slate-950 text-slate-200 p-3 rounded-xl text-[11px] mt-2 border border-slate-700"><code><span class="text-emerald-300">$</span> bash grade.sh -v  <span class="text-slate-500"># 상세</span></code></pre>
+            </div>
+            <div class="space-y-3">
+              <div class="bg-slate-800/40 p-4 rounded-xl border border-slate-700">
+                <p class="text-amber-400 text-xs font-semibold mb-2">3단계 채점</p>
+                <ol class="space-y-1.5 text-[10px] text-slate-300">
+                  <li class="flex gap-2"><span class="bg-cyan-600 text-white text-[9px] font-bold w-4 h-4 rounded-full flex items-center justify-center shrink-0">1</span><span><code class="text-white">&lt;ctype.h&gt;</code> 우회 검사</span></li>
+                  <li class="flex gap-2"><span class="bg-cyan-600 text-white text-[9px] font-bold w-4 h-4 rounded-full flex items-center justify-center shrink-0">2</span><span><code class="text-white">-Wall -Wextra -Werror</code> 컴파일</span></li>
+                  <li class="flex gap-2"><span class="bg-cyan-600 text-white text-[9px] font-bold w-4 h-4 rounded-full flex items-center justify-center shrink-0">3</span><span>libc와 0~255 전수 비교</span></li>
+                </ol>
+              </div>
+              <div class="bg-cyan-950/30 p-3 rounded-xl border border-cyan-500/20">
+                <p class="text-slate-400 text-[10px]"><span class="text-white">표준 함수가 정답.</span> 정답을 외울 필요 없이 libc와 똑같이 동작하면 통과.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="flex justify-between items-center text-xs text-slate-500 border-t border-slate-800/80 pt-4">
+          <span>Auto Grader</span><span>Session 9</span>
+        </div>
+      </div>
+
+      <!-- Slide 11: 실습 1-2 -->
+      <div id="slide11" class="bg-slate-900 w-full max-w-5xl aspect-[16/9] rounded-3xl p-8 md:p-12 shadow-2xl border border-slate-800 flex flex-col justify-between hidden">
+        <div class="flex justify-between items-start">
+          <span class="text-cyan-400 font-bold tracking-wider text-sm uppercase">Slide 11 / Practice 1-2</span>
+          <span class="text-slate-500 text-sm">9차시: 헤더 파일 + 문자 분류 함수</span>
+        </div>
+        <div class="my-auto">
+          <h3 class="text-2xl md:text-3xl font-bold text-white mb-4 border-b border-slate-800 pb-3">실습 ①② — libsbs.h &amp; isalpha</h3>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <span class="text-cyan-400 text-xs font-bold block mb-2">① libsbs.h</span>
+              <pre class="bg-slate-950 text-slate-200 p-3 rounded-xl text-[11px] leading-relaxed border border-slate-700"><code><span class="text-amber-300">#ifndef</span> LIBSBS_H
+<span class="text-amber-300"># define</span> LIBSBS_H
+
+<span class="text-cyan-300">int</span> sbs_isalpha(<span class="text-cyan-300">int</span> c);
+<span class="text-slate-500">/* ... 7개 ... */</span>
+
+<span class="text-amber-300">#endif</span></code></pre>
+            </div>
+            <div>
+              <span class="text-cyan-400 text-xs font-bold block mb-2">② sbs_isalpha.c</span>
+              <pre class="bg-slate-950 text-slate-200 p-3 rounded-xl text-[11px] leading-relaxed border border-slate-700"><code><span class="text-amber-300">#include</span> <span class="text-emerald-300">"libsbs.h"</span>
+
+<span class="text-cyan-300">int</span> sbs_isalpha(<span class="text-cyan-300">int</span> c)
+{
+  <span class="text-amber-300">return</span> ((c&gt;=<span class="text-emerald-300">'a'</span>&amp;&amp;c&lt;=<span class="text-emerald-300">'z'</span>)
+       || (c&gt;=<span class="text-emerald-300">'A'</span>&amp;&amp;c&lt;=<span class="text-emerald-300">'Z'</span>));
+}</code></pre>
+              <p class="text-slate-500 text-[10px] mt-2">제한 시간: ①15분 ②10분</p>
+            </div>
+          </div>
+        </div>
+        <div class="flex justify-between items-center text-xs text-slate-500 border-t border-slate-800/80 pt-4">
+          <span>Practice 1-2</span><span>Session 9</span>
+        </div>
+      </div>
+
+      <!-- Slide 12: 실습 3-5 -->
+      <div id="slide12" class="bg-slate-900 w-full max-w-5xl aspect-[16/9] rounded-3xl p-8 md:p-12 shadow-2xl border border-slate-800 flex flex-col justify-between hidden">
+        <div class="flex justify-between items-start">
+          <span class="text-cyan-400 font-bold tracking-wider text-sm uppercase">Slide 12 / Practice 3-5</span>
+          <span class="text-slate-500 text-sm">9차시: 헤더 파일 + 문자 분류 함수</span>
+        </div>
+        <div class="my-auto">
+          <h3 class="text-2xl md:text-3xl font-bold text-white mb-4 border-b border-slate-800 pb-3">실습 ③④⑤ — digit / alnum / ascii·print</h3>
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
+              <span class="text-cyan-400 text-xs font-bold block mb-2">③ isdigit</span>
+              <pre class="bg-slate-950 text-slate-200 p-3 rounded-xl text-[11px] leading-relaxed border border-slate-700"><code><span class="text-amber-300">return</span> (c&gt;=<span class="text-emerald-300">'0'</span>
+   &amp;&amp; c&lt;=<span class="text-emerald-300">'9'</span>);</code></pre>
+            </div>
+            <div>
+              <span class="text-cyan-400 text-xs font-bold block mb-2">④ isalnum</span>
+              <pre class="bg-slate-950 text-slate-200 p-3 rounded-xl text-[11px] leading-relaxed border border-slate-700"><code><span class="text-amber-300">return</span> (
+  sbs_isalpha(c)
+||sbs_isdigit(c));</code></pre>
+            </div>
+            <div>
+              <span class="text-cyan-400 text-xs font-bold block mb-2">⑤ ascii / print</span>
+              <pre class="bg-slate-950 text-slate-200 p-3 rounded-xl text-[11px] leading-relaxed border border-slate-700"><code><span class="text-slate-500">// ascii</span>
+c&gt;=0 &amp;&amp; c&lt;=127
+<span class="text-slate-500">// print</span>
+c&gt;=32 &amp;&amp; c&lt;=126</code></pre>
+            </div>
+          </div>
+          <div class="mt-4 bg-amber-950/20 p-3 rounded-xl border border-amber-500/20">
+            <p class="text-slate-400 text-[10px]"><span class="text-amber-300">경계값 주의:</span> 127은 ascii지만 print 아님(DEL). 32(공백)는 print. 제한 시간: ③5분 ④10분 ⑤15분</p>
+          </div>
+        </div>
+        <div class="flex justify-between items-center text-xs text-slate-500 border-t border-slate-800/80 pt-4">
+          <span>Practice 3-5</span><span>Session 9</span>
+        </div>
+      </div>
+
+      <!-- Slide 13: 실습 6-7 -->
+      <div id="slide13" class="bg-slate-900 w-full max-w-5xl aspect-[16/9] rounded-3xl p-8 md:p-12 shadow-2xl border border-slate-800 flex flex-col justify-between hidden">
+        <div class="flex justify-between items-start">
+          <span class="text-cyan-400 font-bold tracking-wider text-sm uppercase">Slide 13 / Practice 6-7</span>
+          <span class="text-slate-500 text-sm">9차시: 헤더 파일 + 문자 분류 함수</span>
+        </div>
+        <div class="my-auto">
+          <h3 class="text-2xl md:text-3xl font-bold text-white mb-4 border-b border-slate-800 pb-3">실습 ⑥⑦ — 변환 함수 &amp; 채점</h3>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <span class="text-cyan-400 text-xs font-bold block mb-2">⑥ toupper / tolower</span>
+              <pre class="bg-slate-950 text-slate-200 p-3 rounded-xl text-[11px] leading-relaxed border border-slate-700"><code><span class="text-cyan-300">int</span> sbs_toupper(<span class="text-cyan-300">int</span> c)
+{
+  <span class="text-amber-300">if</span> (c&gt;=<span class="text-emerald-300">'a'</span>&amp;&amp;c&lt;=<span class="text-emerald-300">'z'</span>)
+    <span class="text-amber-300">return</span> (c-32);
+  <span class="text-amber-300">return</span> (c);
+}</code></pre>
+            </div>
+            <div>
+              <span class="text-cyan-400 text-xs font-bold block mb-2">⑦ 채점 실행</span>
+              <pre class="bg-slate-950 text-slate-200 p-3 rounded-xl text-[11px] leading-relaxed border border-slate-700"><code><span class="text-emerald-300">$</span> bash grade.sh
+
+결과: 7 / 7 통과 🎉</code></pre>
+              <div class="mt-3 bg-rose-950/20 p-3 rounded-xl border border-rose-500/20">
+                <p class="text-slate-400 text-[10px]"><span class="text-rose-300">실패하면</span> <code class="text-white">bash grade.sh -v</code>로 어떤 입력에서 틀렸는지 확인.</p>
+              </div>
+              <p class="text-slate-500 text-[10px] mt-2">제한 시간: ⑥15분 ⑦5분</p>
+            </div>
+          </div>
+        </div>
+        <div class="flex justify-between items-center text-xs text-slate-500 border-t border-slate-800/80 pt-4">
+          <span>Practice 6-7</span><span>Session 9</span>
+        </div>
+      </div>
+
+      <!-- Slide 14: 핵심 정리 -->
+      <div id="slide14" class="bg-slate-900 w-full max-w-5xl aspect-[16/9] rounded-3xl p-8 md:p-12 shadow-2xl border border-slate-800 flex flex-col justify-between hidden">
+        <div class="flex justify-between items-start">
+          <span class="text-cyan-400 font-bold tracking-wider text-sm uppercase">Slide 14 / Summary</span>
+          <span class="text-slate-500 text-sm">9차시: 헤더 파일 + 문자 분류 함수</span>
+        </div>
+        <div class="my-auto">
+          <h3 class="text-2xl md:text-3xl font-bold text-white mb-5 border-b border-slate-800 pb-3">9차시 핵심 정리</h3>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+            <div class="space-y-2.5">
+              <div class="flex gap-3 items-start p-3 bg-slate-800/30 rounded-xl">
+                <span class="bg-cyan-600 text-white text-sm font-black w-7 h-7 rounded-full flex items-center justify-center shrink-0">1</span>
+                <div><p class="text-white text-sm font-semibold">헤더(.h)=선언, 소스(.c)=정의</p><p class="text-slate-400 text-xs mt-0.5">.c 첫 줄에 #include "libsbs.h"</p></div>
+              </div>
+              <div class="flex gap-3 items-start p-3 bg-slate-800/30 rounded-xl">
+                <span class="bg-cyan-600 text-white text-sm font-black w-7 h-7 rounded-full flex items-center justify-center shrink-0">2</span>
+                <div><p class="text-white text-sm font-semibold">"내헤더" vs &lt;시스템헤더&gt;</p><p class="text-slate-400 text-xs mt-0.5">큰따옴표는 현재 폴더 우선</p></div>
+              </div>
+              <div class="flex gap-3 items-start p-3 bg-slate-800/30 rounded-xl">
+                <span class="bg-cyan-600 text-white text-sm font-black w-7 h-7 rounded-full flex items-center justify-center shrink-0">3</span>
+                <div><p class="text-white text-sm font-semibold">인클루드 가드로 중복 방지</p><p class="text-slate-400 text-xs mt-0.5">#ifndef / #define / #endif</p></div>
+              </div>
+            </div>
+            <div class="space-y-2.5">
+              <div class="flex gap-3 items-start p-3 bg-slate-800/30 rounded-xl">
+                <span class="bg-amber-500 text-white text-sm font-black w-7 h-7 rounded-full flex items-center justify-center shrink-0">4</span>
+                <div><p class="text-white text-sm font-semibold">is* = 참이면 0 아닌 값</p><p class="text-slate-400 text-xs mt-0.5">isalnum은 isalpha+isdigit 재사용</p></div>
+              </div>
+              <div class="flex gap-3 items-start p-3 bg-slate-800/30 rounded-xl">
+                <span class="bg-amber-500 text-white text-sm font-black w-7 h-7 rounded-full flex items-center justify-center shrink-0">5</span>
+                <div><p class="text-white text-sm font-semibold">변환은 대상 아니면 그대로</p><p class="text-slate-400 text-xs mt-0.5">return (c); 빠뜨리지 말 것</p></div>
+              </div>
+              <div class="bg-amber-950/30 p-3 rounded-xl border border-amber-500/20">
+                <p class="text-amber-300 text-xs font-semibold">다음 차시 예고</p>
+                <p class="text-slate-400 text-[10px] mt-1">10차시: 메모리 함수 I — void*, sbs_memset/bzero/memcpy/memccpy</p>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="flex justify-between items-center text-xs text-slate-500 border-t border-slate-800/80 pt-4">
+          <span>Session 9 — Key Takeaways</span><span>Session 9</span>
+        </div>
+      </div>
+
+      <!-- Slide 15: 제출 체크 -->
+      <div id="slide15" class="bg-slate-900 w-full max-w-5xl aspect-[16/9] rounded-3xl p-8 md:p-12 shadow-2xl border border-slate-800 flex flex-col justify-between hidden">
+        <div class="flex justify-between items-start">
+          <span class="text-cyan-400 font-bold tracking-wider text-sm uppercase">Slide 15 / Checklist</span>
+          <span class="text-slate-500 text-sm">9차시: 헤더 파일 + 문자 분류 함수</span>
+        </div>
+        <div class="my-auto">
+          <h3 class="text-2xl md:text-3xl font-bold text-white mb-4 border-b border-slate-800 pb-3">제출 확인</h3>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="space-y-3">
+              <div class="bg-slate-800/40 p-4 rounded-xl border border-slate-700">
+                <h4 class="font-bold text-amber-400 text-sm mb-3">작성 파일</h4>
+                <ul class="space-y-1 text-[10px] text-slate-300">
+                  <li class="flex gap-2"><span class="text-emerald-400">✓</span><code class="text-cyan-300">libsbs.h</code> (가드 + 7 프로토타입)</li>
+                  <li class="flex gap-2"><span class="text-emerald-400">✓</span><code class="text-cyan-300">sbs_isalpha~tolower.c</code> (7개)</li>
+                  <li class="flex gap-2"><span class="text-emerald-400">✓</span>각 .c 첫 줄 <code class="text-cyan-300">#include "libsbs.h"</code></li>
+                </ul>
+              </div>
+              <div class="bg-slate-800/40 p-3 rounded-xl border border-slate-700 text-[10px] text-slate-400">
+                <code class="text-amber-300">bash grade.sh</code> → <span class="text-emerald-300">7 / 7 통과</span> 목표
+              </div>
+            </div>
+            <div class="space-y-3">
+              <div class="bg-rose-950/20 p-4 rounded-xl border border-rose-500/20">
+                <h4 class="font-bold text-rose-400 text-sm mb-2">자주 막히는 부분</h4>
+                <div class="space-y-1.5 text-[10px] text-slate-300">
+                  <div><p class="font-semibold text-slate-200">No such file libsbs.h?</p><p class="text-slate-400">.c와 같은 폴더, "따옴표" 확인</p></div>
+                  <div><p class="font-semibold text-slate-200">redefinition?</p><p class="text-slate-400">인클루드 가드 누락</p></div>
+                  <div><p class="font-semibold text-slate-200">toupper가 숫자도 바꿈?</p><p class="text-slate-400">return (c); 확인</p></div>
+                </div>
+              </div>
+              <div class="bg-amber-950/30 p-3 rounded-xl border border-amber-500/20 text-center">
+                <p class="text-amber-300 text-sm font-bold">"표준과 똑같이 = 통과"</p>
+                <p class="text-slate-400 text-[10px] mt-1">&lt;ctype.h&gt; 우회 금지</p>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="flex justify-between items-center text-xs text-slate-500 border-t border-slate-800/80 pt-4">
+          <span>Session 9 Checklist</span><span>Session 9</span>
+        </div>
+      </div>
+
+      <!-- Slide 16: Q&A -->
+      <div id="slide16" class="bg-slate-900 w-full max-w-5xl aspect-[16/9] rounded-3xl p-8 md:p-12 shadow-2xl border border-slate-800 flex flex-col justify-between hidden">
+        <div class="flex justify-between items-start">
+          <span class="text-cyan-400 font-bold tracking-wider text-sm uppercase">Slide 16 / Q&amp;A</span>
+          <span class="text-slate-500 text-sm">9차시: 헤더 파일 + 문자 분류 함수</span>
+        </div>
+        <div class="my-auto text-center">
+          <div class="text-4xl mb-4 font-bold text-cyan-400">?</div>
+          <h3 class="text-3xl font-black text-white mb-4">Q&amp;A 및 실습 점검</h3>
+          <p class="text-slate-400 text-sm max-w-lg mx-auto mb-6">헤더 파일, 인클루드 가드, 문자 함수 구현에서 막히는 부분을 함께 해결합니다.</p>
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-4 max-w-2xl mx-auto">
+            <div class="bg-slate-800/50 px-4 py-3 rounded-xl border border-slate-700 text-xs text-slate-300">
+              <p class="font-bold text-slate-200 mb-1">헤더는 왜 나누나요?</p>
+              <p class="text-[10px]">선언을 모아 여러 .c가 공유. 16차시 통합의 기초</p>
+            </div>
+            <div class="bg-slate-800/50 px-4 py-3 rounded-xl border border-slate-700 text-xs text-slate-300">
+              <p class="font-bold text-slate-200 mb-1">왜 표준과 비교하나요?</p>
+              <p class="text-[10px]">libc가 정답. 똑같이 동작하면 통과</p>
+            </div>
+            <div class="bg-slate-800/50 px-4 py-3 rounded-xl border border-slate-700 text-xs text-slate-300">
+              <p class="font-bold text-slate-200 mb-1">isalnum이 다른 함수 호출?</p>
+              <p class="text-[10px]">같은 헤더 선언 → 바로 호출 가능</p>
+            </div>
+          </div>
+          <div class="mt-6 inline-block bg-slate-800/50 px-6 py-3 rounded-full border border-slate-700 text-xs text-amber-300 font-medium">
+            "오늘부터 libsbs를 한 함수씩 직접 만듭니다."
+          </div>
+        </div>
+        <div class="flex justify-between items-center text-xs text-slate-500 border-t border-slate-800/80 pt-4">
+          <span>Session 9 Completion</span><span>Session 9</span>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Bottom Nav -->
+    <div class="bg-slate-950 border-t border-slate-800 px-6 py-4 flex items-center justify-between">
+      <button id="prevBtn" onclick="prevSlide()" class="bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold px-4 py-2 rounded-lg transition-colors border border-slate-700">&larr; 이전 슬라이드</button>
+      <div class="hidden md:flex gap-1.5" id="dotsContainer"></div>
+      <button id="nextBtn" onclick="nextSlide()" class="bg-cyan-600 hover:bg-cyan-700 text-white text-xs font-semibold px-4 py-2 rounded-lg transition-colors">다음 슬라이드 &rarr;</button>
+    </div>
+
+    <script>
+      const totalSlides = 16;
+      let currentSlide = 1;
+
+      function updateSlideVisibility() {
+        for (let i = 1; i <= totalSlides; i++) {
+          const slide = document.getElementById("slide" + i);
+          if (i === currentSlide) slide.classList.remove("hidden");
+          else slide.classList.add("hidden");
+        }
+        document.getElementById("slideCounter").innerText = currentSlide + " / " + totalSlides;
+        updateDots();
+      }
+
+      function nextSlide() { if (currentSlide < totalSlides) { currentSlide++; updateSlideVisibility(); } }
+      function prevSlide() { if (currentSlide > 1) { currentSlide--; updateSlideVisibility(); } }
+      function jumpToSlide(index) { currentSlide = index; updateSlideVisibility(); }
+
+      function buildDots() {
+        const container = document.getElementById("dotsContainer");
+        container.innerHTML = "";
+        for (let i = 1; i <= totalSlides; i++) {
+          const dot = document.createElement("button");
+          dot.id = "dot" + i;
+          dot.onclick = () => jumpToSlide(i);
+          dot.className = "w-2 h-2 rounded-full transition-colors";
+          container.appendChild(dot);
+        }
+      }
+
+      function updateDots() {
+        for (let i = 1; i <= totalSlides; i++) {
+          const dot = document.getElementById("dot" + i);
+          if (!dot) continue;
+          dot.className = i === currentSlide
+            ? "w-2 h-2 rounded-full transition-colors bg-cyan-500"
+            : "w-2 h-2 rounded-full transition-colors bg-slate-700 hover:bg-slate-500";
+        }
+      }
+
+      document.addEventListener("keydown", function(e) {
+        if (e.key === "ArrowRight" || e.key === " ") nextSlide();
+        if (e.key === "ArrowLeft") prevSlide();
+      });
+
+      buildDots();
+      updateSlideVisibility();
+    </script>
+  </body>
+</html>

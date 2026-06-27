@@ -1,0 +1,112 @@
+<!--
+Quiz page for C Language Session 13 (문자열 함수 II).
+15 multiple-choice questions, instant feedback, final score. Cyan & Amber palette.
+NEITHER Mermaid JS NOR SVG were used anywhere in this output.
+-->
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>13차시 퀴즈: 문자열 함수 II</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+      @import url("https://fonts.googleapis.com/css2?family=Pretendard:wght@400;500;600;700;800;900&display=swap");
+      body { font-family: "Pretendard", sans-serif; background-color: #0f172a; color: #f8fafc; }
+      pre, code { font-family: 'Courier New', Courier, monospace; }
+    </style>
+  </head>
+  <body class="min-h-screen">
+    <div class="bg-slate-900 border-b border-slate-800 px-6 py-4 flex flex-wrap items-center justify-between gap-4 sticky top-0 z-50">
+      <div class="flex items-center gap-3">
+        <span class="bg-cyan-600 text-white text-xs font-bold px-2.5 py-1 rounded-full uppercase tracking-wider">Quiz 13</span>
+        <h1 class="text-sm md:text-base font-bold text-slate-200">13차시 퀴즈 — 문자열 함수 II</h1>
+      </div>
+      <div class="flex items-center gap-2 bg-slate-800 px-3 py-1.5 rounded-lg border border-slate-700">
+        <span class="text-xs text-slate-400">진행:</span>
+        <span id="progress" class="text-xs font-bold text-cyan-400">0 / 15</span>
+      </div>
+    </div>
+
+    <div class="max-w-3xl mx-auto p-4 md:p-8">
+      <div id="intro" class="bg-slate-900 rounded-3xl p-8 border border-slate-800 mb-6">
+        <h2 class="text-2xl font-black text-white mb-2">수업 마무리 퀴즈</h2>
+        <p class="text-slate-400 text-sm mb-4">strchr, strrchr, strnstr와 검색 엣지 케이스를 점검합니다. 총 15문항. 답을 고르면 바로 정답·해설이 표시됩니다.</p>
+        <button onclick="startQuiz()" class="bg-cyan-600 hover:bg-cyan-700 text-white text-sm font-semibold px-5 py-2.5 rounded-lg transition-colors">퀴즈 시작</button>
+      </div>
+      <div id="quizArea" class="hidden space-y-4"></div>
+      <div id="result" class="hidden bg-slate-900 rounded-3xl p-8 border border-slate-800 text-center mt-6">
+        <h2 class="text-2xl font-black text-white mb-2">결과</h2>
+        <p id="scoreText" class="text-4xl font-black mb-3"></p>
+        <p id="scoreMsg" class="text-slate-400 text-sm mb-5"></p>
+        <button onclick="location.reload()" class="bg-slate-800 hover:bg-slate-700 text-slate-200 text-sm font-semibold px-5 py-2.5 rounded-lg border border-slate-700 transition-colors">다시 풀기</button>
+      </div>
+    </div>
+
+    <script>
+      const QUESTIONS = [
+        { q: "sbs_strchr의 검색 방향은?", opts: ["뒤에서 앞으로", "앞에서 뒤로(순방향)", "양쪽 동시", "랜덤"], answer: 1, why: "strchr는 앞에서부터 찾아 첫 번째 등장 위치를 반환합니다." },
+        { q: "strchr가 문자를 못 찾으면 반환하는 것은?", opts: ["0", "NULL", "문자열 끝", "s"], answer: 1, why: "찾지 못하면 NULL을 반환합니다." },
+        { q: "strchr(s, '\\0')의 결과는?", opts: ["NULL", "문자열 끝의 \\0 위치", "s", "에러"], answer: 1, why: "\\0도 검색 대상. 문자열 끝의 \\0 위치를 반환하는 것이 표준 동작입니다." },
+        { q: "sbs_strrchr이 반환하는 것은?", opts: ["첫 등장", "마지막 등장 위치", "중간", "전체 개수"], answer: 1, why: "strrchr는 뒤에서부터 찾아 마지막 등장 위치를 반환합니다." },
+        { q: 'strrchr("hello", \'l\')의 결과 인덱스는?', opts: ["2", "3", "0", "4"], answer: 1, why: '"hello"에서 마지막 l은 index 3입니다.' },
+        { q: "strrchr 구현에서 먼저 하는 일은?", opts: ["바로 비교", "\\0까지 이동해 끝 인덱스 확보", "정렬", "복사"], answer: 1, why: "역방향 검색을 위해 먼저 끝(\\0)까지 이동한 뒤 뒤에서부터 내려옵니다." },
+        { q: "strchr/strrchr에서 문자 비교 시 캐스팅은?", opts: ["(int)c", "(char)c", "(void)c", "캐스팅 안 함"], answer: 1, why: "문자열은 char 배열이므로 (char)c로 비교합니다." },
+        { q: "두 함수의 반환 타입은?", opts: ["int", "char *", "void", "size_t"], answer: 1, why: "위치 포인터를 반환하므로 char *. const 입력이라 (char *) 캐스팅이 필요합니다." },
+        { q: "sbs_strnstr의 역할은?", opts: ["문자 검색", "len 범위 안에서 부분 문자열 검색", "비교", "복사"], answer: 1, why: "strnstr은 big에서 little(부분 문자열)을 len바이트 범위 안에서 검색합니다." },
+        { q: "strnstr에서 little이 빈 문자열이면?", opts: ["NULL", "big을 그대로 반환", "0", "에러"], answer: 1, why: "빈 needle이면 즉시 big을 반환하는 것이 표준 동작입니다." },
+        { q: "strnstr이 범위를 넘지 않게 하는 조건은?", opts: ["i < len만", "i + j < len", "j < len", "len > 0"], answer: 1, why: "안쪽 비교 루프에서 i + j < len으로 검색 범위를 제한합니다." },
+        { q: "strnstr에서 little 전체가 일치했음을 아는 조건은?", opts: ["big[i]=='\\0'", "little[j]=='\\0'", "i==len", "j==0"], answer: 1, why: "비교 루프가 끝났을 때 little[j]가 \\0이면 little 끝까지 모두 일치한 것입니다." },
+        { q: 'strnstr("abc", "abcd", 10)의 결과는?', opts: ['"abc"', "NULL", '"abcd"', "빈 문자열"], answer: 1, why: "needle이 big보다 길어 일치할 수 없으므로 NULL." },
+        { q: "strchr와 memchr의 차이는?", opts: ["없음", "strchr는 \\0까지, memchr는 n바이트까지", "memchr가 느림", "strchr가 길이를 받음"], answer: 1, why: "strchr는 문자열용(\\0 기준), memchr는 메모리용(길이 n 기준)입니다." },
+        { q: "13차시 채점에서 strnstr의 정답 기준은?", opts: ["표준 strnstr만", "테스트 안의 정답 동작(BSD 함수라 glibc에 없을 수 있음)", "강사 코드", "랜덤"], answer: 1, why: "strnstr은 BSD 계열 함수라 glibc에 없을 수 있어 테스트 안에 정답 동작을 구현해 비교합니다." }
+      ];
+
+      let current = 0, score = 0;
+      function startQuiz() { document.getElementById("intro").classList.add("hidden"); document.getElementById("quizArea").classList.remove("hidden"); renderQuestion(); }
+      function renderQuestion() {
+        const area = document.getElementById("quizArea");
+        const item = QUESTIONS[current];
+        document.getElementById("progress").innerText = (current + 1) + " / " + QUESTIONS.length;
+        const card = document.createElement("div");
+        card.className = "bg-slate-900 rounded-3xl p-6 md:p-8 border border-slate-800";
+        let html = '<div class="flex items-start gap-3 mb-5"><span class="bg-cyan-600 text-white text-sm font-black w-7 h-7 rounded-full flex items-center justify-center shrink-0">' + (current + 1) + '</span><p class="text-white text-base font-semibold">' + item.q + '</p></div><div class="space-y-2">';
+        item.opts.forEach(function (opt, idx) { html += '<button data-idx="' + idx + '" class="optBtn w-full text-left bg-slate-800/50 hover:bg-slate-800 text-slate-200 text-sm px-4 py-3 rounded-xl border border-slate-700 transition-colors"><span class="text-cyan-400 font-bold mr-2">' + String.fromCharCode(65 + idx) + '</span>' + opt + '</button>'; });
+        html += '</div><div class="feedback hidden mt-4 p-4 rounded-xl text-sm"></div><div class="nextWrap hidden mt-4 text-right"><button onclick="nextQuestion()" class="bg-cyan-600 hover:bg-cyan-700 text-white text-sm font-semibold px-5 py-2.5 rounded-lg transition-colors">' + (current === QUESTIONS.length - 1 ? "결과 보기" : "다음 문제") + '</button></div>';
+        card.innerHTML = html;
+        area.appendChild(card);
+        card.querySelectorAll(".optBtn").forEach(function (btn) { btn.addEventListener("click", function () { selectAnswer(card, parseInt(btn.dataset.idx)); }); });
+        card.scrollIntoView({ behavior: "smooth", block: "start" });
+      }
+      function selectAnswer(card, idx) {
+        const item = QUESTIONS[current];
+        const btns = card.querySelectorAll(".optBtn");
+        btns.forEach(function (b) { b.disabled = true; b.classList.add("cursor-default"); });
+        const correct = item.answer;
+        if (idx === correct) score++;
+        btns[correct].className = "optBtn w-full text-left bg-emerald-600/20 text-emerald-200 text-sm px-4 py-3 rounded-xl border border-emerald-500/50";
+        if (idx !== correct) btns[idx].className = "optBtn w-full text-left bg-rose-600/20 text-rose-200 text-sm px-4 py-3 rounded-xl border border-rose-500/50";
+        const fb = card.querySelector(".feedback");
+        fb.classList.remove("hidden");
+        if (idx === correct) { fb.className = "feedback mt-4 p-4 rounded-xl text-sm bg-emerald-950/40 border border-emerald-500/30 text-emerald-200"; fb.innerHTML = "<span class='font-bold'>정답!</span> " + item.why; }
+        else { fb.className = "feedback mt-4 p-4 rounded-xl text-sm bg-rose-950/40 border border-rose-500/30 text-rose-200"; fb.innerHTML = "<span class='font-bold'>오답.</span> 정답: " + String.fromCharCode(65 + correct) + ". " + item.why; }
+        card.querySelector(".nextWrap").classList.remove("hidden");
+      }
+      function nextQuestion() { current++; if (current < QUESTIONS.length) renderQuestion(); else showResult(); }
+      function showResult() {
+        document.getElementById("quizArea").classList.add("hidden");
+        const res = document.getElementById("result"); res.classList.remove("hidden");
+        const pct = Math.round((score / QUESTIONS.length) * 100);
+        const st = document.getElementById("scoreText"); st.innerText = score + " / " + QUESTIONS.length;
+        st.className = "text-4xl font-black mb-3 " + (pct >= 70 ? "text-emerald-400" : pct >= 40 ? "text-amber-400" : "text-rose-400");
+        let msg;
+        if (pct === 100) msg = "완벽합니다! 검색 함수를 확실히 이해했네요.";
+        else if (pct >= 70) msg = "잘했어요. 틀린 문항의 해설을 다시 확인하세요.";
+        else if (pct >= 40) msg = "절반 정도입니다. 강의 노트를 복습하고 다시 도전하세요.";
+        else msg = "복습이 필요합니다. lecture.md를 다시 읽어보세요.";
+        document.getElementById("scoreMsg").innerText = msg;
+        res.scrollIntoView({ behavior: "smooth" });
+      }
+    </script>
+  </body>
+</html>

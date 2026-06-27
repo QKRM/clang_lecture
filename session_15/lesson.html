@@ -1,0 +1,322 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>15차시 · Makefile과 라이브러리 — C언어 입문 강의</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/styles/atom-one-dark.min.css" />
+    <link rel="stylesheet" href="../lesson.css" />
+  </head>
+  <body>
+    <div id="readbar" class="readbar"></div>
+    <nav class="topnav">
+      <a class="back" href="../index.html">← 강의 목록</a>
+      <span class="crumb">C언어 입문 강의 · 15 / 16</span>
+    </nav>
+    <header class="lesson-hero">
+      <div class="lesson-hero-inner">
+        <span class="badge">libsbs 구현 · 15차시</span>
+        <h1>Makefile과 라이브러리</h1>
+      </div>
+    </header>
+    <main class="wrap">
+      <article class="md">
+<h2>학습 목표</h2>
+<ol><li>Makefile의 기본 문법(타겟·의존성·레시피)을 이해한다.</li><li>변수와 패턴 규칙으로 중복을 줄일 수 있다.</li><li><code>ar</code>로 정적 라이브러리(<code>.a</code>)를 만들 수 있다.</li><li><code>libsbs.a</code>를 빌드하고 다른 프로그램에 링크할 수 있다.</li><li><code>all / clean / fclean / re</code> 표준 규칙을 작성할 수 있다.</li></ol>
+<hr />
+<h2>1부: Makefile이 필요한 이유</h2>
+<p>지금까지 함수마다 <code>gcc ...</code>를 손으로 쳤습니다. 파일이 23개가 되면 매번 모두 컴파일하는 것은 비효율적입니다. <strong>Makefile</strong>은 빌드 규칙을 적어두고 <code>make</code> 한 번으로 자동 빌드합니다. 바뀐 파일만 다시 컴파일합니다.</p>
+<pre><code class="language-bash">$ make          # 빌드
+$ make clean    # 중간 파일 정리</code></pre>
+<hr />
+<h2>2부: Makefile 기본 문법</h2>
+<h3>2.1 타겟 · 의존성 · 레시피</h3>
+<pre><code class="language-makefile">타겟: 의존성
+	레시피     # ← 반드시 탭(Tab)으로 들여쓰기!</code></pre>
+<ul><li><strong>타겟</strong>: 만들려는 것(파일명 또는 동작 이름)</li><li><strong>의존성</strong>: 타겟을 만드는 데 필요한 것</li><li><strong>레시피</strong>: 실행할 명령 (앞에 <strong>탭</strong> 필수, 스페이스 아님)</li></ul>
+<pre><code class="language-makefile">hello: hello.c
+	cc -Wall -Wextra -Werror hello.c -o hello</code></pre>
+<blockquote>레시피 들여쓰기는 <strong>반드시 탭</strong>입니다. 스페이스면 <code>missing separator</code> 에러.</blockquote>
+<h3>2.2 변수</h3>
+<p>반복을 줄입니다.</p>
+<pre><code class="language-makefile">CC      = cc
+CFLAGS  = -Wall -Wextra -Werror
+NAME    = libsbs.a
+
+SRCS    = sbs_isalpha.c sbs_toupper.c sbs_strlen.c sbs_strdup.c
+OBJS    = $(SRCS:.c=.o)      # .c를 .o로 치환</code></pre>
+<p><code>$(SRCS:.c=.o)</code>는 "SRCS의 모든 <code>.c</code>를 <code>.o</code>로 바꾼 목록"입니다.</p>
+<h3>2.3 패턴 규칙과 자동 변수</h3>
+<pre><code class="language-makefile">%.o: %.c libsbs.h
+	$(CC) $(CFLAGS) -c $&lt; -o $@</code></pre>
+<ul><li><code>%.o: %.c</code> — 모든 <code>.o</code>는 같은 이름 <code>.c</code>로 만든다</li><li><code>$&lt;</code> — 첫 번째 의존성(여기선 <code>.c</code>)</li><li><code>$@</code> — 타겟 이름(여기선 <code>.o</code>)</li></ul>
+<hr />
+<h2>3부: ar로 정적 라이브러리 만들기</h2>
+<h3>3.1 정적 라이브러리란?</h3>
+<p>여러 <code>.o</code>(오브젝트 파일)를 하나의 <strong>아카이브</strong> <code>.a</code>로 묶은 것입니다. 다른 프로그램이 이 라이브러리를 링크해 함수를 씁니다.</p>
+<h3>3.2 ar 명령</h3>
+<pre><code class="language-bash">$ ar rcs libsbs.a sbs_isalpha.o sbs_toupper.o ...</code></pre>
+<table><thead><tr><th>플래그</th><th>의미</th></tr></thead><tbody><tr><td><code>r</code></td><td>아카이브에 추가(있으면 교체)</td></tr><tr><td><code>c</code></td><td>아카이브 새로 생성</td></tr><tr><td><code>s</code></td><td>인덱스(심볼 테이블) 생성 — 링크 속도</td></tr></tbody></table>
+<p>Makefile에서:</p>
+<pre><code class="language-makefile">$(NAME): $(OBJS)
+	$(AR) $(ARFLAGS) $(NAME) $(OBJS)   # ar rcs libsbs.a *.o</code></pre>
+<h3>3.3 아카이브 확인</h3>
+<pre><code class="language-bash">$ ar t libsbs.a       # 들어있는 오브젝트 목록
+sbs_isalpha.o
+sbs_toupper.o
+...</code></pre>
+<hr />
+<h2>4부: 표준 규칙 + 링크</h2>
+<h3>4.1 all / clean / fclean / re</h3>
+<p>42 계열과 많은 C 프로젝트가 쓰는 관례 규칙입니다.</p>
+<pre><code class="language-makefile">all: $(NAME)              # 기본 빌드
+
+clean:
+	$(RM) $(OBJS)         # .o만 삭제
+
+fclean: clean
+	$(RM) $(NAME)         # .o + .a 삭제
+
+re: fclean all           # 전체 재빌드
+
+.PHONY: all clean fclean re   # 동명 파일과 충돌 방지</code></pre>
+<blockquote><code>.PHONY</code>는 "이 타겟은 파일이 아니라 동작"이라고 알려, <code>clean</code>이라는 파일이 있어도 항상 실행되게 합니다.</blockquote>
+<h3>4.2 라이브러리 링크</h3>
+<pre><code class="language-bash"># libsbs.a를 링크해 프로그램 빌드
+$ cc -Wall -Wextra -Werror main.c -L. -lsbs -o program</code></pre>
+<ul><li><code>-L.</code> — 현재 디렉토리에서 라이브러리를 찾음</li><li><code>-lsbs</code> — <code>libsbs.a</code>를 링크 (<code>lib</code>와 <code>.a</code>를 뺀 이름)</li></ul>
+<hr />
+<h2>5부: 채점</h2>
+<p>채점 스크립트가 다음을 확인합니다:</p>
+<pre><code class="language-bash">$ bash grade.sh
+=== libsbs 15차시 채점 (Makefile) ===
+✓ make → libsbs.a 생성
+✓ ar 아카이브에 오브젝트 포함
+✓ libsbs.a 링크 + 동작 확인
+✓ clean / fclean / re 규칙 동작
+결과: 4 / 4 통과</code></pre>
+<ol><li><code>make</code>로 <code>libsbs.a</code>가 생기는가</li><li>아카이브에 <code>.o</code>가 들어있는가</li><li>링크해서 함수가 동작하는가(<code>-lsbs</code>)</li><li><code>clean</code>/<code>fclean</code>/<code>re</code>가 제대로 동작하는가</li></ol>
+<hr />
+<h2>핵심 정리</h2>
+<ol><li>Makefile: 타겟·의존성·레시피, 레시피는 <strong>탭</strong> 들여쓰기</li><li>변수와 <code>$(SRCS:.c=.o)</code>로 중복 제거</li><li>패턴 규칙 <code>%.o: %.c</code>, 자동 변수 <code>$&lt;</code>(소스) <code>$@</code>(타겟)</li><li><code>ar rcs libsbs.a *.o</code>로 정적 라이브러리 생성</li><li><code>all/clean/fclean/re</code> + <code>.PHONY</code> 표준 규칙</li><li><code>-L. -lsbs</code>로 라이브러리 링크</li></ol>
+<hr />
+<h2>다음 차시 예고</h2>
+<p>16차시는 종합 프로젝트입니다. 9~14차시에서 만든 모든 함수를 하나의 <code>libsbs</code>로 통합하고, 전체를 빌드하는 Makefile을 완성합니다. 동료와 코드 리뷰를 하고 최종 빌드를 확인합니다.</p>
+<div class="section-split"><h2>실습</h2><p>아래 문제를 직접 풀어본 뒤, 맨 아래 정답 코드로 확인하세요.</p></div>
+<h2>실습 목표</h2>
+<ul><li>Makefile을 작성해 <code>libsbs.a</code>를 자동 빌드한다.</li><li><code>ar</code>로 정적 라이브러리를 만든다.</li><li><code>all / clean / fclean / re</code> 규칙을 구현한다.</li><li>라이브러리를 링크해 함수가 동작함을 확인한다.</li></ul>
+<blockquote>이번 차시는 함수 구현이 아니라 <strong>빌드 시스템</strong>을 만듭니다. <code>.c</code> 파일은 제공됩니다(데모용 4개).</blockquote>
+<hr />
+<h2>준비: 제공 파일</h2>
+<pre><code class="nohighlight">session_15/
+├── libsbs.h
+├── sbs_isalpha.c  sbs_toupper.c
+├── sbs_strlen.c   sbs_strdup.c
+├── Makefile          ← 직접 작성 (참고 정답 동봉)
+├── grade.sh
+└── tests/test_link.c</code></pre>
+<hr />
+<h2>과제 1: 변수 정의</h2>
+<p><code>Makefile</code>을 만들고 변수를 정의하세요.</p>
+<p>요구사항:</p>
+<pre><code class="language-makefile">NAME    = libsbs.a
+CC      = cc
+CFLAGS  = -Wall -Wextra -Werror
+AR      = ar
+ARFLAGS = rcs
+RM      = rm -f
+
+SRCS    = sbs_isalpha.c sbs_toupper.c sbs_strlen.c sbs_strdup.c
+OBJS    = $(SRCS:.c=.o)</code></pre>
+<blockquote><code>$(SRCS:.c=.o)</code>는 모든 <code>.c</code>를 <code>.o</code>로 바꾼 목록입니다.</blockquote>
+<hr />
+<h2>과제 2: 라이브러리 빌드 규칙</h2>
+<p>요구사항:</p>
+<ul><li><code>all</code> 타겟이 <code>$(NAME)</code>을 만든다</li><li><code>$(NAME)</code>은 <code>$(OBJS)</code>를 <code>ar</code>로 묶는다</li><li>패턴 규칙으로 <code>.c</code>를 <code>.o</code>로 컴파일 (libsbs.h 의존)</li></ul>
+<p>힌트:</p>
+<pre><code class="language-makefile">all: $(NAME)
+
+$(NAME): $(OBJS)
+	$(AR) $(ARFLAGS) $(NAME) $(OBJS)
+
+%.o: %.c libsbs.h
+	$(CC) $(CFLAGS) -c $&lt; -o $@</code></pre>
+<blockquote>레시피 줄은 <strong>반드시 탭(Tab)</strong>으로 들여쓰기. 스페이스면 <code>missing separator</code> 에러.</blockquote>
+<hr />
+<h2>과제 3: clean / fclean / re</h2>
+<p>요구사항:</p>
+<pre><code class="language-makefile">clean:
+	$(RM) $(OBJS)
+
+fclean: clean
+	$(RM) $(NAME)
+
+re: fclean all
+
+.PHONY: all clean fclean re</code></pre>
+<blockquote><code>.PHONY</code>로 동명 파일과의 충돌을 막습니다(예: <code>clean</code>이라는 파일이 있어도 동작).</blockquote>
+<hr />
+<h2>과제 4: 빌드 + 링크 확인</h2>
+<pre><code class="language-bash">$ make                       # libsbs.a 생성
+$ ar t libsbs.a              # 오브젝트 목록 확인
+$ make clean                 # .o 삭제
+$ make re                    # 전체 재빌드
+
+# 라이브러리 링크 테스트
+$ cc -Wall -Wextra -Werror tests/test_link.c -L. -lsbs -o run
+$ ./run
+LINK_OK</code></pre>
+<ul><li><code>-L.</code> 현재 폴더에서 라이브러리 검색</li><li><code>-lsbs</code> → <code>libsbs.a</code> 링크 (<code>lib</code>/<code>.a</code> 뺀 이름)</li></ul>
+<hr />
+<h2>과제 5: 채점</h2>
+<pre><code class="language-bash">$ bash grade.sh
+=== libsbs 15차시 채점 (Makefile) ===
+✓ make → libsbs.a 생성
+✓ ar 아카이브에 오브젝트 포함
+✓ libsbs.a 링크 + 동작 확인
+✓ clean / fclean / re 규칙 동작
+결과: 4 / 4 통과</code></pre>
+<hr />
+<h2>제출 확인 사항</h2>
+<ul><li>[ ] <code>Makefile</code> - 변수 정의 (NAME, CC, CFLAGS, AR, SRCS, OBJS)</li><li>[ ] <code>all</code>, <code>$(NAME)</code>, 패턴 규칙</li><li>[ ] <code>clean</code>, <code>fclean</code>, <code>re</code>, <code>.PHONY</code></li><li>[ ] 레시피가 탭으로 들여쓰기 되었는가?</li><li>[ ] <code>make</code> → libsbs.a 생성, <code>-lsbs</code> 링크 동작</li><li>[ ] <code>bash grade.sh</code> → 4 / 4 통과</li></ul>
+<hr />
+<h2>더 생각해볼 거리</h2>
+<ol><li><code>make</code>가 바뀐 파일만 다시 컴파일하는 원리는? (타임스탬프 비교)</li><li>정적 라이브러리(.a)와 동적 라이브러리(.so)의 차이는? (링크 시점)</li><li><code>.PHONY</code>가 없으면 <code>clean</code>이라는 파일이 생겼을 때 무슨 일이? (규칙이 실행 안 됨)</li></ol>
+<div class="section-split"><h2>정답 코드</h2><p>각 항목의 "정답 보기"를 눌러 펼치세요. 먼저 직접 풀어본 뒤 확인하는 것을 권장합니다.</p></div>
+<div class="answer"><div class="answer-head"><span class="answer-name">📄 <span class="file">libsbs.h</span></span><button class="answer-toggle">정답 보기</button></div><div class="answer-body"><pre><code class="language-c">#ifndef LIBSBS_H
+# define LIBSBS_H
+
+# include &lt;stddef.h&gt;
+
+/* 데모용 일부 함수 (실제 과정에서는 9~14차시 전체가 들어감) */
+int		sbs_isalpha(int c);
+int		sbs_toupper(int c);
+size_t	sbs_strlen(const char *s);
+char	*sbs_strdup(const char *s);
+
+#endif</code></pre></div></div>
+<div class="answer"><div class="answer-head"><span class="answer-name">📄 <span class="file">Makefile</span></span><button class="answer-toggle">정답 보기</button></div><div class="answer-body"><pre><code class="language-makefile"># ============================================================
+# libsbs 정적 라이브러리 Makefile (참고 정답)
+# ============================================================
+
+NAME    = libsbs.a
+
+CC      = cc
+CFLAGS  = -Wall -Wextra -Werror
+AR      = ar
+ARFLAGS = rcs
+RM      = rm -f
+
+SRCS    = sbs_isalpha.c \
+          sbs_toupper.c \
+          sbs_strlen.c \
+          sbs_strdup.c
+
+OBJS    = $(SRCS:.c=.o)
+
+# 기본 타겟: 라이브러리 생성
+all: $(NAME)
+
+# .a 아카이브: 오브젝트들을 ar로 묶음
+$(NAME): $(OBJS)
+	$(AR) $(ARFLAGS) $(NAME) $(OBJS)
+
+# 패턴 규칙: .c → .o (libsbs.h 의존)
+%.o: %.c libsbs.h
+	$(CC) $(CFLAGS) -c $&lt; -o $@
+
+# 오브젝트만 삭제
+clean:
+	$(RM) $(OBJS)
+
+# 오브젝트 + 라이브러리 삭제
+fclean: clean
+	$(RM) $(NAME)
+
+# 전체 재빌드
+re: fclean all
+
+.PHONY: all clean fclean re</code></pre></div></div>
+<div class="answer"><div class="answer-head"><span class="answer-name">📄 <span class="file">sbs_isalpha.c</span></span><button class="answer-toggle">정답 보기</button></div><div class="answer-body"><pre><code class="language-c">#include "libsbs.h"
+
+int	sbs_isalpha(int c)
+{
+	if ((c &gt;= 'a' &amp;&amp; c &lt;= 'z') || (c &gt;= 'A' &amp;&amp; c &lt;= 'Z'))
+		return (1);
+	return (0);
+}</code></pre></div></div>
+<div class="answer"><div class="answer-head"><span class="answer-name">📄 <span class="file">sbs_strdup.c</span></span><button class="answer-toggle">정답 보기</button></div><div class="answer-body"><pre><code class="language-c">#include "libsbs.h"
+#include &lt;stdlib.h&gt;
+
+char	*sbs_strdup(const char *s)
+{
+	size_t	len;
+	size_t	i;
+	char	*dup;
+
+	len = sbs_strlen(s);
+	dup = (char *)malloc(len + 1);
+	if (dup == NULL)
+		return (NULL);
+	i = 0;
+	while (i &lt; len)
+	{
+		dup[i] = s[i];
+		i++;
+	}
+	dup[len] = '\0';
+	return (dup);
+}</code></pre></div></div>
+<div class="answer"><div class="answer-head"><span class="answer-name">📄 <span class="file">sbs_strlen.c</span></span><button class="answer-toggle">정답 보기</button></div><div class="answer-body"><pre><code class="language-c">#include "libsbs.h"
+
+size_t	sbs_strlen(const char *s)
+{
+	size_t	len;
+
+	len = 0;
+	while (s[len])
+		len++;
+	return (len);
+}</code></pre></div></div>
+<div class="answer"><div class="answer-head"><span class="answer-name">📄 <span class="file">sbs_toupper.c</span></span><button class="answer-toggle">정답 보기</button></div><div class="answer-body"><pre><code class="language-c">#include "libsbs.h"
+
+int	sbs_toupper(int c)
+{
+	if (c &gt;= 'a' &amp;&amp; c &lt;= 'z')
+		return (c - 32);
+	return (c);
+}</code></pre></div></div>
+
+      </article>
+    </main>
+    <button id="toTop" class="to-top" aria-label="맨 위로">↑</button>
+    <script>
+      document.querySelectorAll(".answer-head").forEach(function (h) {
+        h.addEventListener("click", function () {
+          var card = h.parentElement;
+          card.classList.toggle("open");
+          h.querySelector(".answer-toggle").textContent =
+            card.classList.contains("open") ? "정답 숨기기" : "정답 보기";
+        });
+      });
+      var bar = document.getElementById("readbar");
+      var toTopBtn = document.getElementById("toTop");
+      function onScroll() {
+        var y = window.scrollY || document.documentElement.scrollTop;
+        var dh = document.documentElement.scrollHeight - window.innerHeight;
+        var r = dh > 0 ? y / dh : 0;
+        bar.style.width = (Math.min(1, Math.max(0, r)) * 100) + "%";
+        toTopBtn.classList.toggle("show", y > 400);
+      }
+      window.addEventListener("scroll", onScroll, { passive: true });
+      toTopBtn.addEventListener("click", function () { window.scrollTo({ top: 0, behavior: "smooth" }); });
+      onScroll();
+    </script>
+    <script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/highlight.min.js"></script>
+    <script>
+      if (window.hljs) {
+        document.querySelectorAll("pre code:not(.nohighlight)").forEach(function (el) { hljs.highlightElement(el); });
+      }
+    </script>
+  </body>
+</html>

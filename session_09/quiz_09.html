@@ -1,0 +1,187 @@
+<!--
+Quiz page for C Language Session 9 (헤더 파일 + 문자 분류 함수).
+15 multiple-choice questions, instant feedback, final score. Cyan & Amber palette.
+NEITHER Mermaid JS NOR SVG were used anywhere in this output.
+-->
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>9차시 퀴즈: 헤더 파일 + 문자 분류 함수</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+      @import url("https://fonts.googleapis.com/css2?family=Pretendard:wght@400;500;600;700;800;900&display=swap");
+      body { font-family: "Pretendard", sans-serif; background-color: #0f172a; color: #f8fafc; }
+      pre, code { font-family: 'Courier New', Courier, monospace; }
+    </style>
+  </head>
+  <body class="min-h-screen">
+    <div class="bg-slate-900 border-b border-slate-800 px-6 py-4 flex flex-wrap items-center justify-between gap-4 sticky top-0 z-50">
+      <div class="flex items-center gap-3">
+        <span class="bg-cyan-600 text-white text-xs font-bold px-2.5 py-1 rounded-full uppercase tracking-wider">Quiz 9</span>
+        <h1 class="text-sm md:text-base font-bold text-slate-200">9차시 퀴즈 — 헤더 파일 + 문자 분류 함수</h1>
+      </div>
+      <div class="flex items-center gap-2 bg-slate-800 px-3 py-1.5 rounded-lg border border-slate-700">
+        <span class="text-xs text-slate-400">진행:</span>
+        <span id="progress" class="text-xs font-bold text-cyan-400">0 / 15</span>
+      </div>
+    </div>
+
+    <div class="max-w-3xl mx-auto p-4 md:p-8">
+      <div id="intro" class="bg-slate-900 rounded-3xl p-8 border border-slate-800 mb-6">
+        <h2 class="text-2xl font-black text-white mb-2">수업 마무리 퀴즈</h2>
+        <p class="text-slate-400 text-sm mb-4">헤더 파일, 인클루드 가드, 문자 분류·변환 함수를 점검합니다. 총 15문항. 답을 고르면 바로 정답·해설이 표시됩니다.</p>
+        <button onclick="startQuiz()" class="bg-cyan-600 hover:bg-cyan-700 text-white text-sm font-semibold px-5 py-2.5 rounded-lg transition-colors">퀴즈 시작</button>
+      </div>
+      <div id="quizArea" class="hidden space-y-4"></div>
+      <div id="result" class="hidden bg-slate-900 rounded-3xl p-8 border border-slate-800 text-center mt-6">
+        <h2 class="text-2xl font-black text-white mb-2">결과</h2>
+        <p id="scoreText" class="text-4xl font-black mb-3"></p>
+        <p id="scoreMsg" class="text-slate-400 text-sm mb-5"></p>
+        <button onclick="location.reload()" class="bg-slate-800 hover:bg-slate-700 text-slate-200 text-sm font-semibold px-5 py-2.5 rounded-lg border border-slate-700 transition-colors">다시 풀기</button>
+      </div>
+    </div>
+
+    <script>
+      const QUESTIONS = [
+        {
+          q: "헤더 파일(.h)에 주로 들어가는 것은?",
+          opts: ["함수 본문(정의)", "함수 선언(프로토타입)", "실행 결과", "컴파일 명령"],
+          answer: 1,
+          why: "헤더는 선언(프로토타입), 소스(.c)는 정의(본문). 역할을 나눕니다."
+        },
+        {
+          q: '내가 만든 헤더 libsbs.h를 포함하는 올바른 형식은?',
+          opts: ["#include <libsbs.h>", '#include "libsbs.h"', "#import libsbs.h", "include libsbs.h"],
+          answer: 1,
+          why: '내 헤더는 큰따옴표("")로 — 현재 폴더를 먼저 찾습니다. <>는 시스템 표준 경로용.'
+        },
+        {
+          q: '<code class="text-cyan-300">#include &lt;stdio.h&gt;</code>처럼 꺾쇠를 쓰는 헤더는?',
+          opts: ["내가 만든 헤더", "시스템 표준 헤더", "실행 파일", "텍스트 파일"],
+          answer: 1,
+          why: "꺾쇠(<>)는 시스템 표준 경로에서 찾습니다. 표준 라이브러리 헤더에 씁니다."
+        },
+        {
+          q: "인클루드 가드의 목적은?",
+          opts: ["속도 향상", "같은 헤더의 중복 포함 방지", "메모리 절약", "암호화"],
+          answer: 1,
+          why: "같은 헤더가 두 번 include되면 중복 선언 에러가 납니다. 가드가 이를 막습니다."
+        },
+        {
+          q: '인클루드 가드를 구성하는 세 지시문은?',
+          opts: ["#if / #else / #end", "#ifndef / #define / #endif", "#guard / #begin / #end", "#once / #include / #stop"],
+          answer: 1,
+          why: "#ifndef(정의 안 됐으면) / #define(정의) / #endif(끝)가 한 세트입니다."
+        },
+        {
+          q: '각 sbs_*.c 파일의 첫 줄에 와야 하는 것은?',
+          opts: ["#include <ctype.h>", '#include "libsbs.h"', "int main(void)", "return 0;"],
+          answer: 1,
+          why: '자기 함수의 프로토타입이 있는 헤더를 포함해야 시그니처가 일치합니다.'
+        },
+        {
+          q: "문자 분류 함수(is*)가 조건을 만족할 때 반환하는 값은?",
+          opts: ["반드시 1", "0이 아닌 값", "문자 자체", "항상 0"],
+          answer: 1,
+          why: "표준 명세상 참이면 0이 아닌 값, 거짓이면 0. 꼭 1일 필요는 없습니다."
+        },
+        {
+          q: 'sbs_isalpha가 참을 반환하는 입력은?',
+          opts: ["'5'", "'A'", "' '(공백)", "'!'"],
+          answer: 1,
+          why: "isalpha는 알파벳(a-z, A-Z)에만 참. 'A'가 알파벳입니다."
+        },
+        {
+          q: 'sbs_isalnum을 가장 깔끔하게 구현하는 방법은?',
+          opts: ["조건을 다시 다 쓴다", "sbs_isalpha와 sbs_isdigit를 호출", "for 반복문 사용", "isalnum 호출"],
+          answer: 1,
+          why: "이미 만든 작은 함수를 조합. return (sbs_isalpha(c) || sbs_isdigit(c));"
+        },
+        {
+          q: 'sbs_isprint가 참인 ASCII 범위는?',
+          opts: ["0 ~ 127", "32 ~ 126", "48 ~ 57", "65 ~ 90"],
+          answer: 1,
+          why: "출력 가능 문자는 32(공백)~126(~). 127(DEL)과 제어문자는 제외."
+        },
+        {
+          q: 'sbs_toupper에 숫자 \'5\'를 넣으면 반환해야 하는 값은?',
+          opts: ["0", "'5' 그대로", "'V'", "에러"],
+          answer: 1,
+          why: "변환 대상(소문자)이 아니면 원래 값을 그대로 반환. 숫자는 그대로 '5'."
+        },
+        {
+          q: '소문자 \'a\'를 대문자로 바꾸는 계산은?',
+          opts: ["'a' + 32", "'a' - 32", "'a' * 2", "'a' + 1"],
+          answer: 1,
+          why: "소문자 - 32 = 대문자. 'a'(97) - 32 = 'A'(65)."
+        },
+        {
+          q: '채점 스크립트 실행 명령으로 올바른 것은?',
+          opts: ["./grade", "bash grade.sh", "make grade", "gcc grade.sh"],
+          answer: 1,
+          why: "bash grade.sh로 실행. 상세는 bash grade.sh -v."
+        },
+        {
+          q: "채점 스크립트가 정답(기준)으로 삼는 것은?",
+          opts: ["강사가 짠 코드", "표준 라이브러리(libc) 함수", "다른 학생 코드", "랜덤 값"],
+          answer: 1,
+          why: "libc의 표준 함수가 정답(oracle). sbs_X가 표준 X와 0~255 전 범위에서 일치하면 통과."
+        },
+        {
+          q: '실습에서 <code class="text-cyan-300">&lt;ctype.h&gt;</code>를 include하면?',
+          opts: ["가산점", "채점에서 0점 처리(우회 금지)", "더 빨라짐", "상관없음"],
+          answer: 1,
+          why: "표준 문자 함수로 우회하는 것은 금지. grade.sh가 검사해 0점 처리합니다. 직접 구현해야 함."
+        }
+      ];
+
+      let current = 0, score = 0;
+      function startQuiz() { document.getElementById("intro").classList.add("hidden"); document.getElementById("quizArea").classList.remove("hidden"); renderQuestion(); }
+      function renderQuestion() {
+        const area = document.getElementById("quizArea");
+        const item = QUESTIONS[current];
+        document.getElementById("progress").innerText = (current + 1) + " / " + QUESTIONS.length;
+        const card = document.createElement("div");
+        card.className = "bg-slate-900 rounded-3xl p-6 md:p-8 border border-slate-800";
+        let html = '<div class="flex items-start gap-3 mb-5"><span class="bg-cyan-600 text-white text-sm font-black w-7 h-7 rounded-full flex items-center justify-center shrink-0">' + (current + 1) + '</span><p class="text-white text-base font-semibold">' + item.q + '</p></div><div class="space-y-2">';
+        item.opts.forEach(function (opt, idx) { html += '<button data-idx="' + idx + '" class="optBtn w-full text-left bg-slate-800/50 hover:bg-slate-800 text-slate-200 text-sm px-4 py-3 rounded-xl border border-slate-700 transition-colors"><span class="text-cyan-400 font-bold mr-2">' + String.fromCharCode(65 + idx) + '</span>' + opt + '</button>'; });
+        html += '</div><div class="feedback hidden mt-4 p-4 rounded-xl text-sm"></div><div class="nextWrap hidden mt-4 text-right"><button onclick="nextQuestion()" class="bg-cyan-600 hover:bg-cyan-700 text-white text-sm font-semibold px-5 py-2.5 rounded-lg transition-colors">' + (current === QUESTIONS.length - 1 ? "결과 보기" : "다음 문제") + '</button></div>';
+        card.innerHTML = html;
+        area.appendChild(card);
+        card.querySelectorAll(".optBtn").forEach(function (btn) { btn.addEventListener("click", function () { selectAnswer(card, parseInt(btn.dataset.idx)); }); });
+        card.scrollIntoView({ behavior: "smooth", block: "start" });
+      }
+      function selectAnswer(card, idx) {
+        const item = QUESTIONS[current];
+        const btns = card.querySelectorAll(".optBtn");
+        btns.forEach(function (b) { b.disabled = true; b.classList.add("cursor-default"); });
+        const correct = item.answer;
+        if (idx === correct) score++;
+        btns[correct].className = "optBtn w-full text-left bg-emerald-600/20 text-emerald-200 text-sm px-4 py-3 rounded-xl border border-emerald-500/50";
+        if (idx !== correct) btns[idx].className = "optBtn w-full text-left bg-rose-600/20 text-rose-200 text-sm px-4 py-3 rounded-xl border border-rose-500/50";
+        const fb = card.querySelector(".feedback");
+        fb.classList.remove("hidden");
+        if (idx === correct) { fb.className = "feedback mt-4 p-4 rounded-xl text-sm bg-emerald-950/40 border border-emerald-500/30 text-emerald-200"; fb.innerHTML = "<span class='font-bold'>정답!</span> " + item.why; }
+        else { fb.className = "feedback mt-4 p-4 rounded-xl text-sm bg-rose-950/40 border border-rose-500/30 text-rose-200"; fb.innerHTML = "<span class='font-bold'>오답.</span> 정답: " + String.fromCharCode(65 + correct) + ". " + item.why; }
+        card.querySelector(".nextWrap").classList.remove("hidden");
+      }
+      function nextQuestion() { current++; if (current < QUESTIONS.length) renderQuestion(); else showResult(); }
+      function showResult() {
+        document.getElementById("quizArea").classList.add("hidden");
+        const res = document.getElementById("result"); res.classList.remove("hidden");
+        const pct = Math.round((score / QUESTIONS.length) * 100);
+        const st = document.getElementById("scoreText"); st.innerText = score + " / " + QUESTIONS.length;
+        st.className = "text-4xl font-black mb-3 " + (pct >= 70 ? "text-emerald-400" : pct >= 40 ? "text-amber-400" : "text-rose-400");
+        let msg;
+        if (pct === 100) msg = "완벽합니다! 헤더와 문자 함수를 확실히 이해했네요.";
+        else if (pct >= 70) msg = "잘했어요. 틀린 문항의 해설을 다시 확인하세요.";
+        else if (pct >= 40) msg = "절반 정도입니다. 강의 노트를 복습하고 다시 도전하세요.";
+        else msg = "복습이 필요합니다. lecture.md를 다시 읽어보세요.";
+        document.getElementById("scoreMsg").innerText = msg;
+        res.scrollIntoView({ behavior: "smooth" });
+      }
+    </script>
+  </body>
+</html>
