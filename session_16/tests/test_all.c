@@ -80,6 +80,13 @@ int	main(void)
 	check(strcmp(buf, "hi") == 0, "strlcpy");
 	sbs_strlcat(buf, "!!", 32);
 	check(strcmp(buf, "hi!!") == 0, "strlcat");
+	check(sbs_strnlen("hello", 3) == 3 && sbs_strnlen("hi", 10) == 2, "strnlen");
+	sbs_strncpy(buf, "abc", 6);
+	check(memcmp(buf, "abc\0\0\0", 6) == 0, "strncpy");
+	sbs_strlcpy(buf, "ab", 32);
+	sbs_strncat(buf, "cdef", 2);
+	check(strcmp(buf, "abcd") == 0, "strncat");
+	check(sbs_strcmp("abc", "abc") == 0 && sign(sbs_strcmp("abc", "abd")) < 0, "strcmp");
 
 	/* 13차시 — 문자열 II */
 	check(sbs_strchr("hello", 'e') != NULL && sbs_strchr("hello", 'z') == NULL, "strchr");

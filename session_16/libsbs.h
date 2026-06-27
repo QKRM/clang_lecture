@@ -31,6 +31,10 @@ char	*sbs_strdup(const char *s);
 size_t	sbs_strlen(const char *s);
 size_t	sbs_strlcpy(char *dst, const char *src, size_t dstsize);
 size_t	sbs_strlcat(char *dst, const char *src, size_t dstsize);
+size_t	sbs_strnlen(const char *s, size_t maxlen);
+char	*sbs_strncpy(char *dst, const char *src, size_t n);
+char	*sbs_strncat(char *dst, const char *src, size_t n);
+int		sbs_strcmp(const char *s1, const char *s2);
 
 /* 13차시 — 문자열 함수 II */
 char	*sbs_strchr(const char *s, int c);

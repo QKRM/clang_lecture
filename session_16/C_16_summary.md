@@ -2,7 +2,7 @@
 
 ## 학습 목표
 
-1. 26개 함수를 libsbs로 통합
+1. 30개 함수를 libsbs로 통합
 2. 통합 Makefile 완성
 3. libsbs.h 정리
 4. 동료 코드 리뷰
@@ -11,13 +11,14 @@
 
 ## 핵심 개념
 
-### 1. 26개 함수 통합
+### 1. 30개 함수 통합
 
 | 분류 | 개수 | 차시 |
 |------|------|------|
 | 문자 분류/변환 | 7 | 9 |
-| 메모리 I/II | 8 | 10-11 |
-| 문자열 I/II/III | 9 | 12-14 |
+| 메모리 함수 | 6 | 10 |
+| 동적 메모리(malloc) | 5 | 11 |
+| 문자열 함수 | 12 | 12~14 |
 
 > 한 폴더로 모으고 libsbs.h에 프로토타입 정리(차시별 주석).
 
@@ -26,7 +27,7 @@
 ### 2. 통합 Makefile
 
 ```makefile
-SRCS = sbs_isalpha.c ... sbs_strdup.c   # 26개
+SRCS = sbs_isalpha.c ... sbs_strdup.c   # 30개
 OBJS = $(SRCS:.c=.o)
 $(NAME): $(OBJS)
 	ar rcs $(NAME) $(OBJS)
@@ -34,7 +35,7 @@ $(NAME): $(OBJS)
 
 ```bash
 make            # libsbs.a
-ar t libsbs.a   # 26개 확인
+ar t libsbs.a   # 30개 확인
 ```
 
 ---
@@ -73,7 +74,7 @@ strdup   → strlen
 
 ## 실행 전 체크리스트
 
-- [ ] sbs_*.c 26개 통합?
+- [ ] sbs_*.c 30개 통합?
 - [ ] libsbs.h 전체 프로토타입?
 - [ ] make → libsbs.a 경고 없이?
 - [ ] test_all → ALL_OK?
@@ -95,7 +96,7 @@ strdup   → strlen
 
 | 증상 | 확인 사항 |
 |------|----------|
-| ar t가 26개 미만 | SRCS에 빠진 파일 |
+| ar t가 30개 미만 | SRCS에 빠진 파일 |
 | 통합 테스트 FAIL | 해당 함수 -v로 점검 |
 | make 경고 | 개별 차시에서 -Werror 통과했는지 |
 | 링크 실패 | -L. -lsbs, libsbs.a 존재 |

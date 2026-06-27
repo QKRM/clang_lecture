@@ -8,6 +8,7 @@
 2. 버퍼 오버플로우가 왜 위험한지, "버퍼 안전" 함수가 왜 필요한지 설명한다.
 3. `sbs_strlcpy`의 크기 처리와 반환값을 구현한다.
 4. `sbs_strlcat`의 이어붙이기와 반환값 규칙을 구현한다.
+5. `sbs_strnlen`, `sbs_strncpy`, `sbs_strncat`, `sbs_strcmp`를 구현한다.
 
 ---
 
@@ -162,16 +163,99 @@ size_t sbs_strlcat(char *dst, const char *src, size_t dstsize)
 
 ---
 
-## 5부: 채점
+## 5부: n글자 계열 + 비교
 
-`strlen`은 표준과 비교하지만, `strlcpy`/`strlcat`은 리눅스 표준 라이브러리(glibc)에 없을 수 있어 **테스트 안에 정답 동작을 직접 구현**해 비교합니다. 여러 크기·잘림 상황을 검사합니다.
+### 5.1 sbs_strnlen — 길이를 maxlen까지만
+
+`strlen`은 `\0`까지 끝없이 세지만, `strnlen`은 **`maxlen`을 넘지 않습니다.** 신뢰할 수 없는 입력의 길이를 잴 때 안전합니다.
+
+```c
+size_t sbs_strnlen(const char *s, size_t maxlen)
+{
+    size_t len = 0;
+    while (len < maxlen && s[len])   // \0 만나거나 maxlen 도달하면 멈춤
+        len++;
+    return (len);
+}
+```
+
+### 5.2 sbs_strncpy — 최대 n글자 복사
+
+`src`를 `dst`로 **최대 n글자** 복사합니다. 표준 동작의 두 특징을 꼭 지켜야 합니다.
+
+```c
+char *sbs_strncpy(char *dst, const char *src, size_t n)
+{
+    size_t i = 0;
+    while (i < n && src[i])     // src를 n까지 복사
+    {
+        dst[i] = src[i];
+        i++;
+    }
+    while (i < n)               // src가 짧으면 남는 칸을 \0으로 채움
+    {
+        dst[i] = '\0';
+        i++;
+    }
+    return (dst);
+}
+```
+
+> **주의**: `strlcpy`와 다릅니다. ① src가 짧으면 남은 칸을 전부 `\0`으로 **패딩**합니다. ② src가 n 이상으로 길면 `dst`가 `\0`로 끝나지 **않을 수** 있습니다(표준 strncpy의 함정).
+
+### 5.3 sbs_strncat — 최대 n글자 이어붙이기
+
+`dst` 뒤에 `src`를 **최대 n글자** 붙이고, **항상 `\0`로 끝맺습니다.**
+
+```c
+char *sbs_strncat(char *dst, const char *src, size_t n)
+{
+    size_t dstlen = 0;
+    size_t i = 0;
+    while (dst[dstlen])             // dst 끝 찾기
+        dstlen++;
+    while (i < n && src[i])         // src를 n까지 이어붙임
+    {
+        dst[dstlen + i] = src[i];
+        i++;
+    }
+    dst[dstlen + i] = '\0';         // 항상 종결
+    return (dst);
+}
+```
+
+### 5.4 sbs_strcmp — 문자열 비교
+
+두 문자열을 **끝까지** 비교합니다(길이 제한 없음). 처음 다른 글자의 차이를 반환, 같으면 0.
+
+```c
+int sbs_strcmp(const char *s1, const char *s2)
+{
+    size_t i = 0;
+    while (s1[i] && s1[i] == s2[i])
+        i++;
+    return ((unsigned char)s1[i] - (unsigned char)s2[i]);
+}
+```
+
+> 14차시 `strncmp`는 n글자 제한이 있지만, `strcmp`는 `\0`까지 끝까지 봅니다. 둘 다 `unsigned char`로 비교해야 부호가 정확합니다.
+
+---
+
+## 6부: 채점
+
+`strlen`/`strnlen`/`strncpy`/`strncat`/`strcmp`는 표준 함수와 직접 비교합니다. `strlcpy`/`strlcat`은 리눅스 표준 라이브러리(glibc)에 없을 수 있어 **테스트 안에 정답 동작을 구현**해 비교합니다.
 
 ```bash
 $ bash grade.sh
 ✓ sbs_strlen    (...)
 ✓ sbs_strlcpy   (...)
 ✓ sbs_strlcat   (...)
-결과: 3 / 3 통과
+✓ sbs_strnlen   (...)
+✓ sbs_strncpy   (...)
+✓ sbs_strncat   (...)
+✓ sbs_strcmp    (...)
+결과: 7 / 7 통과
 ```
 
 > 금지: `<string.h>`, `<strings.h>`. 직접 구현해야 합니다.
@@ -182,10 +266,11 @@ $ bash grade.sh
 
 1. `sbs_strlen`은 `\0`까지 세고 `size_t` 반환 → 다른 함수가 재사용
 2. `strcpy`는 버퍼 크기를 몰라 **버퍼 오버플로우**(보안 취약점) 위험
-3. `strlcpy/strlcat`은 `dstsize`로 안전, 항상 `\0` 종결
-4. `strlcpy` 반환값 = **src 전체 길이** → `>= dstsize`면 잘림
-5. `strlcat`은 dst 길이를 dstsize 안에서만 측정, 정상 반환 = `dstlen + srclen`
-6. 두 함수 모두 `dstsize == 0` 예외 처리
+3. `strlcpy/strlcat`은 `dstsize`로 안전, 항상 `\0` 종결, 반환은 "만들려던 길이"
+4. `strnlen`은 `maxlen`까지만 세서 안전
+5. `strncpy`는 짧으면 `\0` 패딩, 길면 `\0` 안 붙을 수 있음(strlcpy와 차이)
+6. `strncat`은 최대 n글자 붙이고 **항상** `\0` 종결
+7. `strcmp`는 끝까지 비교(부호 의미), `unsigned char`로 비교
 
 ---
 

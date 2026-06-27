@@ -69,13 +69,44 @@ return (dstlen + srclen);
 
 ---
 
+### 5. n글자 계열 + 비교
+
+```c
+/* strnlen — maxlen까지만 */
+while (len < maxlen && s[len]) len++;
+
+/* strncpy — n글자 복사 후 남으면 \0 패딩 */
+while (i<n && src[i]) dst[i]=src[i], i++;
+while (i<n)          dst[i]='\0', i++;
+
+/* strncat — n글자 붙이고 항상 \0 */
+while (i<n && src[i]) dst[dstlen+i]=src[i], i++;
+dst[dstlen+i]='\0';
+
+/* strcmp — 끝까지 비교 */
+while (s1[i] && s1[i]==s2[i]) i++;
+return ((unsigned char)s1[i] - (unsigned char)s2[i]);
+```
+
+| 함수 | 핵심 |
+|------|------|
+| strnlen | maxlen 초과 안 함 |
+| strncpy | 짧으면 \0 패딩, 길면 종결 미보장 |
+| strncat | 항상 \0 종결 |
+| strcmp | 끝까지, unsigned char, 부호 의미 |
+
+---
+
 ## 실행 전 체크리스트
 
 - [ ] strlen이 size_t를 반환하는가?
 - [ ] strlcpy가 dstsize==0을 처리하는가?
 - [ ] strlcpy 반환값이 src 길이인가?
 - [ ] strlcat이 dst 길이를 dstsize로 제한 측정하는가?
-- [ ] `bash grade.sh` → 3/3?
+- [ ] strncpy가 남는 칸을 \0으로 패딩하는가?
+- [ ] strncat이 항상 \0로 끝맺는가?
+- [ ] strcmp를 unsigned char로 비교하는가?
+- [ ] `bash grade.sh` → 7/7?
 
 ---
 
