@@ -9,6 +9,7 @@
 3. `sbs_strlcpy`의 크기 처리와 반환값을 구현한다.
 4. `sbs_strlcat`의 이어붙이기와 반환값 규칙을 구현한다.
 5. `sbs_strnlen`, `sbs_strncpy`, `sbs_strncat`, `sbs_strcmp`를 구현한다.
+6. `sbs_strcasecmp`, `sbs_strncasecmp`로 대소문자 무시 비교를 구현한다.
 
 ---
 
@@ -289,22 +290,75 @@ int sbs_strcmp(const char *s1, const char *s2)
 
 > 14차시 `strncmp`는 n글자 제한이 있지만, `strcmp`는 `\0`까지 끝까지 봅니다. 둘 다 `unsigned char`로 비교해야 부호가 정확합니다.
 
+### 5.5 sbs_strcasecmp — 대소문자 무시 비교
+
+`"Hello"`와 `"hello"`를 **같다고** 봐야 할 때가 많습니다(명령어, 파일 확장자, 헤더 이름 등). 비교 전에 각 글자를 소문자로 바꾸면 됩니다.
+
+```c
+static int to_lower(int c)
+{
+    if (c >= 'A' && c <= 'Z')   // 대문자면 +32 → 소문자
+        return (c + 32);
+    return (c);
+}
+
+int sbs_strcasecmp(const char *s1, const char *s2)
+{
+    size_t i = 0;
+    while (s1[i] || s2[i])      // 둘 중 하나라도 안 끝났으면
+    {
+        if (to_lower((unsigned char)s1[i]) != to_lower((unsigned char)s2[i]))
+            return (to_lower((unsigned char)s1[i])
+                - to_lower((unsigned char)s2[i]));
+        i++;
+    }
+    return (0);
+}
+```
+
+> 9차시 `tolower`와 똑같은 원리입니다. 여기선 다른 파일 의존 없이 작은 헬퍼(`to_lower`)로 직접 변환합니다. `static`이라 이 파일 안에서만 보입니다.
+
+### 5.6 sbs_strncasecmp — 대소문자 무시 + n글자 제한
+
+`strcasecmp`에 **n글자 제한**을 더한 버전. 구조는 14차시 `strncmp`와 같고, 비교만 소문자 기준입니다.
+
+```c
+int sbs_strncasecmp(const char *s1, const char *s2, size_t n)
+{
+    size_t i = 0;
+    while (i < n && (s1[i] || s2[i]))   // n글자 안에서만
+    {
+        if (to_lower((unsigned char)s1[i]) != to_lower((unsigned char)s2[i]))
+            return (to_lower((unsigned char)s1[i])
+                - to_lower((unsigned char)s2[i]));
+        i++;
+    }
+    return (0);
+}
+```
+
+> 이 두 함수는 표준에서 `<strings.h>`(s 붙음)에 있습니다. "끝까지/n까지" 구분에 "대소문자 구분/무시" 축이 하나 더 생긴 셈입니다.
+
 ---
 
 ## 6부: 채점
 
 `strlen`/`strnlen`/`strncpy`/`strncat`/`strcmp`는 표준 함수와 직접 비교합니다. `strlcpy`/`strlcat`은 리눅스 표준 라이브러리(glibc)에 없을 수 있어 **테스트 안에 정답 동작을 구현**해 비교합니다.
 
+`strcasecmp`/`strncasecmp`는 표준(`<strings.h>`)을 정답으로 비교합니다.
+
 ```bash
 $ bash grade.sh
-✓ sbs_strlen    (...)
-✓ sbs_strlcpy   (...)
-✓ sbs_strlcat   (...)
-✓ sbs_strnlen   (...)
-✓ sbs_strncpy   (...)
-✓ sbs_strncat   (...)
-✓ sbs_strcmp    (...)
-결과: 7 / 7 통과
+✓ sbs_strlen       (...)
+✓ sbs_strlcpy      (...)
+✓ sbs_strlcat      (...)
+✓ sbs_strnlen      (...)
+✓ sbs_strncpy      (...)
+✓ sbs_strncat      (...)
+✓ sbs_strcmp       (...)
+✓ sbs_strcasecmp   (...)
+✓ sbs_strncasecmp  (...)
+결과: 9 / 9 통과
 ```
 
 > 금지: `<string.h>`, `<strings.h>`. 직접 구현해야 합니다.
@@ -320,6 +374,7 @@ $ bash grade.sh
 5. `strncpy`는 짧으면 `\0` 패딩, 길면 `\0` 안 붙을 수 있음(strlcpy와 차이)
 6. `strncat`은 최대 n글자 붙이고 **항상** `\0` 종결
 7. `strcmp`는 끝까지 비교(부호 의미), `unsigned char`로 비교
+8. `strcasecmp`/`strncasecmp`는 소문자로 바꿔 비교 → 대소문자 무시
 
 ---
 

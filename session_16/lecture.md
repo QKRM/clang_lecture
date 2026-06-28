@@ -2,27 +2,27 @@
 
 ## 학습 목표
 
-1. 9~14차시에서 만든 30개 함수를 하나의 `libsbs`로 통합한다.
+1. 9~14차시에서 만든 32개 함수를 하나의 `libsbs`로 통합한다.
 2. 전체를 빌드하는 통합 Makefile을 완성한다.
 3. 헤더 파일(`libsbs.h`)에 모든 프로토타입을 정리한다.
 4. 동료 코드 리뷰로 코드 품질을 점검하고 개선한다.
 
 ---
 
-## 1부: 통합 — 30개 함수 모으기
+## 1부: 통합 — 32개 함수 모으기
 
 ### 1.1 전체 함수 목록
 
 | 분류 | 함수 | 차시 |
 |------|------|------|
-| 문자 분류/변환 | isalpha, isdigit, isalnum, isascii, isprint, toupper, tolower | 9 |
-| 메모리 I | memset, bzero, memcpy, memccpy | 10 |
-| 메모리 II | memmove, memchr, memcmp, calloc | 11 |
-| 문자열 I | strlen, strlcpy, strlcat | 12 |
-| 문자열 II | strchr, strrchr, strnstr | 13 |
-| 문자열 III | strncmp, atoi, strdup | 14 |
+| 문자 분류/변환 (7) | isalpha, isdigit, isalnum, isascii, isprint, toupper, tolower | 9 |
+| 메모리 (6) | memset, bzero, memcpy, memccpy, memchr, memcmp | 10 |
+| 동적 메모리 (5) | calloc, substr, strjoin, itoa, strdup | 11 |
+| 문자열 I (9) | strlen, strlcpy, strlcat, strnlen, strncpy, strncat, strcmp, strcasecmp, strncasecmp | 12 |
+| 문자열 II (3) | strchr, strrchr, strnstr | 13 |
+| 문자열 비교/변환 (2) | strncmp, atoi | 14 |
 
-총 **30개**. 각 차시 폴더의 `sbs_*.c`를 한 폴더로 모읍니다.
+총 **32개**. 각 차시 폴더의 `sbs_*.c`를 한 폴더로 모읍니다.
 
 ### 1.2 libsbs.h 정리
 
@@ -74,8 +74,8 @@ re: fclean all
 ```
 
 ```bash
-$ make          # 30개 컴파일 → libsbs.a
-$ ar t libsbs.a # 30개 오브젝트 확인
+$ make          # 32개 컴파일 → libsbs.a
+$ ar t libsbs.a # 32개 오브젝트 확인
 ```
 
 ---
@@ -123,28 +123,28 @@ $ ar t libsbs.a # 30개 오브젝트 확인
 ```bash
 $ bash grade.sh
 === libsbs 16차시 종합 채점 ===
-✓ 파일 구성 (libsbs.h + sbs_*.c 30개)
-✓ make → libsbs.a 빌드 (30개 함수)
-✓ 30개 함수 통합 동작 (ALL_OK)
+✓ 파일 구성 (libsbs.h + sbs_*.c 32개)
+✓ make → libsbs.a 빌드 (32개 함수)
+✓ 32개 함수 통합 동작 (ALL_OK)
 ✓ make re / fclean 동작
 결과: 4 / 4 통과
 🎉 libsbs 종합 프로젝트 완성!
 ```
 
-1. 30개 파일 + 헤더가 모두 있는가
+1. 32개 파일 + 헤더가 모두 있는가
 2. `make`로 경고 없이 `libsbs.a`가 빌드되는가
-3. 링크해서 30개 함수가 모두 동작하는가
+3. 링크해서 32개 함수가 모두 동작하는가
 4. `re`/`fclean`이 동작하는가
 
 ---
 
 ## 핵심 정리
 
-1. 30개 함수를 한 폴더로 모으고 `libsbs.h`에 프로토타입 정리
+1. 32개 함수를 한 폴더로 모으고 `libsbs.h`에 프로토타입 정리
 2. 통합 Makefile의 `SRCS`에 모든 소스 나열 → `libsbs.a`
 3. 코드 리뷰: 정확성 · 메모리 안전 · 스타일 · 중복 점검
 4. 질문형·구체적·존중하는 리뷰 코멘트
-5. 통합 테스트로 30개 함수가 함께 동작함을 확인
+5. 통합 테스트로 32개 함수가 함께 동작함을 확인
 6. `make / clean / fclean / re`로 빌드 자동화
 
 ---

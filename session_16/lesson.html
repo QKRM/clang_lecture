@@ -22,12 +22,12 @@
     <main class="wrap">
       <article class="md">
 <h2>학습 목표</h2>
-<ol><li>9~14차시에서 만든 30개 함수를 하나의 <code>libsbs</code>로 통합한다.</li><li>전체를 빌드하는 통합 Makefile을 완성한다.</li><li>헤더 파일(<code>libsbs.h</code>)에 모든 프로토타입을 정리한다.</li><li>동료 코드 리뷰로 코드 품질을 점검하고 개선한다.</li></ol>
+<ol><li>9~14차시에서 만든 32개 함수를 하나의 <code>libsbs</code>로 통합한다.</li><li>전체를 빌드하는 통합 Makefile을 완성한다.</li><li>헤더 파일(<code>libsbs.h</code>)에 모든 프로토타입을 정리한다.</li><li>동료 코드 리뷰로 코드 품질을 점검하고 개선한다.</li></ol>
 <hr />
-<h2>1부: 통합 — 30개 함수 모으기</h2>
+<h2>1부: 통합 — 32개 함수 모으기</h2>
 <h3>1.1 전체 함수 목록</h3>
-<table><thead><tr><th>분류</th><th>함수</th><th>차시</th></tr></thead><tbody><tr><td>문자 분류/변환</td><td>isalpha, isdigit, isalnum, isascii, isprint, toupper, tolower</td><td>9</td></tr><tr><td>메모리 I</td><td>memset, bzero, memcpy, memccpy</td><td>10</td></tr><tr><td>메모리 II</td><td>memmove, memchr, memcmp, calloc</td><td>11</td></tr><tr><td>문자열 I</td><td>strlen, strlcpy, strlcat</td><td>12</td></tr><tr><td>문자열 II</td><td>strchr, strrchr, strnstr</td><td>13</td></tr><tr><td>문자열 III</td><td>strncmp, atoi, strdup</td><td>14</td></tr></tbody></table>
-<p>총 <strong>30개</strong>. 각 차시 폴더의 <code>sbs_*.c</code>를 한 폴더로 모읍니다.</p>
+<table><thead><tr><th>분류</th><th>함수</th><th>차시</th></tr></thead><tbody><tr><td>문자 분류/변환 (7)</td><td>isalpha, isdigit, isalnum, isascii, isprint, toupper, tolower</td><td>9</td></tr><tr><td>메모리 (6)</td><td>memset, bzero, memcpy, memccpy, memchr, memcmp</td><td>10</td></tr><tr><td>동적 메모리 (5)</td><td>calloc, substr, strjoin, itoa, strdup</td><td>11</td></tr><tr><td>문자열 I (9)</td><td>strlen, strlcpy, strlcat, strnlen, strncpy, strncat, strcmp, strcasecmp, strncasecmp</td><td>12</td></tr><tr><td>문자열 II (3)</td><td>strchr, strrchr, strnstr</td><td>13</td></tr><tr><td>문자열 비교/변환 (2)</td><td>strncmp, atoi</td><td>14</td></tr></tbody></table>
+<p>총 <strong>32개</strong>. 각 차시 폴더의 <code>sbs_*.c</code>를 한 폴더로 모읍니다.</p>
 <h3>1.2 libsbs.h 정리</h3>
 <p>모든 프로토타입을 하나의 헤더에 차시별로 정리합니다(주석으로 구분).</p>
 <pre><code class="language-c">#ifndef LIBSBS_H
@@ -66,8 +66,8 @@ fclean: clean
 	$(RM) $(NAME)
 re: fclean all
 .PHONY: all clean fclean re</code></pre>
-<pre><code class="language-bash">$ make          # 30개 컴파일 → libsbs.a
-$ ar t libsbs.a # 30개 오브젝트 확인</code></pre>
+<pre><code class="language-bash">$ make          # 32개 컴파일 → libsbs.a
+$ ar t libsbs.a # 32개 오브젝트 확인</code></pre>
 <hr />
 <h2>3부: 코드 리뷰 방법론</h2>
 <h3>3.1 코드 리뷰란?</h3>
@@ -88,16 +88,16 @@ $ ar t libsbs.a # 30개 오브젝트 확인</code></pre>
 <p>채점 스크립트가 전체를 검증합니다:</p>
 <pre><code class="language-bash">$ bash grade.sh
 === libsbs 16차시 종합 채점 ===
-✓ 파일 구성 (libsbs.h + sbs_*.c 30개)
-✓ make → libsbs.a 빌드 (30개 함수)
-✓ 30개 함수 통합 동작 (ALL_OK)
+✓ 파일 구성 (libsbs.h + sbs_*.c 32개)
+✓ make → libsbs.a 빌드 (32개 함수)
+✓ 32개 함수 통합 동작 (ALL_OK)
 ✓ make re / fclean 동작
 결과: 4 / 4 통과
 🎉 libsbs 종합 프로젝트 완성!</code></pre>
-<ol><li>30개 파일 + 헤더가 모두 있는가</li><li><code>make</code>로 경고 없이 <code>libsbs.a</code>가 빌드되는가</li><li>링크해서 30개 함수가 모두 동작하는가</li><li><code>re</code>/<code>fclean</code>이 동작하는가</li></ol>
+<ol><li>32개 파일 + 헤더가 모두 있는가</li><li><code>make</code>로 경고 없이 <code>libsbs.a</code>가 빌드되는가</li><li>링크해서 32개 함수가 모두 동작하는가</li><li><code>re</code>/<code>fclean</code>이 동작하는가</li></ol>
 <hr />
 <h2>핵심 정리</h2>
-<ol><li>30개 함수를 한 폴더로 모으고 <code>libsbs.h</code>에 프로토타입 정리</li><li>통합 Makefile의 <code>SRCS</code>에 모든 소스 나열 → <code>libsbs.a</code></li><li>코드 리뷰: 정확성 · 메모리 안전 · 스타일 · 중복 점검</li><li>질문형·구체적·존중하는 리뷰 코멘트</li><li>통합 테스트로 30개 함수가 함께 동작함을 확인</li><li><code>make / clean / fclean / re</code>로 빌드 자동화</li></ol>
+<ol><li>32개 함수를 한 폴더로 모으고 <code>libsbs.h</code>에 프로토타입 정리</li><li>통합 Makefile의 <code>SRCS</code>에 모든 소스 나열 → <code>libsbs.a</code></li><li>코드 리뷰: 정확성 · 메모리 안전 · 스타일 · 중복 점검</li><li>질문형·구체적·존중하는 리뷰 코멘트</li><li>통합 테스트로 32개 함수가 함께 동작함을 확인</li><li><code>make / clean / fclean / re</code>로 빌드 자동화</li></ol>
 <hr />
 <h2>과정을 마치며</h2>
 <p>9차시부터 한 함수씩, 표준 라이브러리를 직접 구현했습니다. 포인터·메모리·문자열·동적 할당을 손으로 다루며 C의 본질에 닿았습니다. 이제 여러분은:</p>
@@ -105,19 +105,19 @@ $ ar t libsbs.a # 30개 오브젝트 확인</code></pre>
 <p>이것이 libsbs 과정의 목표였습니다. 수고하셨습니다.</p>
 <div class="section-split"><h2>실습</h2><p>아래 문제를 직접 풀어본 뒤, 맨 아래 정답 코드로 확인하세요.</p></div>
 <h2>실습 목표</h2>
-<ul><li>9~14차시 30개 함수를 한 폴더로 통합한다.</li><li>통합 Makefile로 <code>libsbs.a</code>를 빌드한다.</li><li>동료와 코드 리뷰를 주고받는다.</li><li>최종 통합 테스트를 통과한다.</li></ul>
-<blockquote>이번 폴더에는 30개 함수 정답 + 통합 Makefile + 통합 테스트가 제공됩니다. 본인이 9~14차시에서 만든 코드로 교체해 빌드해보세요.</blockquote>
+<ul><li>9~14차시 32개 함수를 한 폴더로 통합한다.</li><li>통합 Makefile로 <code>libsbs.a</code>를 빌드한다.</li><li>동료와 코드 리뷰를 주고받는다.</li><li>최종 통합 테스트를 통과한다.</li></ul>
+<blockquote>이번 폴더에는 32개 함수 정답 + 통합 Makefile + 통합 테스트가 제공됩니다. 본인이 9~14차시에서 만든 코드로 교체해 빌드해보세요.</blockquote>
 <hr />
 <h2>과제 1: 함수 통합</h2>
 <p>요구사항:</p>
-<ul><li>9~14차시 각 폴더에서 <code>sbs_*.c</code> 30개를 한 폴더로 모은다</li><li><code>libsbs.h</code>에 모든 프로토타입을 차시별로 정리(주석 구분)</li></ul>
+<ul><li>9~14차시 각 폴더에서 <code>sbs_*.c</code> 32개를 한 폴더로 모은다</li><li><code>libsbs.h</code>에 모든 프로토타입을 차시별로 정리(주석 구분)</li></ul>
 <p>체크:</p>
 <pre><code class="language-bash">$ ls sbs_*.c | wc -l
 24</code></pre>
 <hr />
 <h2>과제 2: 통합 Makefile</h2>
 <p>요구사항:</p>
-<ul><li><code>SRCS</code>에 30개 소스를 모두 나열</li><li><code>make</code> → <code>libsbs.a</code> 빌드 (경고 없이)</li><li><code>clean / fclean / re</code> 규칙</li></ul>
+<ul><li><code>SRCS</code>에 32개 소스를 모두 나열</li><li><code>make</code> → <code>libsbs.a</code> 빌드 (경고 없이)</li><li><code>clean / fclean / re</code> 규칙</li></ul>
 <p>확인:</p>
 <pre><code class="language-bash">$ make
 $ ar t libsbs.a | wc -l    # 24
@@ -127,7 +127,7 @@ $ make re                   # 재빌드</code></pre>
 <pre><code class="language-bash">$ cc -Wall -Wextra -Werror tests/test_all.c -L. -lsbs -o run
 $ ./run
 ALL_OK</code></pre>
-<p><code>ALL_OK</code>가 나오면 30개 함수가 모두 정상 동작합니다. <code>[FAIL]</code>이 나오면 해당 함수를 점검하세요.</p>
+<p><code>ALL_OK</code>가 나오면 32개 함수가 모두 정상 동작합니다. <code>[FAIL]</code>이 나오면 해당 함수를 점검하세요.</p>
 <hr />
 <h2>과제 4: 코드 리뷰</h2>
 <p>동료와 짝을 지어 서로의 코드를 리뷰합니다. <code>CODE_REVIEW.md</code>(제공) 체크리스트를 사용하세요.</p>
@@ -142,18 +142,18 @@ ALL_OK</code></pre>
 <h2>과제 5: 최종 채점</h2>
 <pre><code class="language-bash">$ bash grade.sh
 === libsbs 16차시 종합 채점 ===
-✓ 파일 구성 (libsbs.h + sbs_*.c 30개)
-✓ make → libsbs.a 빌드 (30개 함수)
-✓ 30개 함수 통합 동작 (ALL_OK)
+✓ 파일 구성 (libsbs.h + sbs_*.c 32개)
+✓ make → libsbs.a 빌드 (32개 함수)
+✓ 32개 함수 통합 동작 (ALL_OK)
 ✓ make re / fclean 동작
 결과: 4 / 4 통과
 🎉 libsbs 종합 프로젝트 완성!</code></pre>
 <hr />
 <h2>제출 확인 사항</h2>
-<ul><li>[ ] 30개 <code>sbs_*.c</code> 한 폴더에 통합</li><li>[ ] <code>libsbs.h</code> 전체 프로토타입 정리</li><li>[ ] 통합 Makefile (<code>make</code> → libsbs.a, 경고 없음)</li><li>[ ] <code>tests/test_all.c</code> 링크 → <code>ALL_OK</code></li><li>[ ] 동료 코드 리뷰 1회 이상 (주고/받기)</li><li>[ ] <code>bash grade.sh</code> → 4 / 4 통과</li></ul>
+<ul><li>[ ] 32개 <code>sbs_*.c</code> 한 폴더에 통합</li><li>[ ] <code>libsbs.h</code> 전체 프로토타입 정리</li><li>[ ] 통합 Makefile (<code>make</code> → libsbs.a, 경고 없음)</li><li>[ ] <code>tests/test_all.c</code> 링크 → <code>ALL_OK</code></li><li>[ ] 동료 코드 리뷰 1회 이상 (주고/받기)</li><li>[ ] <code>bash grade.sh</code> → 4 / 4 통과</li></ul>
 <hr />
 <h2>더 생각해볼 거리</h2>
-<ol><li>30개 함수 중 다른 함수를 재사용하는 것은? (isalnum→isalpha/isdigit, bzero→memset, calloc→memset, strlcpy/cat/dup→strlen)</li><li>라이브러리를 다른 프로젝트에서 쓰려면 무엇이 필요한가? (libsbs.a + libsbs.h)</li><li>다음에 추가하고 싶은 함수는? (printf, split, itoa 등 — 확장 과제)</li></ol>
+<ol><li>32개 함수 중 다른 함수를 재사용하는 것은? (isalnum→isalpha/isdigit, bzero→memset, calloc→memset, strlcpy/cat/dup→strlen)</li><li>라이브러리를 다른 프로젝트에서 쓰려면 무엇이 필요한가? (libsbs.a + libsbs.h)</li><li>다음에 추가하고 싶은 함수는? (printf, split, itoa 등 — 확장 과제)</li></ol>
 <div class="section-split"><h2>정답 코드</h2><p>각 항목의 "정답 보기"를 눌러 펼치세요. 먼저 직접 풀어본 뒤 확인하는 것을 권장합니다.</p></div>
 <div class="answer"><div class="answer-head"><span class="answer-name">📄 <span class="file">libsbs.h</span></span><button class="answer-toggle">정답 보기</button></div><div class="answer-body"><pre><code class="language-c">#ifndef LIBSBS_H
 # define LIBSBS_H
@@ -192,6 +192,8 @@ size_t	sbs_strnlen(const char *s, size_t maxlen);
 char	*sbs_strncpy(char *dst, const char *src, size_t n);
 char	*sbs_strncat(char *dst, const char *src, size_t n);
 int		sbs_strcmp(const char *s1, const char *s2);
+int		sbs_strcasecmp(const char *s1, const char *s2);
+int		sbs_strncasecmp(const char *s1, const char *s2, size_t n);
 
 /* 13차시 — 문자열 함수 II */
 char	*sbs_strchr(const char *s, int c);
@@ -205,7 +207,7 @@ int		sbs_atoi(const char *str);
 #endif</code></pre></div></div>
 <div class="answer"><div class="answer-head"><span class="answer-name">📄 <span class="file">Makefile</span></span><button class="answer-toggle">정답 보기</button></div><div class="answer-body"><pre><code class="language-makefile"># ============================================================
 # libsbs 종합 정적 라이브러리 Makefile (16차시 최종)
-#   9~14차시에서 구현한 26개 함수를 하나로 통합
+#   9~14차시에서 구현한 32개 함수를 하나로 통합
 # ============================================================
 
 NAME    = libsbs.a
@@ -223,6 +225,7 @@ SRCS    = sbs_isalpha.c sbs_isdigit.c sbs_isalnum.c sbs_isascii.c \
           sbs_calloc.c sbs_substr.c sbs_strjoin.c sbs_itoa.c sbs_strdup.c \
           sbs_strlen.c sbs_strlcpy.c sbs_strlcat.c \
           sbs_strnlen.c sbs_strncpy.c sbs_strncat.c sbs_strcmp.c \
+          sbs_strcasecmp.c sbs_strncasecmp.c \
           sbs_strchr.c sbs_strrchr.c sbs_strnstr.c \
           sbs_strncmp.c sbs_atoi.c
 
@@ -476,6 +479,36 @@ void	*sbs_memset(void *b, int c, size_t len)
 	}
 	return (b);
 }</code></pre></div></div>
+<div class="answer"><div class="answer-head"><span class="answer-name">📄 <span class="file">sbs_strcasecmp.c</span></span><button class="answer-toggle">정답 보기</button></div><div class="answer-body"><pre><code class="language-c">#include "libsbs.h"
+
+/*
+ * 두 문자열을 대소문자 구분 없이 끝까지 비교한다.
+ *  - 각 글자를 소문자로 바꿔 비교 ('A'~'Z' → +32)
+ *  - 처음 다른 글자에서 차이를 반환 (부호가 의미)
+ *  - 둘 다 끝까지 같으면 0
+ *  - 9차시 tolower와 같은 원리 (여기선 의존 없이 직접 변환)
+ */
+static int	to_lower(int c)
+{
+	if (c &gt;= 'A' &amp;&amp; c &lt;= 'Z')
+		return (c + 32);
+	return (c);
+}
+
+int	sbs_strcasecmp(const char *s1, const char *s2)
+{
+	size_t	i;
+
+	i = 0;
+	while (s1[i] || s2[i])
+	{
+		if (to_lower((unsigned char)s1[i]) != to_lower((unsigned char)s2[i]))
+			return (to_lower((unsigned char)s1[i])
+				- to_lower((unsigned char)s2[i]));
+		i++;
+	}
+	return (0);
+}</code></pre></div></div>
 <div class="answer"><div class="answer-head"><span class="answer-name">📄 <span class="file">sbs_strchr.c</span></span><button class="answer-toggle">정답 보기</button></div><div class="answer-body"><pre><code class="language-c">#include "libsbs.h"
 
 char	*sbs_strchr(const char *s, int c)
@@ -627,6 +660,35 @@ size_t	sbs_strlen(const char *s)
 	while (s[len])
 		len++;
 	return (len);
+}</code></pre></div></div>
+<div class="answer"><div class="answer-head"><span class="answer-name">📄 <span class="file">sbs_strncasecmp.c</span></span><button class="answer-toggle">정답 보기</button></div><div class="answer-body"><pre><code class="language-c">#include "libsbs.h"
+
+/*
+ * 두 문자열을 대소문자 구분 없이 최대 n글자까지 비교한다.
+ *  - n글자 안에서 처음 다른 글자의 차이를 반환 (소문자 기준)
+ *  - n글자까지 같으면 0
+ *  - strcasecmp의 길이 제한 버전 (14차시 strncmp와 같은 구조)
+ */
+static int	to_lower(int c)
+{
+	if (c &gt;= 'A' &amp;&amp; c &lt;= 'Z')
+		return (c + 32);
+	return (c);
+}
+
+int	sbs_strncasecmp(const char *s1, const char *s2, size_t n)
+{
+	size_t	i;
+
+	i = 0;
+	while (i &lt; n &amp;&amp; (s1[i] || s2[i]))
+	{
+		if (to_lower((unsigned char)s1[i]) != to_lower((unsigned char)s2[i]))
+			return (to_lower((unsigned char)s1[i])
+				- to_lower((unsigned char)s2[i]));
+		i++;
+	}
+	return (0);
 }</code></pre></div></div>
 <div class="answer"><div class="answer-head"><span class="answer-name">📄 <span class="file">sbs_strncat.c</span></span><button class="answer-toggle">정답 보기</button></div><div class="answer-body"><pre><code class="language-c">#include "libsbs.h"
 

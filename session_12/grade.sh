@@ -16,8 +16,8 @@ if [ "$1" = "-v" ]; then
 	VERBOSE="-v"
 fi
 
-FUNCS="strlen strlcpy strlcat strnlen strncpy strncat strcmp"
-SRC="sbs_strlen.c sbs_strlcpy.c sbs_strlcat.c sbs_strnlen.c sbs_strncpy.c sbs_strncat.c sbs_strcmp.c"
+FUNCS="strlen strlcpy strlcat strnlen strncpy strncat strcmp strcasecmp strncasecmp"
+SRC="sbs_strlen.c sbs_strlcpy.c sbs_strlcat.c sbs_strnlen.c sbs_strncpy.c sbs_strncat.c sbs_strcmp.c sbs_strcasecmp.c sbs_strncasecmp.c"
 FORBIDDEN='string\.h|strings\.h'
 
 TMP="$(mktemp -d)"
@@ -40,14 +40,14 @@ for f in $SRC; do
 	fi
 done
 if [ "$missing" -eq 1 ]; then
-	echo "결과: 0 / 7 통과 (파일 누락)"
+	echo "결과: 0 / 9 통과 (파일 누락)"
 	exit 1
 fi
 
 for f in $SRC; do
 	if grep -Eq "include[[:space:]]*<($FORBIDDEN)>" "$f"; then
 		echo "✗ $f : <string.h>/<strings.h> 사용 금지 (직접 구현)"
-		echo "결과: 0 / 7 통과 (금지 헤더)"
+		echo "결과: 0 / 9 통과 (금지 헤더)"
 		exit 1
 	fi
 done

@@ -97,6 +97,33 @@ return ((unsigned char)s1[i] - (unsigned char)s2[i]);
 
 ---
 
+### 6. 대소문자 무시 비교
+
+```c
+static int to_lower(int c)
+{
+    if (c >= 'A' && c <= 'Z') return (c + 32);
+    return (c);
+}
+
+/* strcasecmp — 끝까지, 소문자 기준 */
+while (s1[i] || s2[i]) {
+    if (to_lower((unsigned char)s1[i]) != to_lower((unsigned char)s2[i]))
+        return (to_lower((unsigned char)s1[i]) - to_lower((unsigned char)s2[i]));
+    i++;
+}
+return (0);
+
+/* strncasecmp — 위와 같되 while (i < n && (s1[i] || s2[i])) */
+```
+
+| 함수 | 핵심 |
+|------|------|
+| strcasecmp | 소문자로 바꿔 끝까지 비교 |
+| strncasecmp | 소문자 + n글자 제한 |
+
+---
+
 ## 실행 전 체크리스트
 
 - [ ] strlen이 size_t를 반환하는가?
@@ -106,7 +133,8 @@ return ((unsigned char)s1[i] - (unsigned char)s2[i]);
 - [ ] strncpy가 남는 칸을 \0으로 패딩하는가?
 - [ ] strncat이 항상 \0로 끝맺는가?
 - [ ] strcmp를 unsigned char로 비교하는가?
-- [ ] `bash grade.sh` → 7/7?
+- [ ] strcasecmp/strncasecmp가 소문자 기준으로 비교하는가?
+- [ ] `bash grade.sh` → 9/9?
 
 ---
 

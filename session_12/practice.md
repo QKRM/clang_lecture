@@ -21,6 +21,8 @@ size_t	sbs_strnlen(const char *s, size_t maxlen);
 char	*sbs_strncpy(char *dst, const char *src, size_t n);
 char	*sbs_strncat(char *dst, const char *src, size_t n);
 int		sbs_strcmp(const char *s1, const char *s2);
+int		sbs_strcasecmp(const char *s1, const char *s2);
+int		sbs_strncasecmp(const char *s1, const char *s2, size_t n);
 ```
 
 ---
@@ -174,7 +176,57 @@ strcmp("abd", "abc") → 양수
 
 ---
 
-## 과제 8: 채점 + 버퍼 안전성 테스트
+## 과제 8: sbs_strcasecmp
+
+`sbs_strcasecmp.c` — 대소문자 무시 비교. 비교 전에 각 글자를 소문자로 변환.
+
+요구사항:
+- 작은 `static` 헬퍼로 `'A'~'Z'`만 `+32` 변환
+- `unsigned char`로 변환·비교(부호 정확)
+
+힌트:
+```c
+static int to_lower(int c)
+{
+    if (c >= 'A' && c <= 'Z')
+        return (c + 32);
+    return (c);
+}
+while (s1[i] || s2[i])
+{
+    if (to_lower((unsigned char)s1[i]) != to_lower((unsigned char)s2[i]))
+        return (to_lower((unsigned char)s1[i]) - to_lower((unsigned char)s2[i]));
+    i++;
+}
+return (0);
+```
+
+출력 예시:
+```
+strcasecmp("Hello", "hello") → 0
+strcasecmp("ABC", "abd")     → 음수
+```
+
+---
+
+## 과제 9: sbs_strncasecmp
+
+`sbs_strncasecmp.c` — 대소문자 무시 + 최대 `n`글자 비교. 구조는 strncmp와 같고 비교만 소문자 기준.
+
+힌트:
+```c
+while (i < n && (s1[i] || s2[i]))
+{
+    if (to_lower((unsigned char)s1[i]) != to_lower((unsigned char)s2[i]))
+        return (to_lower((unsigned char)s1[i]) - to_lower((unsigned char)s2[i]));
+    i++;
+}
+return (0);
+```
+
+---
+
+## 과제 10: 채점 + 버퍼 안전성 테스트
 
 ```bash
 $ bash grade.sh
@@ -185,8 +237,10 @@ $ bash grade.sh
 ✓ sbs_strnlen   (...)
 ✓ sbs_strncpy   (...)
 ✓ sbs_strncat   (...)
-✓ sbs_strcmp    (...)
-결과: 7 / 7 통과
+✓ sbs_strcmp       (...)
+✓ sbs_strcasecmp   (...)
+✓ sbs_strncasecmp  (...)
+결과: 9 / 9 통과
 ```
 
 실패 시 `bash grade.sh -v`로 어떤 크기/입력에서 틀렸는지 확인.
@@ -202,7 +256,7 @@ size_t n = sbs_strlcpy(buf, "hello", 4);
 
 ## 제출 확인 사항
 
-- [ ] `libsbs.h`에 7개 프로토타입 추가
+- [ ] `libsbs.h`에 9개 프로토타입 추가
 - [ ] `sbs_strlen.c` - `\0`까지, size_t 반환
 - [ ] `sbs_strlcpy.c` - dstsize-1 복사, src 길이 반환, dstsize==0 처리
 - [ ] `sbs_strlcat.c` - dst 뒤 이어붙이기, 반환값 규칙
@@ -210,8 +264,10 @@ size_t n = sbs_strlcpy(buf, "hello", 4);
 - [ ] `sbs_strncpy.c` - n글자 복사 + \0 패딩
 - [ ] `sbs_strncat.c` - n글자 이어붙이기 + \0 종결
 - [ ] `sbs_strcmp.c` - 끝까지 비교, unsigned char
+- [ ] `sbs_strcasecmp.c` - 대소문자 무시 비교
+- [ ] `sbs_strncasecmp.c` - 대소문자 무시 + n글자 제한
 - [ ] `<string.h>` 미사용
-- [ ] `bash grade.sh` → 7 / 7 통과
+- [ ] `bash grade.sh` → 9 / 9 통과
 
 ---
 

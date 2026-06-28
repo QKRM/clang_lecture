@@ -2,20 +2,20 @@
 
 ## 실습 목표
 
-- 9~14차시 30개 함수를 한 폴더로 통합한다.
+- 9~14차시 32개 함수를 한 폴더로 통합한다.
 - 통합 Makefile로 `libsbs.a`를 빌드한다.
 - 동료와 코드 리뷰를 주고받는다.
 - 최종 통합 테스트를 통과한다.
 
 
-> 이번 폴더에는 30개 함수 정답 + 통합 Makefile + 통합 테스트가 제공됩니다. 본인이 9~14차시에서 만든 코드로 교체해 빌드해보세요.
+> 이번 폴더에는 32개 함수 정답 + 통합 Makefile + 통합 테스트가 제공됩니다. 본인이 9~14차시에서 만든 코드로 교체해 빌드해보세요.
 
 ---
 
 ## 과제 1: 함수 통합
 
 요구사항:
-- 9~14차시 각 폴더에서 `sbs_*.c` 30개를 한 폴더로 모은다
+- 9~14차시 각 폴더에서 `sbs_*.c` 32개를 한 폴더로 모은다
 - `libsbs.h`에 모든 프로토타입을 차시별로 정리(주석 구분)
 
 체크:
@@ -29,7 +29,7 @@ $ ls sbs_*.c | wc -l
 ## 과제 2: 통합 Makefile
 
 요구사항:
-- `SRCS`에 30개 소스를 모두 나열
+- `SRCS`에 32개 소스를 모두 나열
 - `make` → `libsbs.a` 빌드 (경고 없이)
 - `clean / fclean / re` 규칙
 
@@ -50,7 +50,7 @@ $ ./run
 ALL_OK
 ```
 
-`ALL_OK`가 나오면 30개 함수가 모두 정상 동작합니다. `[FAIL]`이 나오면 해당 함수를 점검하세요.
+`ALL_OK`가 나오면 32개 함수가 모두 정상 동작합니다. `[FAIL]`이 나오면 해당 함수를 점검하세요.
 
 ---
 
@@ -79,9 +79,9 @@ ALL_OK
 ```bash
 $ bash grade.sh
 === libsbs 16차시 종합 채점 ===
-✓ 파일 구성 (libsbs.h + sbs_*.c 30개)
-✓ make → libsbs.a 빌드 (30개 함수)
-✓ 30개 함수 통합 동작 (ALL_OK)
+✓ 파일 구성 (libsbs.h + sbs_*.c 32개)
+✓ make → libsbs.a 빌드 (32개 함수)
+✓ 32개 함수 통합 동작 (ALL_OK)
 ✓ make re / fclean 동작
 결과: 4 / 4 통과
 🎉 libsbs 종합 프로젝트 완성!
@@ -91,7 +91,7 @@ $ bash grade.sh
 
 ## 제출 확인 사항
 
-- [ ] 30개 `sbs_*.c` 한 폴더에 통합
+- [ ] 32개 `sbs_*.c` 한 폴더에 통합
 - [ ] `libsbs.h` 전체 프로토타입 정리
 - [ ] 통합 Makefile (`make` → libsbs.a, 경고 없음)
 - [ ] `tests/test_all.c` 링크 → `ALL_OK`
@@ -102,6 +102,6 @@ $ bash grade.sh
 
 ## 더 생각해볼 거리
 
-1. 30개 함수 중 다른 함수를 재사용하는 것은? (isalnum→isalpha/isdigit, bzero→memset, calloc→memset, strlcpy/cat/dup→strlen)
+1. 32개 함수 중 다른 함수를 재사용하는 것은? (isalnum→isalpha/isdigit, bzero→memset, calloc→memset, strlcpy/cat/dup→strlen)
 2. 라이브러리를 다른 프로젝트에서 쓰려면 무엇이 필요한가? (libsbs.a + libsbs.h)
 3. 다음에 추가하고 싶은 함수는? (printf, split, itoa 등 — 확장 과제)

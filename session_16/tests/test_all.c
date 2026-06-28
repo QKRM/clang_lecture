@@ -5,7 +5,7 @@
 #include "libsbs.h"
 
 /*
- * 종합 통합 테스트: libsbs.a를 링크해 26개 함수를 대표값으로 검증.
+ * 종합 통합 테스트: libsbs.a를 링크해 32개 함수를 대표값으로 검증.
  * grade.sh가 이 파일을 libsbs.a와 함께 빌드/실행한다.
  * 모든 검사를 통과하면 "ALL_OK" 출력 + 0 반환.
  */
@@ -87,6 +87,10 @@ int	main(void)
 	sbs_strncat(buf, "cdef", 2);
 	check(strcmp(buf, "abcd") == 0, "strncat");
 	check(sbs_strcmp("abc", "abc") == 0 && sign(sbs_strcmp("abc", "abd")) < 0, "strcmp");
+	check(sbs_strcasecmp("Hello", "hello") == 0
+		&& sign(sbs_strcasecmp("ABC", "abd")) < 0, "strcasecmp");
+	check(sbs_strncasecmp("Hello", "help", 3) == 0
+		&& sign(sbs_strncasecmp("ABC", "abx", 3)) < 0, "strncasecmp");
 
 	/* 13차시 — 문자열 II */
 	check(sbs_strchr("hello", 'e') != NULL && sbs_strchr("hello", 'z') == NULL, "strchr");

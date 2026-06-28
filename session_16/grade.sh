@@ -5,9 +5,9 @@
 #            bash grade.sh -v      (상세)
 #
 #   검사 항목:
-#     1) 30개 sbs_*.c 파일 + libsbs.h 존재
+#     1) 32개 sbs_*.c 파일 + libsbs.h 존재
 #     2) make 로 libsbs.a 빌드 (-Wall -Wextra -Werror)
-#     3) libsbs.a를 링크해 30개 함수 통합 동작 (ALL_OK)
+#     3) libsbs.a를 링크해 32개 함수 통합 동작 (ALL_OK)
 #     4) make re / fclean 동작
 # =============================================================
 
@@ -18,7 +18,7 @@ if [ "$1" = "-v" ]; then
 fi
 
 NAME="libsbs.a"
-EXPECTED=30
+EXPECTED=32
 pass_count=0
 total=0
 
@@ -33,7 +33,7 @@ missing=0
 [ -f libsbs.h ] || { echo "  libsbs.h 없음"; missing=1; }
 count="$(ls sbs_*.c 2>/dev/null | wc -l)"
 if [ "$count" -lt "$EXPECTED" ]; then
-	echo "  sbs_*.c 파일이 $count개 (30개 필요)"
+	echo "  sbs_*.c 파일이 $count개 (32개 필요)"
 	missing=1
 fi
 if [ "$missing" -eq 0 ]; then
@@ -52,7 +52,7 @@ if [ ! -f Makefile ]; then
 	exit 1
 fi
 if make >"$TMP/make.log" 2>&1 && [ -f "$NAME" ]; then
-	echo "✓ make → libsbs.a 빌드 (30개 함수)"
+	echo "✓ make → libsbs.a 빌드 (32개 함수)"
 	pass_count=$((pass_count + 1))
 else
 	echo "✗ make 빌드 실패"
@@ -66,7 +66,7 @@ total=$((total + 1))
 if cc $CFLAGS -I. tests/test_all.c -L. -lsbs -o "$TMP/run" 2>"$TMP/link.log"; then
 	out="$("$TMP/run")"
 	if [ "$out" = "ALL_OK" ]; then
-		echo "✓ 30개 함수 통합 동작 (ALL_OK)"
+		echo "✓ 32개 함수 통합 동작 (ALL_OK)"
 		pass_count=$((pass_count + 1))
 	else
 		echo "✗ 통합 동작 실패"
