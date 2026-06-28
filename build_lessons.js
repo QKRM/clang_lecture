@@ -155,8 +155,15 @@ function answerCards(dir) {
 }
 
 /* ---------- 페이지 템플릿 ---------- */
-function page(n, bodyHtml) {
+function page(n, bodyHtml, quizFile) {
   const title = TITLES[n];
+  const quizCta = quizFile
+    ? `      <div class="quiz-cta">
+        <span class="quiz-cta-label">📝 수업 마무리 퀴즈 (15문항)</span>
+        <a class="quiz-btn" href="${quizFile}" target="_blank" rel="noopener">퀴즈 풀기</a>
+        <a class="quiz-btn ghost" href="${quizFile}" download>내려받기</a>
+      </div>\n`
+    : "";
   return `<!doctype html>
 <html lang="ko">
   <head>
@@ -176,7 +183,7 @@ function page(n, bodyHtml) {
       <div class="lesson-hero-inner">
         <span class="badge">${n <= 8 ? "C 기초" : "libsbs 구현"} · ${n}차시</span>
         <h1>${title}</h1>
-      </div>
+${quizCta}      </div>
     </header>
     <main class="wrap">
       <article class="md">
@@ -238,7 +245,10 @@ for (let n = 1; n <= 16; n++) {
   }
   body += answerCards(dir);
 
-  fs.writeFileSync(path.join(dir, "lesson.html"), page(n, body), "utf8");
+  const quizName = "quiz_" + nn + ".html";
+  const quizFile = fs.existsSync(path.join(dir, quizName)) ? quizName : null;
+
+  fs.writeFileSync(path.join(dir, "lesson.html"), page(n, body, quizFile), "utf8");
   built++;
   console.log("built session_" + nn + "/lesson.html");
 }

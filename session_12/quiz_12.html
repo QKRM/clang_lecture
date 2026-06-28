@@ -31,7 +31,7 @@ NEITHER Mermaid JS NOR SVG were used anywhere in this output.
     <div class="max-w-3xl mx-auto p-4 md:p-8">
       <div id="intro" class="bg-slate-900 rounded-3xl p-8 border border-slate-800 mb-6">
         <h2 class="text-2xl font-black text-white mb-2">수업 마무리 퀴즈</h2>
-        <p class="text-slate-400 text-sm mb-4">strlen, 버퍼 오버플로우, strlcpy/strlcat을 점검합니다. 총 15문항. 답을 고르면 바로 정답·해설이 표시됩니다.</p>
+        <p class="text-slate-400 text-sm mb-4">문자열 함수 9개(strlen·strlcpy·strlcat·strnlen·strncpy·strncat·strcmp·strcasecmp·strncasecmp)와 버퍼 오버플로우를 점검합니다. 총 15문항. 답을 고르면 바로 정답·해설이 표시됩니다.</p>
         <button onclick="startQuiz()" class="bg-cyan-600 hover:bg-cyan-700 text-white text-sm font-semibold px-5 py-2.5 rounded-lg transition-colors">퀴즈 시작</button>
       </div>
       <div id="quizArea" class="hidden space-y-4"></div>
@@ -45,21 +45,21 @@ NEITHER Mermaid JS NOR SVG were used anywhere in this output.
 
     <script>
       const QUESTIONS = [
+        { q: "C에서 char 배열 a, b가 같은 내용일 때 a == b 는?", opts: ["참(내용 비교)", "거짓(서로 다른 주소를 비교)", "컴파일 에러", "항상 참"], answer: 1, why: "C엔 문자열 타입이 없어 ==는 내용이 아니라 주소를 비교합니다. 내용 비교는 strcmp가 필요합니다." },
         { q: "sbs_strlen이 세는 것은?", opts: ["\\0 포함 전체", "\\0 직전까지 글자 수", "버퍼 크기", "단어 수"], answer: 1, why: "strlen은 \\0(종결자)를 제외한 글자 수를 셉니다." },
         { q: "sbs_strlen의 반환 타입은?", opts: ["int", "size_t", "char", "void"], answer: 1, why: "길이는 음수가 없으므로 size_t를 반환합니다." },
         { q: "strcpy가 위험한 이유는?", opts: ["느려서", "dst 크기를 몰라 버퍼 오버플로우 위험", "메모리를 더 써서", "const 때문"], answer: 1, why: "strcpy는 dst 버퍼 크기를 모릅니다. src가 길면 버퍼를 넘어 덮어쓰는 보안 취약점." },
         { q: "버퍼 오버플로우를 막기 위해 strlcpy/strlcat이 받는 추가 인자는?", opts: ["src 길이", "dstsize(버퍼 크기)", "정지 문자", "복사 횟수"], answer: 1, why: "dstsize를 받아 절대 버퍼를 넘지 않습니다." },
-        { q: "sbs_strlcpy의 반환값은?", opts: ["복사한 글자 수", "src의 전체 길이", "dstsize", "0"], answer: 1, why: "반환값은 src 전체 길이. dstsize보다 크면 잘렸다는 신호입니다." },
-        { q: "strlcpy에서 dstsize == 0이면?", opts: ["크래시", "아무것도 안 쓰고 srclen 반환", "0 반환", "dst를 0으로"], answer: 1, why: "쓸 공간이 없으므로 아무것도 쓰지 않고 src 길이만 반환합니다." },
+        { q: "sbs_strlcpy의 반환값은?", opts: ["복사한 글자 수", "src의 전체 길이", "dstsize", "0"], answer: 1, why: "반환값은 src 전체 길이. dstsize보다 크면(>=) 잘렸다는 신호입니다." },
         { q: "strlcpy에서 복사 한계 조건으로 올바른 것은?", opts: ["i < dstsize", "i < dstsize - 1", "i <= dstsize", "i < srclen"], answer: 1, why: "마지막 \\0 자리를 남겨야 하므로 i < dstsize - 1까지 복사합니다." },
-        { q: "strlcpy가 복사 후 항상 하는 것은?", opts: ["free", "dst[i] = '\\0' 종결", "src 비우기", "재귀 호출"], answer: 1, why: "dstsize>0이면 항상 \\0로 종결해 안전한 문자열을 만듭니다." },
-        { q: "sbs_strlcat의 역할은?", opts: ["복사", "dst 뒤에 src 이어붙이기(안전)", "비교", "검색"], answer: 1, why: "strlcat은 dst의 기존 문자열 뒤에 src를 버퍼 안전하게 이어붙입니다." },
-        { q: "strlcat이 dst 길이를 측정할 때 제한하는 이유는?", opts: ["속도", "dstsize 안에 \\0이 없는 비정상 버퍼 방어", "메모리 절약", "문법"], answer: 1, why: "dst 길이를 dstsize 안에서만 측정해 \\0 없는 버퍼에서도 안전하게 동작합니다." },
-        { q: "strlcat에서 dst에 \\0이 dstsize 안에 없으면 반환값은?", opts: ["0", "dstsize + srclen", "srclen", "dstsize"], answer: 1, why: "비정상 상황으로 보고 dstsize + srclen을 반환합니다." },
-        { q: "strlcat의 정상 반환값은?", opts: ["srclen", "dstlen + srclen", "dstsize", "복사한 수"], answer: 1, why: "원래 만들려던 전체 길이 = 초기 dstlen + srclen." },
-        { q: "안전 함수들의 반환값을 dstsize와 비교해 알 수 있는 것은?", opts: ["메모리 누수", "잘림(truncation) 발생 여부", "속도", "정렬 상태"], answer: 1, why: "반환값 >= dstsize면 버퍼에 다 못 담겨 잘렸다는 뜻입니다." },
-        { q: "strlcpy/strlcat을 다른 함수에서 재사용하는 함수는?", opts: ["malloc", "sbs_strlen", "printf", "free"], answer: 1, why: "두 함수 모두 길이 계산에 sbs_strlen을 사용합니다." },
-        { q: "12차시 채점에서 strlcpy/strlcat의 정답 기준은?", opts: ["glibc 표준 함수", "테스트 안에 구현된 정답 동작(oracle)", "강사 코드", "랜덤"], answer: 1, why: "glibc에 strlcpy/strlcat이 없을 수 있어 테스트 안에 정답 동작을 구현해 비교합니다." }
+        { q: "sbs_strlcat의 정상 반환값은?", opts: ["srclen", "dstlen + srclen(만들려던 전체 길이)", "dstsize", "복사한 수"], answer: 1, why: "원래 만들려던 전체 길이 = 초기 dstlen + srclen." },
+        { q: "sbs_strnlen이 sbs_strlen과 다른 점은?", opts: ["\\0 무시", "maxlen을 넘지 않고 멈춤", "역방향으로 셈", "size_t 대신 int 반환"], answer: 1, why: "strnlen은 maxlen에 도달하거나 \\0을 만나면 멈춰, 신뢰할 수 없는 입력에 안전합니다." },
+        { q: "sbs_strncpy에서 src가 n보다 짧으면?", opts: ["남는 칸을 \\0으로 패딩", "그냥 멈춤", "공백으로 채움", "에러"], answer: 0, why: "표준 strncpy는 src가 짧으면 남은 칸을 전부 \\0으로 채웁니다." },
+        { q: "sbs_strncpy의 함정은?", opts: ["항상 \\0로 끝난다", "src가 n 이상이면 \\0로 안 끝날 수 있다", "느리다", "n을 무시한다"], answer: 1, why: "src 길이가 n 이상이면 종결 \\0이 안 붙어, strlcpy와 달리 종결을 보장하지 않습니다." },
+        { q: "sbs_strncat이 strncpy와 달리 항상 보장하는 것은?", opts: ["패딩", "\\0로 종결", "n글자 정확히 붙임", "dst 비우기"], answer: 1, why: "strncat은 최대 n글자를 붙이고 끝에 항상 \\0을 둡니다." },
+        { q: "sbs_strcmp가 반환하는 값과 비교 방식은?", opts: ["bool, char 비교", "처음 다른 글자의 차이, unsigned char 비교", "길이 차이", "항상 0/1"], answer: 1, why: "처음 다른 글자에서 (unsigned char)차이를 반환. unsigned여야 부호가 정확합니다." },
+        { q: "sbs_strcasecmp의 핵심 동작은?", opts: ["대문자로 비교", "각 글자를 소문자로 바꿔 비교(대소문자 무시)", "길이만 비교", "앞 글자만 비교"], answer: 1, why: "비교 전에 'A'~'Z'를 +32로 소문자 변환해 대소문자를 무시합니다." },
+        { q: "sbs_strncasecmp와 sbs_strcasecmp의 차이는?", opts: ["부호 없음", "최대 n글자까지만 비교", "대문자 기준", "포인터 반환"], answer: 1, why: "strncasecmp는 대소문자 무시 비교에 n글자 제한을 더한 버전입니다." }
       ];
 
       let current = 0, score = 0;
