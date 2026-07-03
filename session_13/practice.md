@@ -31,17 +31,25 @@ char	*sbs_strnstr(const char *big, const char *little, size_t len);
 - **`\0` 검색 처리**: `c`가 `\0`이면 문자열 끝 위치 반환
 - 반환은 `(char *)` 캐스팅
 
-::: hint 막히면 힌트 보기 (sbs_strchr)
+::: hint 막히면 힌트 보기 (sbs_strchr 완성 코드)
 ```c
-while (s[i])
+#include "libsbs.h"
+
+char	*sbs_strchr(const char *s, int c)
 {
-    if (s[i] == (char)c)
-        return ((char *)(s + i));
-    i++;
+	size_t	i;
+
+	i = 0;
+	while (s[i])
+	{
+		if (s[i] == (char)c)
+			return ((char *)(s + i));
+		i++;
+	}
+	if ((char)c == '\0')
+		return ((char *)(s + i));
+	return (NULL);
 }
-if ((char)c == '\0')
-    return ((char *)(s + i));
-return (NULL);
 ```
 :::
 
@@ -58,18 +66,27 @@ return (NULL);
 - `\0` 검색이면 끝 위치 반환
 - 뒤에서부터 내려오며 첫 일치 반환
 
-::: hint 막히면 힌트 보기 (sbs_strrchr)
+::: hint 막히면 힌트 보기 (sbs_strrchr 완성 코드)
 ```c
-while (s[i]) i++;          // 끝으로
-if ((char)c == '\0')
-    return ((char *)(s + i));
-while (i > 0)
+#include "libsbs.h"
+
+char	*sbs_strrchr(const char *s, int c)
 {
-    i--;
-    if (s[i] == (char)c)
-        return ((char *)(s + i));
+	size_t	i;
+
+	i = 0;
+	while (s[i])               // 먼저 끝까지 이동
+		i++;
+	if ((char)c == '\0')
+		return ((char *)(s + i));
+	while (i > 0)              // 뒤에서부터
+	{
+		i--;
+		if (s[i] == (char)c)
+			return ((char *)(s + i));
+	}
+	return (NULL);
 }
-return (NULL);
 ```
 :::
 
@@ -85,20 +102,29 @@ return (NULL);
 - `i + j < len`으로 범위 초과 방지
 - `little[j] == '\0'`이면 발견
 
-::: hint 막히면 힌트 보기 (sbs_strnstr)
+::: hint 막히면 힌트 보기 (sbs_strnstr 완성 코드)
 ```c
-if (little[0] == '\0')
-    return ((char *)big);
-while (big[i] && i < len)
+#include "libsbs.h"
+
+char	*sbs_strnstr(const char *big, const char *little, size_t len)
 {
-    j = 0;
-    while (big[i + j] && i + j < len && big[i + j] == little[j])
-        j++;
-    if (little[j] == '\0')
-        return ((char *)(big + i));
-    i++;
+	size_t	i;
+	size_t	j;
+
+	if (little[0] == '\0')
+		return ((char *)big);
+	i = 0;
+	while (big[i] && i < len)
+	{
+		j = 0;
+		while (big[i + j] && i + j < len && big[i + j] == little[j])
+			j++;
+		if (little[j] == '\0')
+			return ((char *)(big + i));
+		i++;
+	}
+	return (NULL);
 }
-return (NULL);
 ```
 :::
 
@@ -117,6 +143,8 @@ $ bash grade.sh
 결과: 3 / 3 통과
 ```
 
+실패하면 `bash grade.sh -v`로 어떤 케이스에서 틀렸는지 확인하세요.
+
 직접 확인할 엣지 케이스:
 - `strchr(s, '\0')` → 끝의 \0 위치
 - `strrchr("hello", 'l')` → 마지막 l (index 3)
@@ -133,6 +161,7 @@ $ bash grade.sh
 - [ ] `sbs_strnstr.c` - len 범위, 빈 needle 처리
 - [ ] `<string.h>` 미사용
 - [ ] `bash grade.sh` → 3 / 3 통과
+- [ ] (선택) 도전 과제 — `word_finder.c` / `file_ext.c` / `file_search.c` / `sbs_strcasestr.c`(BONUS 채점)
 
 ---
 

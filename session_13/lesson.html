@@ -150,16 +150,24 @@ char	*sbs_strnstr(const char *big, const char *little, size_t len);</code></pre>
 <p><code>sbs_strchr.c</code> — <code>s</code>에서 <code>c</code>를 앞에서부터 찾아 위치 반환, 못 찾으면 NULL.</p>
 <p>요구사항:</p>
 <ul><li><code>(char)c</code>로 비교</li><li><strong><code>\0</code> 검색 처리</strong>: <code>c</code>가 <code>\0</code>이면 문자열 끝 위치 반환</li><li>반환은 <code>(char *)</code> 캐스팅</li></ul>
-<details class="hint"><summary>💡 막히면 힌트 보기 (sbs_strchr)</summary><div class="hint-body">
-<pre><code class="language-c">while (s[i])
+<details class="hint"><summary>💡 막히면 힌트 보기 (sbs_strchr 완성 코드)</summary><div class="hint-body">
+<pre><code class="language-c">#include "libsbs.h"
+
+char	*sbs_strchr(const char *s, int c)
 {
-    if (s[i] == (char)c)
-        return ((char *)(s + i));
-    i++;
-}
-if ((char)c == '\0')
-    return ((char *)(s + i));
-return (NULL);</code></pre>
+	size_t	i;
+
+	i = 0;
+	while (s[i])
+	{
+		if (s[i] == (char)c)
+			return ((char *)(s + i));
+		i++;
+	}
+	if ((char)c == '\0')
+		return ((char *)(s + i));
+	return (NULL);
+}</code></pre>
 </div></details>
 <blockquote><code>strchr(s, '\0')</code>은 문자열 끝의 \0 위치를 반환합니다(표준 동작). 빠뜨리기 쉬움.</blockquote>
 <hr />
@@ -167,36 +175,54 @@ return (NULL);</code></pre>
 <p><code>sbs_strrchr.c</code> — <code>c</code>를 뒤에서부터 찾아 <strong>마지막 등장</strong> 위치 반환.</p>
 <p>요구사항:</p>
 <ul><li>먼저 <code>\0</code>까지 이동</li><li><code>\0</code> 검색이면 끝 위치 반환</li><li>뒤에서부터 내려오며 첫 일치 반환</li></ul>
-<details class="hint"><summary>💡 막히면 힌트 보기 (sbs_strrchr)</summary><div class="hint-body">
-<pre><code class="language-c">while (s[i]) i++;          // 끝으로
-if ((char)c == '\0')
-    return ((char *)(s + i));
-while (i &gt; 0)
+<details class="hint"><summary>💡 막히면 힌트 보기 (sbs_strrchr 완성 코드)</summary><div class="hint-body">
+<pre><code class="language-c">#include "libsbs.h"
+
+char	*sbs_strrchr(const char *s, int c)
 {
-    i--;
-    if (s[i] == (char)c)
-        return ((char *)(s + i));
-}
-return (NULL);</code></pre>
+	size_t	i;
+
+	i = 0;
+	while (s[i])               // 먼저 끝까지 이동
+		i++;
+	if ((char)c == '\0')
+		return ((char *)(s + i));
+	while (i &gt; 0)              // 뒤에서부터
+	{
+		i--;
+		if (s[i] == (char)c)
+			return ((char *)(s + i));
+	}
+	return (NULL);
+}</code></pre>
 </div></details>
 <hr />
 <h2>과제 3: sbs_strnstr</h2>
 <p><code>sbs_strnstr.c</code> — <code>big</code>에서 <code>little</code>을 <code>len</code>바이트 범위 안에서 검색.</p>
 <p>요구사항:</p>
 <ul><li>빈 <code>little</code>이면 <code>big</code> 반환</li><li>이중 루프(바깥 시작위치 i, 안쪽 비교 j)</li><li><code>i + j &lt; len</code>으로 범위 초과 방지</li><li><code>little[j] == '\0'</code>이면 발견</li></ul>
-<details class="hint"><summary>💡 막히면 힌트 보기 (sbs_strnstr)</summary><div class="hint-body">
-<pre><code class="language-c">if (little[0] == '\0')
-    return ((char *)big);
-while (big[i] &amp;&amp; i &lt; len)
+<details class="hint"><summary>💡 막히면 힌트 보기 (sbs_strnstr 완성 코드)</summary><div class="hint-body">
+<pre><code class="language-c">#include "libsbs.h"
+
+char	*sbs_strnstr(const char *big, const char *little, size_t len)
 {
-    j = 0;
-    while (big[i + j] &amp;&amp; i + j &lt; len &amp;&amp; big[i + j] == little[j])
-        j++;
-    if (little[j] == '\0')
-        return ((char *)(big + i));
-    i++;
-}
-return (NULL);</code></pre>
+	size_t	i;
+	size_t	j;
+
+	if (little[0] == '\0')
+		return ((char *)big);
+	i = 0;
+	while (big[i] &amp;&amp; i &lt; len)
+	{
+		j = 0;
+		while (big[i + j] &amp;&amp; i + j &lt; len &amp;&amp; big[i + j] == little[j])
+			j++;
+		if (little[j] == '\0')
+			return ((char *)(big + i));
+		i++;
+	}
+	return (NULL);
+}</code></pre>
 </div></details>
 <blockquote>엣지 케이스: needle이 끝에 걸쳐 len을 넘으면 못 찾은 것. 빈 needle은 즉시 big.</blockquote>
 <hr />
@@ -207,11 +233,12 @@ return (NULL);</code></pre>
 ✓ sbs_strrchr   (...)
 ✓ sbs_strnstr   (...)
 결과: 3 / 3 통과</code></pre>
+<p>실패하면 <code>bash grade.sh -v</code>로 어떤 케이스에서 틀렸는지 확인하세요.</p>
 <p>직접 확인할 엣지 케이스:</p>
 <ul><li><code>strchr(s, '\0')</code> → 끝의 \0 위치</li><li><code>strrchr("hello", 'l')</code> → 마지막 l (index 3)</li><li><code>strnstr("abc", "", 3)</code> → "abc" (빈 needle)</li><li><code>strnstr("abc", "abcd", 10)</code> → NULL (needle이 더 김)</li></ul>
 <hr />
 <h2>제출 확인 사항</h2>
-<ul><li>[ ] <code>libsbs.h</code>에 3개 프로토타입 추가</li><li>[ ] <code>sbs_strchr.c</code> - 순방향, \0 검색 처리</li><li>[ ] <code>sbs_strrchr.c</code> - 역방향, 마지막 등장</li><li>[ ] <code>sbs_strnstr.c</code> - len 범위, 빈 needle 처리</li><li>[ ] <code>&lt;string.h&gt;</code> 미사용</li><li>[ ] <code>bash grade.sh</code> → 3 / 3 통과</li></ul>
+<ul><li>[ ] <code>libsbs.h</code>에 3개 프로토타입 추가</li><li>[ ] <code>sbs_strchr.c</code> - 순방향, \0 검색 처리</li><li>[ ] <code>sbs_strrchr.c</code> - 역방향, 마지막 등장</li><li>[ ] <code>sbs_strnstr.c</code> - len 범위, 빈 needle 처리</li><li>[ ] <code>&lt;string.h&gt;</code> 미사용</li><li>[ ] <code>bash grade.sh</code> → 3 / 3 통과</li><li>[ ] (선택) 도전 과제 — <code>word_finder.c</code> / <code>file_ext.c</code> / <code>file_search.c</code> / <code>sbs_strcasestr.c</code>(BONUS 채점)</li></ul>
 <hr />
 <h2>더 생각해볼 거리</h2>
 <ol><li><code>strchr</code>가 <code>\0</code>을 찾을 수 있어야 하는 이유는? (문자열 끝 위치를 얻으려고)</li><li><code>strrchr</code>를 앞에서부터 돌면서도 구현할 수 있을까? (마지막 일치를 변수에 기억)</li><li><code>strnstr</code>의 <code>n</code>이 <code>strstr</code>과 다른 점은? (검색 범위를 len으로 제한)</li></ol>

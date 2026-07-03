@@ -6,7 +6,7 @@
 
 1. 대소문자를 무시하는 문자열 비교가 왜 필요한지 설명할 수 있다.
 2. `sbs_strcasestr`을 `sbs_strnstr`의 구조를 재사용해 구현할 수 있다.
-3. `sbs_tolower`(9차시)로 비교 시점에만 대소문자를 맞추는 방식을 이해한다.
+3. `to_lower` 헬퍼로 **비교하는 순간에만** 대소문자를 맞추는 방식을 이해한다(원본은 그대로 둠).
 
 ---
 
@@ -23,7 +23,7 @@ sbs_strcasestr("Hello World", "world", 11);   // "World" 위치 반환
 
 ## 2. sbs_strcasestr — 구현
 
-`big`에서 `little`을 대소문자 구분 없이 `len` 범위 안에서 찾습니다. `sbs_strnstr`과 뼈대는 같고, 비교 한 줄만 `sbs_tolower`를 거칩니다.
+`big`에서 `little`을 대소문자 구분 없이 `len` 범위 안에서 찾습니다. `sbs_strnstr`과 뼈대는 같고, 비교 한 줄만 `to_lower`를 거칩니다.
 
 ```c
 #include "libsbs.h"
