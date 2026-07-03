@@ -219,20 +219,102 @@ return (NULL);</code></pre>
 인덱스 18에서 발견
 인덱스 21에서 발견
 "is"를 4번 찾음</code></pre>
+<p>스켈레톤 (<code>word_finder.c</code>로 저장 후 TODO를 채우세요):</p>
+<pre><code class="language-c">#include "libsbs.h"
+#include &lt;stdio.h&gt;
+
+static size_t	str_len(const char *s)
+{
+	size_t	i;
+
+	i = 0;
+	/* TODO: \0까지 세기 (12차시 sbs_strlen과 동일) */
+	return (i);
+}
+
+int	main(void)
+{
+	char	*text = "this is a test, this is only a test";
+	char	*word = "is";
+	size_t	pos;
+	char	*found;
+	int		count;
+
+	pos = 0;
+	count = 0;
+	while (pos &lt; str_len(text))
+	{
+		/* TODO 1: text + pos 부터 남은 길이만큼 sbs_strnstr로 검색 */
+		found = NULL;
+		if (!found)
+			break ;
+		/* TODO 2: 찾은 인덱스(found - text) 출력, count 증가 */
+		/* TODO 3: pos를 찾은 인덱스 + 단어 길이로 이동 (겹침 방지) */
+	}
+	/* TODO 4: count가 0이면 "찾지 못함", 아니면 "N번 찾음" 출력 */
+	return (0);
+}</code></pre>
 <p>컴파일·실행:</p>
 <pre><code class="language-bash">cc -Wall -Wextra -Werror -I. word_finder.c sbs_strnstr.c -o word_finder &amp;&amp; ./word_finder</code></pre>
 <h3>도전 2: 미니 프로젝트 — 파일 경로 분리기 (file_ext.c)</h3>
 <p><code>"/home/user/report.final.txt"</code> 같은 경로 문자열에서 <strong>파일명</strong>과 <strong>확장자</strong>를 분리해 출력하세요.</p>
 <p>요구사항:</p>
 <ul><li><code>sbs_strrchr(path, '/')</code>로 마지막 <code>/</code> 찾기 → 그 다음이 파일명</li><li><code>sbs_strrchr(filename, '.')</code>로 마지막 <code>.</code> 찾기 → 그 다음이 확장자(<code>.</code>이 없으면 "확장자 없음")</li><li>경로에 <code>/</code>가 없는 경우(<code>"report.txt"</code>)도 처리</li><li>출력 예: <code>파일명: report.final.txt, 확장자: txt</code></li></ul>
+<p>스켈레톤 (<code>file_ext.c</code>로 저장 후 TODO를 채우세요):</p>
+<pre><code class="language-c">#include "libsbs.h"
+#include &lt;stdio.h&gt;
+
+int	main(void)
+{
+	char	*path = "/home/user/report.final.txt";
+	char	*slash;
+	char	*dot;
+	char	*filename;
+
+	/* TODO 1: sbs_strrchr로 마지막 '/' 찾기 */
+	slash = NULL;
+	/* TODO 2: slash가 있으면 파일명은 slash + 1, 없으면 path 전체 */
+	filename = path;
+	/* TODO 3: filename에서 sbs_strrchr로 마지막 '.' 찾기 */
+	dot = NULL;
+	/* TODO 4: dot 있으면 "파일명: ..., 확장자: ..." / 없으면 "확장자 없음" 출력 */
+	(void)slash;
+	(void)dot;
+	(void)filename;
+	return (0);
+}</code></pre>
 <p>컴파일·실행:</p>
 <pre><code class="language-bash">cc -Wall -Wextra -Werror -I. file_ext.c sbs_strrchr.c -o file_ext &amp;&amp; ./file_ext</code></pre>
 <h3>도전 3: 심화 함수 — sbs_strcasestr</h3>
 <p>대소문자를 무시하고 부분 문자열을 찾는 <code>sbs_strcasestr</code>을 구현하세요. <a href="advanced.md">advanced.md</a>를 참고하세요. 힌트: <code>sbs_strnstr</code>과 구조는 같고, 비교할 때 두 글자를 소문자로 맞춰 비교합니다(12차시 <code>sbs_strcasecmp</code>의 <code>to_lower</code> 헬퍼와 같은 방식).</p>
+<p>스켈레톤 (<code>sbs_strcasestr.c</code>로 저장 후 TODO를 채우세요):</p>
+<pre><code class="language-c">#include "libsbs.h"
+
+static int	to_lower(int c)
+{
+	/* TODO: 'A'~'Z'면 +32, 아니면 그대로 (12차시 strcasecmp와 동일) */
+	return (c);
+}
+
+char	*sbs_strcasestr(const char *big, const char *little, size_t len)
+{
+	size_t	i;
+	size_t	j;
+
+	/* TODO 1: 빈 little이면 big 반환 */
+	i = 0;
+	while (big[i] &amp;&amp; i &lt; len)
+	{
+		j = 0;
+		/* TODO 2: sbs_strnstr의 안쪽 루프와 같되,
+		           비교만 to_lower(...) == to_lower(...)로 */
+		if (little[j] == '\0')
+			return ((char *)(big + i));
+		i++;
+	}
+	return (NULL);
+}</code></pre>
 <p><code>sbs_strcasestr.c</code> 파일을 만들면 <code>bash grade.sh</code>가 자동으로 BONUS 섹션에서 채점합니다.</p>
-<h3>도전 4: 짝 코드 리뷰</h3>
-<p>옆 사람과 <code>sbs_strchr.c</code>/<code>sbs_strrchr.c</code>/<code>sbs_strnstr.c</code>를 서로 바꿔서 <code>session_16/CODE_REVIEW.md</code> 체크리스트로 리뷰하세요.</p>
-<ul><li>엣지 케이스(빈 문자열, <code>\0</code> 검색, <code>len=0</code>)를 놓치지 않았는지 질문형으로 코멘트</li><li>좋은 점 최소 1개 언급</li><li>리뷰 받은 내용으로 자기 코드를 한 번 고쳐보기</li></ul>
 <div class="section-split"><h2>정답 코드</h2><p>각 항목의 "정답 보기"를 눌러 펼치세요. 먼저 직접 풀어본 뒤 확인하는 것을 권장합니다.</p></div>
 <div class="answer"><div class="answer-head"><span class="answer-name">📄 <span class="file">libsbs.h</span></span><button class="answer-toggle">정답 보기</button></div><div class="answer-body"><pre><code class="language-c">#ifndef LIBSBS_H
 # define LIBSBS_H

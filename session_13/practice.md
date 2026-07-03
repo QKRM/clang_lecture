@@ -165,6 +165,44 @@ $ bash grade.sh
 "is"를 4번 찾음
 ```
 
+스켈레톤 (`word_finder.c`로 저장 후 TODO를 채우세요):
+```c
+#include "libsbs.h"
+#include <stdio.h>
+
+static size_t	str_len(const char *s)
+{
+	size_t	i;
+
+	i = 0;
+	/* TODO: \0까지 세기 (12차시 sbs_strlen과 동일) */
+	return (i);
+}
+
+int	main(void)
+{
+	char	*text = "this is a test, this is only a test";
+	char	*word = "is";
+	size_t	pos;
+	char	*found;
+	int		count;
+
+	pos = 0;
+	count = 0;
+	while (pos < str_len(text))
+	{
+		/* TODO 1: text + pos 부터 남은 길이만큼 sbs_strnstr로 검색 */
+		found = NULL;
+		if (!found)
+			break ;
+		/* TODO 2: 찾은 인덱스(found - text) 출력, count 증가 */
+		/* TODO 3: pos를 찾은 인덱스 + 단어 길이로 이동 (겹침 방지) */
+	}
+	/* TODO 4: count가 0이면 "찾지 못함", 아니면 "N번 찾음" 출력 */
+	return (0);
+}
+```
+
 컴파일·실행:
 ```bash
 cc -Wall -Wextra -Werror -I. word_finder.c sbs_strnstr.c -o word_finder && ./word_finder
@@ -180,6 +218,32 @@ cc -Wall -Wextra -Werror -I. word_finder.c sbs_strnstr.c -o word_finder && ./wor
 - 경로에 `/`가 없는 경우(`"report.txt"`)도 처리
 - 출력 예: `파일명: report.final.txt, 확장자: txt`
 
+스켈레톤 (`file_ext.c`로 저장 후 TODO를 채우세요):
+```c
+#include "libsbs.h"
+#include <stdio.h>
+
+int	main(void)
+{
+	char	*path = "/home/user/report.final.txt";
+	char	*slash;
+	char	*dot;
+	char	*filename;
+
+	/* TODO 1: sbs_strrchr로 마지막 '/' 찾기 */
+	slash = NULL;
+	/* TODO 2: slash가 있으면 파일명은 slash + 1, 없으면 path 전체 */
+	filename = path;
+	/* TODO 3: filename에서 sbs_strrchr로 마지막 '.' 찾기 */
+	dot = NULL;
+	/* TODO 4: dot 있으면 "파일명: ..., 확장자: ..." / 없으면 "확장자 없음" 출력 */
+	(void)slash;
+	(void)dot;
+	(void)filename;
+	return (0);
+}
+```
+
 컴파일·실행:
 ```bash
 cc -Wall -Wextra -Werror -I. file_ext.c sbs_strrchr.c -o file_ext && ./file_ext
@@ -189,12 +253,34 @@ cc -Wall -Wextra -Werror -I. file_ext.c sbs_strrchr.c -o file_ext && ./file_ext
 
 대소문자를 무시하고 부분 문자열을 찾는 `sbs_strcasestr`을 구현하세요. [advanced.md](advanced.md)를 참고하세요. 힌트: `sbs_strnstr`과 구조는 같고, 비교할 때 두 글자를 소문자로 맞춰 비교합니다(12차시 `sbs_strcasecmp`의 `to_lower` 헬퍼와 같은 방식).
 
+스켈레톤 (`sbs_strcasestr.c`로 저장 후 TODO를 채우세요):
+```c
+#include "libsbs.h"
+
+static int	to_lower(int c)
+{
+	/* TODO: 'A'~'Z'면 +32, 아니면 그대로 (12차시 strcasecmp와 동일) */
+	return (c);
+}
+
+char	*sbs_strcasestr(const char *big, const char *little, size_t len)
+{
+	size_t	i;
+	size_t	j;
+
+	/* TODO 1: 빈 little이면 big 반환 */
+	i = 0;
+	while (big[i] && i < len)
+	{
+		j = 0;
+		/* TODO 2: sbs_strnstr의 안쪽 루프와 같되,
+		           비교만 to_lower(...) == to_lower(...)로 */
+		if (little[j] == '\0')
+			return ((char *)(big + i));
+		i++;
+	}
+	return (NULL);
+}
+```
+
 `sbs_strcasestr.c` 파일을 만들면 `bash grade.sh`가 자동으로 BONUS 섹션에서 채점합니다.
-
-### 도전 4: 짝 코드 리뷰
-
-옆 사람과 `sbs_strchr.c`/`sbs_strrchr.c`/`sbs_strnstr.c`를 서로 바꿔서 `session_16/CODE_REVIEW.md` 체크리스트로 리뷰하세요.
-
-- 엣지 케이스(빈 문자열, `\0` 검색, `len=0`)를 놓치지 않았는지 질문형으로 코멘트
-- 좋은 점 최소 1개 언급
-- 리뷰 받은 내용으로 자기 코드를 한 번 고쳐보기

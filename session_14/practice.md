@@ -130,6 +130,57 @@ $ valgrind --leak-check=full ./a.out
 - `sbs_atoi`로 `.`로 구분된 각 부분을 숫자로 변환한 뒤 비교(메이저.마이너.패치 순서로)
 - 출력 예: `1.2.3 < 1.10.0`
 
+스켈레톤 (`version_compare.c`로 저장 후 TODO를 채우세요):
+```c
+#include "libsbs.h"
+#include <stdio.h>
+
+/* s의 idx 위치부터 다음 '.' 전까지를 숫자로 변환하고, idx를 다음 부분으로 이동 */
+static int	next_part(const char *s, int *idx)
+{
+	int	start;
+	int	value;
+
+	start = *idx;
+	/* TODO 1: *idx를 '.' 또는 '\0'까지 전진 */
+	value = sbs_atoi(s + start);
+	/* TODO 2: 지금 위치가 '.'이면 한 칸 더 전진(다음 부분의 시작) */
+	return (value);
+}
+
+static int	compare_version(const char *a, const char *b)
+{
+	int	ia;
+	int	ib;
+
+	ia = 0;
+	ib = 0;
+	while (a[ia] || b[ib])
+	{
+		/* TODO 3: next_part로 양쪽에서 숫자 하나씩 꺼내 비교.
+		           다르면 그 차이를 반환 */
+	}
+	return (0);
+}
+
+int	main(void)
+{
+	char	*v1 = "1.2.3";
+	char	*v2 = "1.10.0";
+	int		cmp;
+
+	cmp = compare_version(v1, v2);
+	/* TODO 4: cmp 부호에 따라 "<", ">", "==" 출력 */
+	(void)cmp;
+	return (0);
+}
+```
+
+컴파일·실행:
+```bash
+cc -Wall -Wextra -Werror -I. version_compare.c sbs_atoi.c -o vcmp && ./vcmp
+```
+
 ### 도전 2: 미니 프로젝트 — 커맨드라인 계산기 (calc_cli.c)
 
 `argc`/`argv`로 `숫자 연산자 숫자` 형태의 인자 3개를 받아 계산하는 프로그램을 작성하세요(예: `./calc 3 + 5`).
@@ -140,14 +191,62 @@ $ valgrind --leak-check=full ./a.out
 - `argc != 4`면 사용법 출력 후 종료
 - `0`으로 나누기 방지
 
+스켈레톤 (`calc_cli.c`로 저장 후 TODO를 채우세요):
+```c
+#include "libsbs.h"
+#include <stdio.h>
+
+int	main(int argc, char **argv)
+{
+	int	a;
+	int	b;
+	int	result;
+
+	result = 0;
+	/* TODO 1: argc != 4 이거나 argv[2]가 한 글자가 아니면 사용법 출력 후 return 1 */
+	a = sbs_atoi(argv[1]);
+	b = sbs_atoi(argv[3]);
+	/* TODO 2: sbs_strncmp로 argv[2]가 +,-,*,/ 중 무엇인지 판별해 계산 */
+	/* TODO 3: 나눗셈일 때 b == 0이면 에러 출력 후 return 1 */
+	printf("%d %s %d = %d\n", a, argv[2], b, result);
+	return (0);
+}
+```
+
+컴파일·실행:
+```bash
+cc -Wall -Wextra -Werror -I. calc_cli.c sbs_atoi.c sbs_strncmp.c -o calc && ./calc 3 + 5
+```
+
 ### 도전 3: 심화 함수 — sbs_atol
 
 `int` 범위를 넘는 큰 정수도 다루는 `sbs_atol`(문자열 → `long`)을 구현하세요. [advanced.md](advanced.md)를 참고하세요. 힌트: `sbs_atoi`와 로직은 같고, `result`와 반환 타입만 `long`으로 바꿉니다.
 
-### 도전 4: 짝 코드 리뷰
+스켈레톤 (`sbs_atol.c`로 저장 후 TODO를 채우세요):
+```c
+#include "libsbs.h"
 
-옆 사람과 `sbs_strncmp.c`/`sbs_atoi.c`를 서로 바꿔서 `session_16/CODE_REVIEW.md` 체크리스트로 리뷰하세요.
+static int	is_space(char c)
+{
+	/* TODO: sbs_atoi의 is_space와 동일 */
+	(void)c;
+	return (0);
+}
 
-- 엣지 케이스(빈 문자열, 부호만 있는 입력, `n=0`)를 놓치지 않았는지 질문형으로 코멘트
-- 좋은 점 최소 1개 언급
-- 리뷰 받은 내용으로 자기 코드를 한 번 고쳐보기
+long	sbs_atol(const char *str)
+{
+	int			i;
+	int			sign;
+	long long	result;
+
+	i = 0;
+	sign = 1;
+	result = 0;
+	/* TODO 1: 공백 건너뛰기 */
+	/* TODO 2: 부호 한 개 처리 */
+	/* TODO 3: 숫자 누적 (sbs_atoi와 동일, 타입만 long long) */
+	return ((long)(result * sign));
+}
+```
+
+`sbs_atol.c` 파일을 만들면 `bash grade.sh`가 자동으로 BONUS 섹션에서 채점합니다.
