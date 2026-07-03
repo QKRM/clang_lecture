@@ -53,6 +53,19 @@ function mdToHtml(md) {
   while (i < lines.length) {
     let line = lines[i];
 
+    // 힌트 토글 (::: hint 제목 ... :::) — 학생이 원할 때만 펼쳐 보는 접이식 블록
+    const hintOpen = line.match(/^:::\s*hint(?:\s+(.+))?\s*$/);
+    if (hintOpen) {
+      i++;
+      let buf = [];
+      while (i < lines.length && !/^:::\s*$/.test(lines[i])) { buf.push(lines[i]); i++; }
+      i++;
+      const label = hintOpen[1] || "힌트 보기";
+      html += '<details class="hint"><summary>💡 ' + inline(label) + "</summary><div class=\"hint-body\">\n" +
+        mdToHtml(buf.join("\n")) + "</div></details>\n";
+      continue;
+    }
+
     // 코드 펜스
     const fence = line.match(/^```(\w*)/);
     if (fence) {

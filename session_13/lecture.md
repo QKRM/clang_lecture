@@ -48,20 +48,17 @@ printf("%s\n", sbs_strrchr(s, 'l'));   // "lo"   (s+3, 마지막 'l' 위치)
 
 `s`에서 문자 `c`를 **앞에서부터** 찾아 그 위치 포인터를 반환. 못 찾으면 `NULL`.
 
-```c
-char *sbs_strchr(const char *s, int c)
-{
-    size_t i = 0;
-    while (s[i])
-    {
-        if (s[i] == (char)c)
-            return ((char *)(s + i));
-        i++;
-    }
-    if ((char)c == '\0')           // \0도 검색 대상!
-        return ((char *)(s + i));
-    return (NULL);
-}
+동작 순서 (코드는 실습에서 직접 작성):
+
+1. 인덱스 `i`를 0부터 시작해 `s[i]`가 `\0`이 아닌 동안 반복
+2. `s[i]`가 찾는 문자와 같으면 **그 위치의 포인터**를 반환
+3. 루프가 끝났는데(문자열 끝 도달) 찾는 문자가 `\0` 자체라면? → 지금 서 있는 곳이 바로 `\0` 위치이므로 그 위치를 반환
+4. 둘 다 아니면 `NULL` 반환
+
+```
+sbs_strchr("hello", 'l')
+ h   e   l   l   o  \0
+ ×   ×   ✓              ← 앞에서부터 처음 만나는 'l' (인덱스 2)
 ```
 
 핵심 포인트:
@@ -77,22 +74,18 @@ char *sbs_strchr(const char *s, int c)
 
 `s`에서 `c`를 **뒤에서부터** 찾습니다. 즉 **마지막으로 나타나는** 위치를 반환.
 
-```c
-char *sbs_strrchr(const char *s, int c)
-{
-    size_t i = 0;
-    while (s[i])                   // 먼저 끝까지 이동
-        i++;
-    if ((char)c == '\0')           // \0이면 끝 위치
-        return ((char *)(s + i));
-    while (i > 0)                  // 뒤에서부터
-    {
-        i--;
-        if (s[i] == (char)c)
-            return ((char *)(s + i));
-    }
-    return (NULL);
-}
+동작 순서 (코드는 실습에서 직접 작성):
+
+1. 먼저 `i`를 문자열 **끝(`\0` 위치)까지 이동**시켜 끝 인덱스를 확보
+2. 찾는 문자가 `\0`이면 지금 위치(끝)를 바로 반환
+3. `i`를 하나씩 **줄여가며** 검사 — 뒤에서부터 처음 만나는 일치가 곧 "마지막 등장"
+4. `i`가 0까지 내려가도 못 찾으면 `NULL`
+
+```
+sbs_strrchr("hello", 'l')
+ h   e   l   l   o  \0
+                     │  ① 먼저 끝까지 이동
+         ✓   ←   ×   ┘  ② 뒤에서부터 검사, 처음 만나는 'l' (인덱스 3)
 ```
 
 핵심 포인트:
@@ -111,26 +104,19 @@ char *sbs_strrchr(const char *s, int c)
 
 `big`에서 `little`(부분 문자열)을 **`len`바이트 범위 안에서** 찾습니다.
 
-```c
-char *sbs_strnstr(const char *big, const char *little, size_t len)
-{
-    size_t i;
-    size_t j;
+동작 순서 (코드는 실습에서 직접 작성):
 
-    if (little[0] == '\0')          // 빈 needle이면 big 반환
-        return ((char *)big);
-    i = 0;
-    while (big[i] && i < len)
-    {
-        j = 0;
-        while (big[i + j] && i + j < len && big[i + j] == little[j])
-            j++;
-        if (little[j] == '\0')      // little 끝까지 일치 = 찾음
-            return ((char *)(big + i));
-        i++;
-    }
-    return (NULL);
-}
+1. `little`이 빈 문자열이면 즉시 `big`을 반환(표준 동작)
+2. **바깥 루프**: 시작 위치 `i`를 0부터 한 칸씩 이동 (`big[i]`가 있고 `i < len`인 동안)
+3. **안쪽 루프**: `i`에서 출발해 `big[i + j]`와 `little[j]`가 같은 동안 `j`를 늘림 — 단, `i + j < len` 범위 안에서만
+4. 안쪽 루프가 끝났을 때 `little[j]`가 `\0`이면 → little 전체가 일치한 것 = **발견**, `big + i` 반환
+5. 아니면 `i`를 한 칸 옮겨 다시 시도, 끝까지 없으면 `NULL`
+
+```
+sbs_strnstr("abcabd", "abd", 6)
+ i=0:  a b c a b d      i=3:  a b c a b d
+       a b ×                        a b d ✓ → big+3 반환
+       └ 2글자까지 갔다 실패해도, i는 1칸만 전진!
 ```
 
 핵심 포인트:

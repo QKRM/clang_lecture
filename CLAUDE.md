@@ -32,6 +32,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 `build_lessons.js`는 자체 미니 마크다운 → HTML 변환기(`mdToHtml`)를 갖고 있다(외부 markdown 라이브러리 미사용). 코드 펜스, 표, 목록, blockquote, 헤딩만 지원하는 제한된 서브셋이므로 `lecture.md`/`practice.md`를 쓸 때 이 서브셋 밖의 마크다운 문법(중첩 리스트, 각주 등)은 렌더링되지 않는다는 점 주의.
 
+커스텀 블록: `::: hint 제목` ~ `:::` 은 접이식 힌트 토글(`<details class="hint">`)로 변환된다. 실습 문제 힌트는 이 블록으로 감싸 학생이 원할 때만 펼치게 한다. 강의노트(lecture.md)의 함수 설명부에는 완성 정답 코드를 넣지 않는 것이 원칙 — 동작 순서(단계 목록)와 그림으로 설명하고, 코드는 practice의 힌트 토글과 페이지 하단 정답 카드에서만 보이게 한다(13,14차시 방식).
+
 `answerCards()`가 세션 폴더의 `.c`/`Makefile`/`libsbs.h`를 스캔해 "정답 보기" 토글 카드로 자동 삽입한다 — lecture.md/practice.md에 정답 코드를 직접 붙여넣지 않는다.
 
 ### 세션 번호 → 커리큘럼 단계

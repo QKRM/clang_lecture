@@ -31,7 +31,7 @@ char	*sbs_strnstr(const char *big, const char *little, size_t len);
 - **`\0` 검색 처리**: `c`가 `\0`이면 문자열 끝 위치 반환
 - 반환은 `(char *)` 캐스팅
 
-힌트:
+::: hint 막히면 힌트 보기 (sbs_strchr)
 ```c
 while (s[i])
 {
@@ -43,6 +43,7 @@ if ((char)c == '\0')
     return ((char *)(s + i));
 return (NULL);
 ```
+:::
 
 > `strchr(s, '\0')`은 문자열 끝의 \0 위치를 반환합니다(표준 동작). 빠뜨리기 쉬움.
 
@@ -57,7 +58,7 @@ return (NULL);
 - `\0` 검색이면 끝 위치 반환
 - 뒤에서부터 내려오며 첫 일치 반환
 
-힌트:
+::: hint 막히면 힌트 보기 (sbs_strrchr)
 ```c
 while (s[i]) i++;          // 끝으로
 if ((char)c == '\0')
@@ -70,6 +71,7 @@ while (i > 0)
 }
 return (NULL);
 ```
+:::
 
 ---
 
@@ -83,7 +85,7 @@ return (NULL);
 - `i + j < len`으로 범위 초과 방지
 - `little[j] == '\0'`이면 발견
 
-힌트:
+::: hint 막히면 힌트 보기 (sbs_strnstr)
 ```c
 if (little[0] == '\0')
     return ((char *)big);
@@ -98,6 +100,7 @@ while (big[i] && i < len)
 }
 return (NULL);
 ```
+:::
 
 > 엣지 케이스: needle이 끝에 걸쳐 len을 넘으면 못 찾은 것. 빈 needle은 즉시 big.
 

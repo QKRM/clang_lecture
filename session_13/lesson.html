@@ -47,65 +47,35 @@ printf("%s\n", sbs_strrchr(s, 'l'));   // "lo"   (s+3, 마지막 'l' 위치)</co
 <hr />
 <h2>1부: sbs_strchr — 순방향 검색</h2>
 <p><code>s</code>에서 문자 <code>c</code>를 <strong>앞에서부터</strong> 찾아 그 위치 포인터를 반환. 못 찾으면 <code>NULL</code>.</p>
-<pre><code class="language-c">char *sbs_strchr(const char *s, int c)
-{
-    size_t i = 0;
-    while (s[i])
-    {
-        if (s[i] == (char)c)
-            return ((char *)(s + i));
-        i++;
-    }
-    if ((char)c == '\0')           // \0도 검색 대상!
-        return ((char *)(s + i));
-    return (NULL);
-}</code></pre>
+<p>동작 순서 (코드는 실습에서 직접 작성):</p>
+<ol><li>인덱스 <code>i</code>를 0부터 시작해 <code>s[i]</code>가 <code>\0</code>이 아닌 동안 반복</li><li><code>s[i]</code>가 찾는 문자와 같으면 <strong>그 위치의 포인터</strong>를 반환</li><li>루프가 끝났는데(문자열 끝 도달) 찾는 문자가 <code>\0</code> 자체라면? → 지금 서 있는 곳이 바로 <code>\0</code> 위치이므로 그 위치를 반환</li><li>둘 다 아니면 <code>NULL</code> 반환</li></ol>
+<pre><code class="nohighlight">sbs_strchr("hello", 'l')
+ h   e   l   l   o  \0
+ ×   ×   ✓              ← 앞에서부터 처음 만나는 'l' (인덱스 2)</code></pre>
 <p>핵심 포인트:</p>
 <ul><li><strong>왜 매개변수가 <code>int c</code>?</strong> — 표준 시그니처가 그렇게 정해져 있습니다(9차시 <code>sbs_isalpha(int c)</code>와 같은 관례). 실제 비교는 1바이트끼리 해야 하므로 <code>(char)c</code>로 캐스팅해 비교합니다.</li><li><strong><code>\0</code> 검색</strong>: <code>c</code>가 <code>\0</code>이면 문자열 끝의 <code>\0</code> 위치를 반환(표준 동작)</li><li>반환 타입은 <code>char *</code>지만 입력은 <code>const char *</code> → <code>(char *)</code> 캐스팅(표준 시그니처를 따르기 위한 캐스팅)</li></ul>
 <blockquote><code>memchr</code>(11차시)와 달리 길이가 아니라 <code>\0</code>까지 봅니다.</blockquote>
 <hr />
 <h2>2부: sbs_strrchr — 역방향 검색</h2>
 <p><code>s</code>에서 <code>c</code>를 <strong>뒤에서부터</strong> 찾습니다. 즉 <strong>마지막으로 나타나는</strong> 위치를 반환.</p>
-<pre><code class="language-c">char *sbs_strrchr(const char *s, int c)
-{
-    size_t i = 0;
-    while (s[i])                   // 먼저 끝까지 이동
-        i++;
-    if ((char)c == '\0')           // \0이면 끝 위치
-        return ((char *)(s + i));
-    while (i &gt; 0)                  // 뒤에서부터
-    {
-        i--;
-        if (s[i] == (char)c)
-            return ((char *)(s + i));
-    }
-    return (NULL);
-}</code></pre>
+<p>동작 순서 (코드는 실습에서 직접 작성):</p>
+<ol><li>먼저 <code>i</code>를 문자열 <strong>끝(<code>\0</code> 위치)까지 이동</strong>시켜 끝 인덱스를 확보</li><li>찾는 문자가 <code>\0</code>이면 지금 위치(끝)를 바로 반환</li><li><code>i</code>를 하나씩 <strong>줄여가며</strong> 검사 — 뒤에서부터 처음 만나는 일치가 곧 "마지막 등장"</li><li><code>i</code>가 0까지 내려가도 못 찾으면 <code>NULL</code></li></ol>
+<pre><code class="nohighlight">sbs_strrchr("hello", 'l')
+ h   e   l   l   o  \0
+                     │  ① 먼저 끝까지 이동
+         ✓   ←   ×   ┘  ② 뒤에서부터 검사, 처음 만나는 'l' (인덱스 3)</code></pre>
 <p>핵심 포인트:</p>
 <ul><li>먼저 <code>\0</code>까지 이동(끝 인덱스 확보)</li><li><code>\0</code> 검색이면 끝 위치 반환</li><li>뒤에서부터 내려오며 첫 일치 = 마지막 등장</li></ul>
 <table><thead><tr><th>함수</th><th>방향</th><th>결과</th></tr></thead><tbody><tr><td><code>strchr</code></td><td>앞 → 뒤</td><td>첫 번째 등장</td></tr><tr><td><code>strrchr</code></td><td>뒤 → 앞</td><td>마지막 등장</td></tr></tbody></table>
 <hr />
 <h2>3부: sbs_strnstr — 부분 문자열 검색</h2>
 <p><code>big</code>에서 <code>little</code>(부분 문자열)을 <strong><code>len</code>바이트 범위 안에서</strong> 찾습니다.</p>
-<pre><code class="language-c">char *sbs_strnstr(const char *big, const char *little, size_t len)
-{
-    size_t i;
-    size_t j;
-
-    if (little[0] == '\0')          // 빈 needle이면 big 반환
-        return ((char *)big);
-    i = 0;
-    while (big[i] &amp;&amp; i &lt; len)
-    {
-        j = 0;
-        while (big[i + j] &amp;&amp; i + j &lt; len &amp;&amp; big[i + j] == little[j])
-            j++;
-        if (little[j] == '\0')      // little 끝까지 일치 = 찾음
-            return ((char *)(big + i));
-        i++;
-    }
-    return (NULL);
-}</code></pre>
+<p>동작 순서 (코드는 실습에서 직접 작성):</p>
+<ol><li><code>little</code>이 빈 문자열이면 즉시 <code>big</code>을 반환(표준 동작)</li><li><strong>바깥 루프</strong>: 시작 위치 <code>i</code>를 0부터 한 칸씩 이동 (<code>big[i]</code>가 있고 <code>i &lt; len</code>인 동안)</li><li><strong>안쪽 루프</strong>: <code>i</code>에서 출발해 <code>big[i + j]</code>와 <code>little[j]</code>가 같은 동안 <code>j</code>를 늘림 — 단, <code>i + j &lt; len</code> 범위 안에서만</li><li>안쪽 루프가 끝났을 때 <code>little[j]</code>가 <code>\0</code>이면 → little 전체가 일치한 것 = <strong>발견</strong>, <code>big + i</code> 반환</li><li>아니면 <code>i</code>를 한 칸 옮겨 다시 시도, 끝까지 없으면 <code>NULL</code></li></ol>
+<pre><code class="nohighlight">sbs_strnstr("abcabd", "abd", 6)
+ i=0:  a b c a b d      i=3:  a b c a b d
+       a b ×                        a b d ✓ → big+3 반환
+       └ 2글자까지 갔다 실패해도, i는 1칸만 전진!</code></pre>
 <p>핵심 포인트:</p>
 <ul><li><strong>빈 little</strong>: 즉시 <code>big</code> 반환(표준 동작)</li><li>이중 루프: 바깥은 시작 위치 <code>i</code>, 안쪽은 일치 검사 <code>j</code></li><li><code>i + j &lt; len</code> 으로 범위를 넘지 않음(strnstr의 n)</li><li><code>little[j] == '\0'</code>이면 little 전체가 일치 = 발견</li></ul>
 <blockquote><code>man 3 strnstr</code> 참고. 엣지 케이스(빈 needle, len이 짧을 때, needle이 끝에 걸칠 때)를 꼭 테스트하세요.</blockquote>
@@ -144,7 +114,7 @@ char	*sbs_strnstr(const char *big, const char *little, size_t len);</code></pre>
 <p><code>sbs_strchr.c</code> — <code>s</code>에서 <code>c</code>를 앞에서부터 찾아 위치 반환, 못 찾으면 NULL.</p>
 <p>요구사항:</p>
 <ul><li><code>(char)c</code>로 비교</li><li><strong><code>\0</code> 검색 처리</strong>: <code>c</code>가 <code>\0</code>이면 문자열 끝 위치 반환</li><li>반환은 <code>(char *)</code> 캐스팅</li></ul>
-<p>힌트:</p>
+<details class="hint"><summary>💡 막히면 힌트 보기 (sbs_strchr)</summary><div class="hint-body">
 <pre><code class="language-c">while (s[i])
 {
     if (s[i] == (char)c)
@@ -154,13 +124,14 @@ char	*sbs_strnstr(const char *big, const char *little, size_t len);</code></pre>
 if ((char)c == '\0')
     return ((char *)(s + i));
 return (NULL);</code></pre>
+</div></details>
 <blockquote><code>strchr(s, '\0')</code>은 문자열 끝의 \0 위치를 반환합니다(표준 동작). 빠뜨리기 쉬움.</blockquote>
 <hr />
 <h2>과제 2: sbs_strrchr</h2>
 <p><code>sbs_strrchr.c</code> — <code>c</code>를 뒤에서부터 찾아 <strong>마지막 등장</strong> 위치 반환.</p>
 <p>요구사항:</p>
 <ul><li>먼저 <code>\0</code>까지 이동</li><li><code>\0</code> 검색이면 끝 위치 반환</li><li>뒤에서부터 내려오며 첫 일치 반환</li></ul>
-<p>힌트:</p>
+<details class="hint"><summary>💡 막히면 힌트 보기 (sbs_strrchr)</summary><div class="hint-body">
 <pre><code class="language-c">while (s[i]) i++;          // 끝으로
 if ((char)c == '\0')
     return ((char *)(s + i));
@@ -171,12 +142,13 @@ while (i &gt; 0)
         return ((char *)(s + i));
 }
 return (NULL);</code></pre>
+</div></details>
 <hr />
 <h2>과제 3: sbs_strnstr</h2>
 <p><code>sbs_strnstr.c</code> — <code>big</code>에서 <code>little</code>을 <code>len</code>바이트 범위 안에서 검색.</p>
 <p>요구사항:</p>
 <ul><li>빈 <code>little</code>이면 <code>big</code> 반환</li><li>이중 루프(바깥 시작위치 i, 안쪽 비교 j)</li><li><code>i + j &lt; len</code>으로 범위 초과 방지</li><li><code>little[j] == '\0'</code>이면 발견</li></ul>
-<p>힌트:</p>
+<details class="hint"><summary>💡 막히면 힌트 보기 (sbs_strnstr)</summary><div class="hint-body">
 <pre><code class="language-c">if (little[0] == '\0')
     return ((char *)big);
 while (big[i] &amp;&amp; i &lt; len)
@@ -189,6 +161,7 @@ while (big[i] &amp;&amp; i &lt; len)
     i++;
 }
 return (NULL);</code></pre>
+</div></details>
 <blockquote>엣지 케이스: needle이 끝에 걸쳐 len을 넘으면 못 찾은 것. 빈 needle은 즉시 big.</blockquote>
 <hr />
 <h2>과제 4: 채점 + 엣지 케이스</h2>

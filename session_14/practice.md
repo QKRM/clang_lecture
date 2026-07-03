@@ -29,7 +29,7 @@ int		sbs_atoi(const char *str);
 - `unsigned char`로 차이 계산
 - 부호가 정확해야 함
 
-힌트:
+::: hint 막히면 힌트 보기 (sbs_strncmp)
 ```c
 while (i < n)
 {
@@ -39,6 +39,7 @@ while (i < n)
 }
 return (0);
 ```
+:::
 
 > memcmp와 달리 `\0`에서 멈춥니다. 한쪽이 짧으면 거기서 결판.
 
@@ -54,7 +55,7 @@ return (0);
 - 숫자가 아닌 문자를 만나면 중단
 - 숫자 없으면 0
 
-힌트:
+::: hint 막히면 힌트 보기 (sbs_atoi)
 ```c
 while (is_space(str[i])) i++;
 if (str[i] == '+' || str[i] == '-')
@@ -69,6 +70,7 @@ while (str[i] >= '0' && str[i] <= '9')
 }
 return ((int)(result * sign));
 ```
+:::
 
 엣지 케이스 (꼭 테스트):
 ```
