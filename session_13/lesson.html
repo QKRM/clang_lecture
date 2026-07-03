@@ -121,6 +121,24 @@ int main(void)
 <table><thead><tr><th>i</th><th>j 진행 (big[i+j] vs little[j])</th><th>little[j]=='\0'?</th><th>결과</th></tr></thead><tbody><tr><td>0</td><td>b[0]='a'==l[0]'a'→j=1, b[1]='b'==l[1]'b'→j=2, b[2]='c'≠l[2]'d'</td><td>j=2에서 멈춤, 불일치</td><td>다음 i</td></tr><tr><td>1</td><td>b[1]='b'≠l[0]'a'</td><td>j=0에서 멈춤</td><td>다음 i</td></tr><tr><td>2</td><td>b[2]='c'≠l[0]'a'</td><td>j=0</td><td>다음 i</td></tr><tr><td>3</td><td>b[3]='a'==l[0], b[4]='b'==l[1], b[5]='d'==l[2]→j=3</td><td>little[3]=='\0' → 참</td><td><strong>찾음! i=3 반환</strong></td></tr></tbody></table>
 <p>직접 채워볼 것: <code>big = "aaab"</code>, <code>little = "aab"</code>, <code>len = 4</code> — 헛짚었다가(<code>i=0</code>에서 <code>j=1</code>까지 갔다 실패) 다시 처음부터 비교하는 지점(<code>i=1</code>)을 표로 그려보세요.</p>
 <hr />
+<h2>3.7부: 함정 — 반환값 NULL을 확인하라</h2>
+<p>검색 함수 사고의 90%는 여기서 납니다. 세 함수 모두 <strong>못 찾으면 NULL</strong>을 반환하는데, 확인 없이 바로 쓰면 프로그램이 죽습니다.</p>
+<pre><code class="language-c">char *p = sbs_strchr("hello", 'z');   // 'z' 없음 → p == NULL
+printf("%s\n", p);                    // 💥 NULL 역참조 → segfault (크래시)
+printf("%c\n", *p);                   // 💥 마찬가지</code></pre>
+<p>올바른 패턴 — <strong>쓰기 전에 반드시 if</strong>:</p>
+<pre><code class="language-c">char *p = sbs_strchr(s, 'z');
+if (p != NULL)                        // 또는 if (p)
+    printf("찾음: %s\n", p);
+else
+    printf("없음\n");</code></pre>
+<ul><li>12차시의 버퍼 오버플로우가 "복사 함수의 대표 사고"라면, <strong>NULL 역참조는 검색 함수의 대표 사고</strong>입니다.</li><li>도전 과제(file_ext, file_search)에서 <code>if (slash)</code>, <code>if (!found)</code> 검사가 계속 나오는 이유가 이것.</li><li>11차시 malloc 반환값 NULL 검사와 같은 습관 — "실패할 수 있는 함수의 반환값은 무조건 확인".</li></ul>
+<hr />
+<h2>3.8부: 지금까지의 검색 함수 한눈에 보기</h2>
+<p>11차시 <code>memchr</code>부터 오늘까지, 검색 함수가 4개 쌓였습니다. "무엇을, 어디까지" 찾는지가 다릅니다.</p>
+<table><thead><tr><th>함수</th><th>무엇을 찾나</th><th>어디까지 보나</th><th>못 찾으면</th><th>차시</th></tr></thead><tbody><tr><td><code>sbs_memchr</code></td><td>바이트 1개</td><td><code>n</code>바이트 (\0 무시)</td><td>NULL</td><td>11</td></tr><tr><td><code>sbs_strchr</code></td><td>문자 1개 (앞→뒤)</td><td><code>\0</code>까지</td><td>NULL</td><td>13</td></tr><tr><td><code>sbs_strrchr</code></td><td>문자 1개 (뒤→앞)</td><td><code>\0</code>까지</td><td>NULL</td><td>13</td></tr><tr><td><code>sbs_strnstr</code></td><td>부분 문자열</td><td><code>len</code>바이트와 <code>\0</code> 중 먼저</td><td>NULL</td><td>13</td></tr></tbody></table>
+<blockquote>표준 C에는 <code>strstr</code>(len 제한 없는 부분 문자열 검색)도 있습니다. <code>strnstr</code>에서 <code>len</code> 조건만 빼면 <code>strstr</code>입니다 — BSD 계열이 buffer 안전을 위해 <code>n</code> 버전을 추가한 것(12차시 strlcpy가 strcpy의 안전판인 것과 같은 흐름).</blockquote>
+<hr />
 <h2>4부: 채점</h2>
 <p><code>strchr</code>/<code>strrchr</code>는 표준과 비교, <code>strnstr</code>은 BSD 함수라 테스트 안의 정답 동작과 비교합니다.</p>
 <pre><code class="language-bash">$ bash grade.sh
@@ -130,7 +148,7 @@ int main(void)
 결과: 3 / 3 통과</code></pre>
 <hr />
 <h2>핵심 정리</h2>
-<ol><li><code>strchr</code>는 순방향(첫 등장), <code>\0</code>도 검색 대상</li><li><code>strrchr</code>는 역방향(마지막 등장), 먼저 끝까지 이동 후 내려옴</li><li>두 함수 모두 <code>(char)c</code>로 비교, <code>(char *)</code> 캐스팅 반환</li><li><code>strnstr</code>는 <code>len</code> 범위 안에서 부분 문자열 검색</li><li>빈 <code>little</code>이면 <code>big</code>을 그대로 반환</li><li>이중 루프 + <code>i + j &lt; len</code>으로 범위 안전</li></ol>
+<ol><li><code>strchr</code>는 순방향(첫 등장), <code>\0</code>도 검색 대상</li><li><code>strrchr</code>는 역방향(마지막 등장), 먼저 끝까지 이동 후 내려옴</li><li>두 함수 모두 <code>(char)c</code>로 비교, <code>(char *)</code> 캐스팅 반환</li><li><code>strnstr</code>는 <code>len</code> 범위 안에서 부분 문자열 검색</li><li>빈 <code>little</code>이면 <code>big</code>을 그대로 반환</li><li>이중 루프 + <code>i + j &lt; len</code>으로 범위 안전</li><li><strong>반환값 NULL 확인 없이 역참조 금지</strong> — 검색 함수의 대표 사고</li></ol>
 <hr />
 <h2>다음 차시 예고</h2>
 <p>14차시에서는 문자열 비교와 변환(<code>sbs_strncmp</code>, <code>sbs_atoi</code>)을 구현합니다. 문자열을 n글자까지 비교하는 법과, <code>"42"</code> 같은 문자열을 정수 42로 바꾸는 파싱 로직(부호·공백 처리)을 다룹니다. (문자열 복제 <code>strdup</code>은 11차시에서 이미 만들었습니다.)</p>
@@ -241,7 +259,7 @@ char	*sbs_strnstr(const char *big, const char *little, size_t len)
 <ul><li>[ ] <code>libsbs.h</code>에 3개 프로토타입 추가</li><li>[ ] <code>sbs_strchr.c</code> - 순방향, \0 검색 처리</li><li>[ ] <code>sbs_strrchr.c</code> - 역방향, 마지막 등장</li><li>[ ] <code>sbs_strnstr.c</code> - len 범위, 빈 needle 처리</li><li>[ ] <code>&lt;string.h&gt;</code> 미사용</li><li>[ ] <code>bash grade.sh</code> → 3 / 3 통과</li><li>[ ] (선택) 도전 과제 — <code>word_finder.c</code> / <code>file_ext.c</code> / <code>file_search.c</code> / <code>sbs_strcasestr.c</code>(BONUS 채점)</li></ul>
 <hr />
 <h2>더 생각해볼 거리</h2>
-<ol><li><code>strchr</code>가 <code>\0</code>을 찾을 수 있어야 하는 이유는? (문자열 끝 위치를 얻으려고)</li><li><code>strrchr</code>를 앞에서부터 돌면서도 구현할 수 있을까? (마지막 일치를 변수에 기억)</li><li><code>strnstr</code>의 <code>n</code>이 <code>strstr</code>과 다른 점은? (검색 범위를 len으로 제한)</li></ol>
+<ol><li><code>strchr</code>가 <code>\0</code>을 찾을 수 있어야 하는 이유는? (문자열 끝 위치를 얻으려고)</li><li><code>strrchr</code>를 앞에서부터 돌면서도 구현할 수 있을까? (마지막 일치를 변수에 기억)</li><li><code>strnstr</code>의 <code>n</code>이 <code>strstr</code>과 다른 점은? (검색 범위를 len으로 제한)</li><li><code>printf("%s", sbs_strchr("abc", 'z'))</code>를 실행하면 무슨 일이? (NULL 역참조 → 크래시. 강의노트 3.7부)</li></ol>
 <hr />
 <h2>도전 과제 (필수 4개를 마친 사람만)</h2>
 <p>시간이 남으면 아래 순서대로 도전하세요. 정답 예시는 이 페이지 맨 아래 "정답 코드"에서 확인할 수 있습니다.</p>
