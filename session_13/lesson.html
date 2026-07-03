@@ -35,6 +35,15 @@
 <p>12차시까지는 길이 재기·복사·비교를 했습니다. 오늘부터는 <strong>문자열 안에서 뭔가를 찾는</strong> 함수입니다. 사람이 텍스트 에디터에서 <code>Ctrl+F</code>로 단어를 찾는 것과 똑같은 동작을 C로 직접 구현합니다.</p>
 <table><thead><tr><th>분야</th><th>예시</th></tr></thead><tbody><tr><td>파일 경로</td><td><code>strrchr</code>로 마지막 <code>/</code>나 <code>.</code> 찾아 파일명/확장자 분리</td></tr><tr><td>텍스트 검색</td><td><code>strnstr</code>로 로그 파일에서 특정 단어(키워드) 위치 찾기</td></tr><tr><td>파서/토크나이저</td><td><code>strchr</code>로 구분자(<code>,</code>, <code>=</code>, 공백) 위치 찾아 문자열 자르기</td></tr><tr><td>URL/이메일 파싱</td><td><code>strchr(email, '@')</code>로 아이디/도메인 분리</td></tr></tbody></table>
 <p>세 함수 모두 <strong>"어디서 찾을까"만 다른</strong> 같은 계열입니다: 앞에서부터(<code>strchr</code>), 뒤에서부터(<code>strrchr</code>), 부분 문자열을 범위 안에서(<code>strnstr</code>).</p>
+<h3>용어 두 개만 미리</h3>
+<ul><li><strong>haystack(건초더미) / needle(바늘)</strong>: 검색 함수에서 관용적으로 <strong>찾는 대상이 되는 큰 문자열</strong>을 haystack, <strong>찾을 문자열</strong>을 needle이라 부릅니다("건초더미에서 바늘 찾기"). <code>strnstr</code>의 <code>big</code>이 haystack, <code>little</code>이 needle입니다.</li><li><strong>위치 포인터 반환</strong>: 이 함수들은 찾은 글자를 복사해 주는 게 아니라, <strong>원본 문자열 안의 그 위치를 가리키는 포인터</strong>를 돌려줍니다. 그래서 반환값을 <code>printf("%s")</code>로 찍으면 <strong>그 위치부터 끝까지</strong>가 출력됩니다.</li></ul>
+<pre><code class="language-c">char *s = "hello";
+printf("%s\n", sbs_strchr(s, 'l'));    // "llo"  (s+2 위치를 반환했으므로)
+printf("%s\n", sbs_strrchr(s, 'l'));   // "lo"   (s+3, 마지막 'l' 위치)</code></pre>
+<pre><code class="nohighlight">인덱스:  0    1    2    3    4
+        'h'  'e'  'l'  'l'  'o'  '\0'
+                  ↑    ↑
+             strchr  strrchr  (같은 'l'이라도 방향에 따라 다른 위치)</code></pre>
 <hr />
 <h2>1부: sbs_strchr — 순방향 검색</h2>
 <p><code>s</code>에서 문자 <code>c</code>를 <strong>앞에서부터</strong> 찾아 그 위치 포인터를 반환. 못 찾으면 <code>NULL</code>.</p>
@@ -52,7 +61,7 @@
     return (NULL);
 }</code></pre>
 <p>핵심 포인트:</p>
-<ul><li><code>c</code>를 <code>(char)</code>로 캐스팅해 비교</li><li><strong><code>\0</code> 검색</strong>: <code>c</code>가 <code>\0</code>이면 문자열 끝의 <code>\0</code> 위치를 반환(표준 동작)</li><li>반환 타입은 <code>char *</code>지만 입력은 <code>const char *</code> → <code>(char *)</code> 캐스팅</li></ul>
+<ul><li><strong>왜 매개변수가 <code>int c</code>?</strong> — 표준 시그니처가 그렇게 정해져 있습니다(9차시 <code>sbs_isalpha(int c)</code>와 같은 관례). 실제 비교는 1바이트끼리 해야 하므로 <code>(char)c</code>로 캐스팅해 비교합니다.</li><li><strong><code>\0</code> 검색</strong>: <code>c</code>가 <code>\0</code>이면 문자열 끝의 <code>\0</code> 위치를 반환(표준 동작)</li><li>반환 타입은 <code>char *</code>지만 입력은 <code>const char *</code> → <code>(char *)</code> 캐스팅(표준 시그니처를 따르기 위한 캐스팅)</li></ul>
 <blockquote><code>memchr</code>(11차시)와 달리 길이가 아니라 <code>\0</code>까지 봅니다.</blockquote>
 <hr />
 <h2>2부: sbs_strrchr — 역방향 검색</h2>
@@ -102,7 +111,7 @@
 <blockquote><code>man 3 strnstr</code> 참고. 엣지 케이스(빈 needle, len이 짧을 때, needle이 끝에 걸칠 때)를 꼭 테스트하세요.</blockquote>
 <hr />
 <h2>3.5부: 손으로 추적하기 — strnstr(big, little, len)</h2>
-<p>코드를 짜기 전에 종이(또는 주석)에 <code>i</code>, <code>j</code> 값을 직접 채워보세요. <code>big = "abcabd"</code>, <code>little = "abd"</code>, <code>len = 6</code>일 때:</p>
+<p>코드를 짜기 전에 종이(또는 주석)에 <code>i</code>, <code>j</code> 값을 직접 채워보세요. <code>big = "abcabd"</code>, <code>little = "abd"</code>, <code>len = 6</code>일 때 (표에서 <code>b</code> = big, <code>l</code> = little 줄임):</p>
 <table><thead><tr><th>i</th><th>j 진행 (big[i+j] vs little[j])</th><th>little[j]=='\0'?</th><th>결과</th></tr></thead><tbody><tr><td>0</td><td>b[0]='a'==l[0]'a'→j=1, b[1]='b'==l[1]'b'→j=2, b[2]='c'≠l[2]'d'</td><td>j=2에서 멈춤, 불일치</td><td>다음 i</td></tr><tr><td>1</td><td>b[1]='b'≠l[0]'a'</td><td>j=0에서 멈춤</td><td>다음 i</td></tr><tr><td>2</td><td>b[2]='c'≠l[0]'a'</td><td>j=0</td><td>다음 i</td></tr><tr><td>3</td><td>b[3]='a'==l[0], b[4]='b'==l[1], b[5]='d'==l[2]→j=3</td><td>little[3]=='\0' → 참</td><td><strong>찾음! i=3 반환</strong></td></tr></tbody></table>
 <p>직접 채워볼 것: <code>big = "aaab"</code>, <code>little = "aab"</code>, <code>len = 4</code> — 헛짚었다가(<code>i=0</code>에서 <code>j=1</code>까지 갔다 실패) 다시 처음부터 비교하는 지점(<code>i=1</code>)을 표로 그려보세요.</p>
 <hr />
@@ -118,7 +127,7 @@
 <ol><li><code>strchr</code>는 순방향(첫 등장), <code>\0</code>도 검색 대상</li><li><code>strrchr</code>는 역방향(마지막 등장), 먼저 끝까지 이동 후 내려옴</li><li>두 함수 모두 <code>(char)c</code>로 비교, <code>(char *)</code> 캐스팅 반환</li><li><code>strnstr</code>는 <code>len</code> 범위 안에서 부분 문자열 검색</li><li>빈 <code>little</code>이면 <code>big</code>을 그대로 반환</li><li>이중 루프 + <code>i + j &lt; len</code>으로 범위 안전</li></ol>
 <hr />
 <h2>다음 차시 예고</h2>
-<p>14차시에서는 문자열 함수 III(<code>sbs_strncmp</code>, <code>sbs_atoi</code>, <code>sbs_strdup</code>)를 구현합니다. 문자열 비교, 문자열→정수 변환(부호·공백·오버플로 처리), 동적 메모리로 문자열 복제를 다룹니다.</p>
+<p>14차시에서는 문자열 비교와 변환(<code>sbs_strncmp</code>, <code>sbs_atoi</code>)을 구현합니다. 문자열을 n글자까지 비교하는 법과, <code>"42"</code> 같은 문자열을 정수 42로 바꾸는 파싱 로직(부호·공백 처리)을 다룹니다. (문자열 복제 <code>strdup</code>은 11차시에서 이미 만들었습니다.)</p>
 <div class="section-split"><h2>실습</h2><p>아래 문제를 직접 풀어본 뒤, 맨 아래 정답 코드로 확인하세요.</p></div>
 <h1>13차시 실습 - 문자열 함수 II</h1>
 <h2>실습 목표</h2>
@@ -203,13 +212,24 @@ return (NULL);</code></pre>
 <h3>도전 1: 미니 프로젝트 — 단어 검색기 (word_finder.c)</h3>
 <p>방금 만든 <code>sbs_strnstr</code>을 반복 호출해 문자열 안에서 특정 단어가 <strong>등장하는 모든 위치</strong>를 찾아 출력하는 프로그램을 작성하세요.</p>
 <p>요구사항:</p>
-<ul><li><code>char *text</code>, <code>char *word</code> 두 문자열을 코드 안에 준비(하드코딩 가능)</li><li><code>sbs_strnstr</code>로 찾은 위치부터 <code>sbs_strlen(text) - (찾은 위치 - text)</code>를 남은 길이로 다음 검색 시작</li><li>겹치지 않게: 찾으면 <code>찾은 위치 + strlen(word)</code>부터 다시 검색</li><li>출력 예: <code>"is"를 3번 찾음: 인덱스 2, 5, 21</code></li><li>못 찾으면 "찾지 못함" 출력</li></ul>
+<ul><li><code>char *text</code>, <code>char *word</code> 두 문자열을 코드 안에 준비(하드코딩 가능)</li><li>처음엔 <code>text</code> 전체에서 검색 → 찾으면 <strong>찾은 위치 + 단어 길이</strong>부터 이어서 다시 검색(겹침 방지) → 못 찾을 때까지 반복</li><li>각 호출의 <code>len</code> 인자에는 남은 부분의 길이를 넘김</li><li>문자열 길이 함수: 이 폴더에는 <code>sbs_strlen</code>이 없으므로 <strong>간단한 길이 헬퍼 함수를 직접 작성</strong>하세요(12차시에서 만든 것과 동일한 5줄짜리)</li><li>못 찾으면 "찾지 못함" 출력</li></ul>
+<p>출력 예 (<code>text = "this is a test, this is only a test"</code>, <code>word = "is"</code>):</p>
+<pre><code class="nohighlight">인덱스 2에서 발견
+인덱스 5에서 발견
+인덱스 18에서 발견
+인덱스 21에서 발견
+"is"를 4번 찾음</code></pre>
+<p>컴파일·실행:</p>
+<pre><code class="language-bash">cc -Wall -Wextra -Werror -I. word_finder.c sbs_strnstr.c -o word_finder &amp;&amp; ./word_finder</code></pre>
 <h3>도전 2: 미니 프로젝트 — 파일 경로 분리기 (file_ext.c)</h3>
 <p><code>"/home/user/report.final.txt"</code> 같은 경로 문자열에서 <strong>파일명</strong>과 <strong>확장자</strong>를 분리해 출력하세요.</p>
 <p>요구사항:</p>
 <ul><li><code>sbs_strrchr(path, '/')</code>로 마지막 <code>/</code> 찾기 → 그 다음이 파일명</li><li><code>sbs_strrchr(filename, '.')</code>로 마지막 <code>.</code> 찾기 → 그 다음이 확장자(<code>.</code>이 없으면 "확장자 없음")</li><li>경로에 <code>/</code>가 없는 경우(<code>"report.txt"</code>)도 처리</li><li>출력 예: <code>파일명: report.final.txt, 확장자: txt</code></li></ul>
+<p>컴파일·실행:</p>
+<pre><code class="language-bash">cc -Wall -Wextra -Werror -I. file_ext.c sbs_strrchr.c -o file_ext &amp;&amp; ./file_ext</code></pre>
 <h3>도전 3: 심화 함수 — sbs_strcasestr</h3>
 <p>대소문자를 무시하고 부분 문자열을 찾는 <code>sbs_strcasestr</code>을 구현하세요. <a href="advanced.md">advanced.md</a>를 참고하세요. 힌트: <code>sbs_strnstr</code>과 구조는 같고, 비교할 때 두 글자를 소문자로 맞춰 비교합니다(12차시 <code>sbs_strcasecmp</code>의 <code>to_lower</code> 헬퍼와 같은 방식).</p>
+<p><code>sbs_strcasestr.c</code> 파일을 만들면 <code>bash grade.sh</code>가 자동으로 BONUS 섹션에서 채점합니다.</p>
 <h3>도전 4: 짝 코드 리뷰</h3>
 <p>옆 사람과 <code>sbs_strchr.c</code>/<code>sbs_strrchr.c</code>/<code>sbs_strnstr.c</code>를 서로 바꿔서 <code>session_16/CODE_REVIEW.md</code> 체크리스트로 리뷰하세요.</p>
 <ul><li>엣지 케이스(빈 문자열, <code>\0</code> 검색, <code>len=0</code>)를 놓치지 않았는지 질문형으로 코멘트</li><li>좋은 점 최소 1개 언급</li><li>리뷰 받은 내용으로 자기 코드를 한 번 고쳐보기</li></ul>

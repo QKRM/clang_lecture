@@ -24,6 +24,24 @@
 
 세 함수 모두 **"어디서 찾을까"만 다른** 같은 계열입니다: 앞에서부터(`strchr`), 뒤에서부터(`strrchr`), 부분 문자열을 범위 안에서(`strnstr`).
 
+### 용어 두 개만 미리
+
+- **haystack(건초더미) / needle(바늘)**: 검색 함수에서 관용적으로 **찾는 대상이 되는 큰 문자열**을 haystack, **찾을 문자열**을 needle이라 부릅니다("건초더미에서 바늘 찾기"). `strnstr`의 `big`이 haystack, `little`이 needle입니다.
+- **위치 포인터 반환**: 이 함수들은 찾은 글자를 복사해 주는 게 아니라, **원본 문자열 안의 그 위치를 가리키는 포인터**를 돌려줍니다. 그래서 반환값을 `printf("%s")`로 찍으면 **그 위치부터 끝까지**가 출력됩니다.
+
+```c
+char *s = "hello";
+printf("%s\n", sbs_strchr(s, 'l'));    // "llo"  (s+2 위치를 반환했으므로)
+printf("%s\n", sbs_strrchr(s, 'l'));   // "lo"   (s+3, 마지막 'l' 위치)
+```
+
+```
+인덱스:  0    1    2    3    4
+        'h'  'e'  'l'  'l'  'o'  '\0'
+                  ↑    ↑
+             strchr  strrchr  (같은 'l'이라도 방향에 따라 다른 위치)
+```
+
 ---
 
 ## 1부: sbs_strchr — 순방향 검색
@@ -47,9 +65,9 @@ char *sbs_strchr(const char *s, int c)
 ```
 
 핵심 포인트:
-- `c`를 `(char)`로 캐스팅해 비교
+- **왜 매개변수가 `int c`?** — 표준 시그니처가 그렇게 정해져 있습니다(9차시 `sbs_isalpha(int c)`와 같은 관례). 실제 비교는 1바이트끼리 해야 하므로 `(char)c`로 캐스팅해 비교합니다.
 - **`\0` 검색**: `c`가 `\0`이면 문자열 끝의 `\0` 위치를 반환(표준 동작)
-- 반환 타입은 `char *`지만 입력은 `const char *` → `(char *)` 캐스팅
+- 반환 타입은 `char *`지만 입력은 `const char *` → `(char *)` 캐스팅(표준 시그니처를 따르기 위한 캐스팅)
 
 > `memchr`(11차시)와 달리 길이가 아니라 `\0`까지 봅니다.
 
@@ -127,7 +145,7 @@ char *sbs_strnstr(const char *big, const char *little, size_t len)
 
 ## 3.5부: 손으로 추적하기 — strnstr(big, little, len)
 
-코드를 짜기 전에 종이(또는 주석)에 `i`, `j` 값을 직접 채워보세요. `big = "abcabd"`, `little = "abd"`, `len = 6`일 때:
+코드를 짜기 전에 종이(또는 주석)에 `i`, `j` 값을 직접 채워보세요. `big = "abcabd"`, `little = "abd"`, `len = 6`일 때 (표에서 `b` = big, `l` = little 줄임):
 
 | i | j 진행 (big[i+j] vs little[j]) | little[j]=='\0'? | 결과 |
 |---|---|---|---|
@@ -167,4 +185,4 @@ $ bash grade.sh
 
 ## 다음 차시 예고
 
-14차시에서는 문자열 함수 III(`sbs_strncmp`, `sbs_atoi`, `sbs_strdup`)를 구현합니다. 문자열 비교, 문자열→정수 변환(부호·공백·오버플로 처리), 동적 메모리로 문자열 복제를 다룹니다.
+14차시에서는 문자열 비교와 변환(`sbs_strncmp`, `sbs_atoi`)을 구현합니다. 문자열을 n글자까지 비교하는 법과, `"42"` 같은 문자열을 정수 42로 바꾸는 파싱 로직(부호·공백 처리)을 다룹니다. (문자열 복제 `strdup`은 11차시에서 이미 만들었습니다.)

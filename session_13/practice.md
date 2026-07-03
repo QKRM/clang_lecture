@@ -151,10 +151,24 @@ $ bash grade.sh
 
 요구사항:
 - `char *text`, `char *word` 두 문자열을 코드 안에 준비(하드코딩 가능)
-- `sbs_strnstr`로 찾은 위치부터 `sbs_strlen(text) - (찾은 위치 - text)`를 남은 길이로 다음 검색 시작
-- 겹치지 않게: 찾으면 `찾은 위치 + strlen(word)`부터 다시 검색
-- 출력 예: `"is"를 3번 찾음: 인덱스 2, 5, 21`
+- 처음엔 `text` 전체에서 검색 → 찾으면 **찾은 위치 + 단어 길이**부터 이어서 다시 검색(겹침 방지) → 못 찾을 때까지 반복
+- 각 호출의 `len` 인자에는 남은 부분의 길이를 넘김
+- 문자열 길이 함수: 이 폴더에는 `sbs_strlen`이 없으므로 **간단한 길이 헬퍼 함수를 직접 작성**하세요(12차시에서 만든 것과 동일한 5줄짜리)
 - 못 찾으면 "찾지 못함" 출력
+
+출력 예 (`text = "this is a test, this is only a test"`, `word = "is"`):
+```
+인덱스 2에서 발견
+인덱스 5에서 발견
+인덱스 18에서 발견
+인덱스 21에서 발견
+"is"를 4번 찾음
+```
+
+컴파일·실행:
+```bash
+cc -Wall -Wextra -Werror -I. word_finder.c sbs_strnstr.c -o word_finder && ./word_finder
+```
 
 ### 도전 2: 미니 프로젝트 — 파일 경로 분리기 (file_ext.c)
 
@@ -166,9 +180,16 @@ $ bash grade.sh
 - 경로에 `/`가 없는 경우(`"report.txt"`)도 처리
 - 출력 예: `파일명: report.final.txt, 확장자: txt`
 
+컴파일·실행:
+```bash
+cc -Wall -Wextra -Werror -I. file_ext.c sbs_strrchr.c -o file_ext && ./file_ext
+```
+
 ### 도전 3: 심화 함수 — sbs_strcasestr
 
 대소문자를 무시하고 부분 문자열을 찾는 `sbs_strcasestr`을 구현하세요. [advanced.md](advanced.md)를 참고하세요. 힌트: `sbs_strnstr`과 구조는 같고, 비교할 때 두 글자를 소문자로 맞춰 비교합니다(12차시 `sbs_strcasecmp`의 `to_lower` 헬퍼와 같은 방식).
+
+`sbs_strcasestr.c` 파일을 만들면 `bash grade.sh`가 자동으로 BONUS 섹션에서 채점합니다.
 
 ### 도전 4: 짝 코드 리뷰
 
