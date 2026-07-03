@@ -252,7 +252,68 @@ int	main(void)
 cc -Wall -Wextra -Werror -I. file_ext.c sbs_strrchr.c -o file_ext && ./file_ext
 ```
 
-### 도전 3: 심화 함수 — sbs_strcasestr
+### 도전 3: 미니 프로젝트 — 파일에서 내용 찾기 (file_search.c)
+
+강의노트 0.5부에서 배운 `open`/`read`/`close`로 **실제 파일**을 읽어, 그 안에서 단어를 검색하세요. 도전 1(단어 검색기)의 파일 버전입니다.
+
+먼저 검색 대상 파일을 만드세요 (폴더에 `sample.txt`로 저장):
+```
+C is fun. Searching text is a core skill.
+A search function finds a needle in a haystack.
+This file is the haystack for your search program.
+```
+
+요구사항:
+- `open("sample.txt", O_RDONLY)`으로 열기, 실패(`fd < 0`) 시 에러 출력 후 종료
+- `read`로 버퍼에 읽고 **`buf[n] = '\0'`으로 직접 문자열화** (0.5부 핵심 포인트)
+- 도전 1과 같은 방식으로 `sbs_strnstr` 반복 호출 → 모든 등장 인덱스 출력
+- `<fcntl.h>`, `<unistd.h>` 사용 가능 (`<string.h>`는 여전히 금지)
+
+스켈레톤 (`file_search.c`로 저장 후 TODO를 채우세요):
+```c
+#include "libsbs.h"
+#include <stdio.h>
+#include <fcntl.h>
+#include <unistd.h>
+
+#define BUF_SIZE 4096
+
+int	main(void)
+{
+	char	buf[BUF_SIZE];
+	char	*word = "is";
+	ssize_t	n;
+	int		fd;
+
+	/* TODO 1: sample.txt를 O_RDONLY로 열고, 실패하면 에러 출력 후 return 1 */
+	fd = -1;
+	/* TODO 2: read로 최대 BUF_SIZE - 1 바이트 읽고 close */
+	n = 0;
+	/* TODO 3: buf[n] = '\0' 으로 문자열화 */
+	/* TODO 4: 도전 1(word_finder)과 같은 반복 검색 루프 */
+	(void)fd;
+	(void)n;
+	(void)word;
+	return (0);
+}
+```
+
+컴파일·실행:
+```bash
+cc -Wall -Wextra -Werror -I. file_search.c sbs_strnstr.c -o file_search && ./file_search
+```
+
+출력 예 (위 sample.txt 기준):
+```
+인덱스 2에서 발견
+인덱스 24에서 발견
+...
+"is"를 N번 찾음
+```
+
+> 더 해보기: `word`를 `"haystack"`으로 바꾸면? 파일이 없을 때(`sample.txt` 삭제 후 실행) 에러 처리가 잘 되는지도 확인하세요.
+
+### 도전 4: 심화 함수 — sbs_strcasestr
 
 대소문자를 무시하고 부분 문자열을 찾는 `sbs_strcasestr`을 구현하세요. [advanced.md](advanced.md)를 참고하세요. 힌트: `sbs_strnstr`과 구조는 같고, 비교할 때 두 글자를 소문자로 맞춰 비교합니다(12차시 `sbs_strcasecmp`의 `to_lower` 헬퍼와 같은 방식).
 

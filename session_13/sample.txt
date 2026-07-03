@@ -1,0 +1,3 @@
+C is fun. Searching text is a core skill.
+A search function finds a needle in a haystack.
+This file is the haystack for your search program.
