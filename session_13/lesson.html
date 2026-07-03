@@ -99,7 +99,7 @@ int main(void)
 <pre><code class="nohighlight">sbs_strrchr("hello", 'l')
  h   e   l   l   o  \0
                      │  ① 먼저 끝까지 이동
-         ✓   ←   ×   ┘  ② 뒤에서부터 검사, 처음 만나는 'l' (인덱스 3)</code></pre>
+             ✓   ×   ┘  ② 뒤에서부터: 'o'는 ×, 다음 'l'(인덱스 3)에서 ✓</code></pre>
 <p>핵심 포인트:</p>
 <ul><li>먼저 <code>\0</code>까지 이동(끝 인덱스 확보)</li><li><code>\0</code> 검색이면 끝 위치 반환</li><li>뒤에서부터 내려오며 첫 일치 = 마지막 등장</li></ul>
 <table><thead><tr><th>함수</th><th>방향</th><th>결과</th></tr></thead><tbody><tr><td><code>strchr</code></td><td>앞 → 뒤</td><td>첫 번째 등장</td></tr><tr><td><code>strrchr</code></td><td>뒤 → 앞</td><td>마지막 등장</td></tr></tbody></table>
@@ -218,6 +218,7 @@ return (NULL);</code></pre>
 <hr />
 <h2>도전 과제 (필수 4개를 마친 사람만)</h2>
 <p>시간이 남으면 아래 순서대로 도전하세요. 정답 예시는 이 페이지 맨 아래 "정답 코드"에서 확인할 수 있습니다.</p>
+<blockquote>스켈레톤 코드는 <strong>TODO를 채우기 전에는 컴파일이 안 될 수 있습니다</strong> (<code>-Werror</code>가 미사용 변수 경고를 에러로 처리). TODO를 다 채운 뒤 컴파일하세요.</blockquote>
 <h3>도전 1: 미니 프로젝트 — 단어 검색기 (word_finder.c)</h3>
 <p>방금 만든 <code>sbs_strnstr</code>을 반복 호출해 문자열 안에서 특정 단어가 <strong>등장하는 모든 위치</strong>를 찾아 출력하는 프로그램을 작성하세요.</p>
 <p>요구사항:</p>
@@ -287,9 +288,6 @@ int	main(void)
 	/* TODO 3: filename에서 sbs_strrchr로 마지막 '.' 찾기 */
 	dot = NULL;
 	/* TODO 4: dot 있으면 "파일명: ..., 확장자: ..." / 없으면 "확장자 없음" 출력 */
-	(void)slash;
-	(void)dot;
-	(void)filename;
 	return (0);
 }</code></pre>
 <p>컴파일·실행:</p>
@@ -323,18 +321,16 @@ int	main(void)
 	n = 0;
 	/* TODO 3: buf[n] = '\0' 으로 문자열화 */
 	/* TODO 4: 도전 1(word_finder)과 같은 반복 검색 루프 */
-	(void)fd;
-	(void)n;
-	(void)word;
 	return (0);
 }</code></pre>
 <p>컴파일·실행:</p>
 <pre><code class="language-bash">cc -Wall -Wextra -Werror -I. file_search.c sbs_strnstr.c -o file_search &amp;&amp; ./file_search</code></pre>
 <p>출력 예 (위 sample.txt 기준):</p>
 <pre><code class="nohighlight">인덱스 2에서 발견
-인덱스 24에서 발견
-...
-"is"를 N번 찾음</code></pre>
+인덱스 25에서 발견
+인덱스 92에서 발견
+인덱스 100에서 발견
+"is"를 4번 찾음</code></pre>
 <blockquote>더 해보기: <code>word</code>를 <code>"haystack"</code>으로 바꾸면? 파일이 없을 때(<code>sample.txt</code> 삭제 후 실행) 에러 처리가 잘 되는지도 확인하세요.</blockquote>
 <h3>도전 4: 심화 함수 — sbs_strcasestr</h3>
 <p>대소문자를 무시하고 부분 문자열을 찾는 <code>sbs_strcasestr</code>을 구현하세요. <a href="advanced.md">advanced.md</a>를 참고하세요. 힌트: <code>sbs_strnstr</code>과 구조는 같고, 비교할 때 두 글자를 소문자로 맞춰 비교합니다(12차시 <code>sbs_strcasecmp</code>의 <code>to_lower</code> 헬퍼와 같은 방식).</p>

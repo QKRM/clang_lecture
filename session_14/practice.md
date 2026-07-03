@@ -123,6 +123,8 @@ $ valgrind --leak-check=full ./a.out
 
 시간이 남으면 아래 순서대로 도전하세요. 정답 예시는 이 페이지 맨 아래 "정답 코드"에서 확인할 수 있습니다.
 
+> 스켈레톤 코드는 **TODO를 채우기 전에는 컴파일이 안 될 수 있습니다** (`-Werror`가 미사용 변수 경고를 에러로 처리). TODO를 다 채운 뒤 컴파일하세요.
+
 ### 도전 1: 미니 프로젝트 — 버전 비교기 (version_compare.c)
 
 `"1.2.3"`, `"1.10.0"` 같은 버전 문자열 두 개를 받아 어느 쪽이 더 높은 버전인지 출력하세요.
@@ -173,7 +175,6 @@ int	main(void)
 
 	cmp = compare_version(v1, v2);
 	/* TODO 4: cmp 부호에 따라 "<", ">", "==" 출력 */
-	(void)cmp;
 	return (0);
 }
 ```
@@ -231,8 +232,7 @@ cc -Wall -Wextra -Werror -I. calc_cli.c sbs_atoi.c sbs_strncmp.c -o calc && ./ca
 static int	is_space(char c)
 {
 	/* TODO: sbs_atoi의 is_space와 동일 */
-	(void)c;
-	return (0);
+	return (c == ' ');
 }
 
 long	sbs_atol(const char *str)

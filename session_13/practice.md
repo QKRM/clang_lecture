@@ -148,6 +148,8 @@ $ bash grade.sh
 
 시간이 남으면 아래 순서대로 도전하세요. 정답 예시는 이 페이지 맨 아래 "정답 코드"에서 확인할 수 있습니다.
 
+> 스켈레톤 코드는 **TODO를 채우기 전에는 컴파일이 안 될 수 있습니다** (`-Werror`가 미사용 변수 경고를 에러로 처리). TODO를 다 채운 뒤 컴파일하세요.
+
 ### 도전 1: 미니 프로젝트 — 단어 검색기 (word_finder.c)
 
 방금 만든 `sbs_strnstr`을 반복 호출해 문자열 안에서 특정 단어가 **등장하는 모든 위치**를 찾아 출력하는 프로그램을 작성하세요.
@@ -240,9 +242,6 @@ int	main(void)
 	/* TODO 3: filename에서 sbs_strrchr로 마지막 '.' 찾기 */
 	dot = NULL;
 	/* TODO 4: dot 있으면 "파일명: ..., 확장자: ..." / 없으면 "확장자 없음" 출력 */
-	(void)slash;
-	(void)dot;
-	(void)filename;
 	return (0);
 }
 ```
@@ -291,9 +290,6 @@ int	main(void)
 	n = 0;
 	/* TODO 3: buf[n] = '\0' 으로 문자열화 */
 	/* TODO 4: 도전 1(word_finder)과 같은 반복 검색 루프 */
-	(void)fd;
-	(void)n;
-	(void)word;
 	return (0);
 }
 ```
@@ -306,9 +302,10 @@ cc -Wall -Wextra -Werror -I. file_search.c sbs_strnstr.c -o file_search && ./fil
 출력 예 (위 sample.txt 기준):
 ```
 인덱스 2에서 발견
-인덱스 24에서 발견
-...
-"is"를 N번 찾음
+인덱스 25에서 발견
+인덱스 92에서 발견
+인덱스 100에서 발견
+"is"를 4번 찾음
 ```
 
 > 더 해보기: `word`를 `"haystack"`으로 바꾸면? 파일이 없을 때(`sample.txt` 삭제 후 실행) 에러 처리가 잘 되는지도 확인하세요.
