@@ -78,7 +78,54 @@ for name in $FUNCS; do
 	fi
 done
 
-echo "-------------------------"
 echo "결과: $pass_count / $total 통과"
+
+# =============================================================
+# BONUS (심화) — 대소문자 무시 검색. 파일이 있을 때만 채점.
+#   strcasestr
+# =============================================================
+BONUS_FUNCS="strcasestr"
+BONUS_SRC="sbs_strcasestr.c"
+
+bonus_present=1
+for f in $BONUS_SRC; do
+	[ -f "$f" ] || bonus_present=0
+done
+
+if [ "$bonus_present" -eq 1 ]; then
+	echo "--- BONUS (심화) ---"
+	bpass=0
+	btotal=0
+	for name in $BONUS_FUNCS; do
+		btotal=$((btotal + 1))
+		src="sbs_${name}.c"
+		test="tests/test_${name}.c"
+
+		if ! gcc $CFLAGS -c "$src" -I. -o "$TMP/${name}.o" 2> "$TMP/werr"; then
+			echo "✗ sbs_${name}   (컴파일 실패: 경고/에러)"
+			[ -n "$VERBOSE" ] && sed 's/^/    /' "$TMP/werr"
+			continue
+		fi
+		if ! gcc $CFLAGS -I. "$test" $BONUS_SRC -o "$TMP/run_${name}" 2> "$TMP/lerr"; then
+			echo "✗ sbs_${name}   (테스트 빌드 실패)"
+			[ -n "$VERBOSE" ] && sed 's/^/    /' "$TMP/lerr"
+			continue
+		fi
+		out="$("$TMP/run_${name}" $VERBOSE)"
+		rc=$?
+		score="$(echo "$out" | tail -n1)"
+		detail="$(echo "$out" | sed '$d')"
+		if [ "$rc" -eq 0 ]; then
+			echo "✓ sbs_${name}   ($score)"
+			bpass=$((bpass + 1))
+		else
+			echo "✗ sbs_${name}   ($score)"
+			[ -n "$VERBOSE" ] && [ -n "$detail" ] && echo "$detail"
+		fi
+	done
+	echo "보너스: $bpass / $btotal 통과"
+fi
+
+echo "-------------------------"
 [ "$pass_count" -eq "$total" ] && exit 0
 exit 1

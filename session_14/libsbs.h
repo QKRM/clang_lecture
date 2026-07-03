@@ -7,4 +7,7 @@
 int		sbs_strncmp(const char *s1, const char *s2, size_t n);
 int		sbs_atoi(const char *str);
 
+/* 심화(bonus) — 큰 정수 변환 */
+long	sbs_atol(const char *str);
+
 #endif

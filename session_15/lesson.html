@@ -26,6 +26,7 @@
     </header>
     <main class="wrap">
       <article class="md">
+<h1>15차시 강의 노트 - Makefile과 라이브러리 아카이브</h1>
 <h2>학습 목표</h2>
 <ol><li>Makefile의 기본 문법(타겟·의존성·레시피)을 이해한다.</li><li>변수와 패턴 규칙으로 중복을 줄일 수 있다.</li><li><code>ar</code>로 정적 라이브러리(<code>.a</code>)를 만들 수 있다.</li><li><code>libsbs.a</code>를 빌드하고 다른 프로그램에 링크할 수 있다.</li><li><code>all / clean / fclean / re</code> 표준 규칙을 작성할 수 있다.</li></ol>
 <hr />
@@ -108,6 +109,7 @@ $ cc -Wall -Wextra -Werror main.c -L. -lsbs -o program</code></pre>
 <h2>다음 차시 예고</h2>
 <p>16차시는 종합 프로젝트입니다. 9~14차시에서 만든 모든 함수를 하나의 <code>libsbs</code>로 통합하고, 전체를 빌드하는 Makefile을 완성합니다. 동료와 코드 리뷰를 하고 최종 빌드를 확인합니다.</p>
 <div class="section-split"><h2>실습</h2><p>아래 문제를 직접 풀어본 뒤, 맨 아래 정답 코드로 확인하세요.</p></div>
+<h1>15차시 실습 - Makefile과 라이브러리 아카이브</h1>
 <h2>실습 목표</h2>
 <ul><li>Makefile을 작성해 <code>libsbs.a</code>를 자동 빌드한다.</li><li><code>ar</code>로 정적 라이브러리를 만든다.</li><li><code>all / clean / fclean / re</code> 규칙을 구현한다.</li><li>라이브러리를 링크해 함수가 동작함을 확인한다.</li></ul>
 <blockquote>이번 차시는 함수 구현이 아니라 <strong>빌드 시스템</strong>을 만듭니다. <code>.c</code> 파일은 제공됩니다(데모용 4개).</blockquote>

@@ -26,8 +26,15 @@
     </header>
     <main class="wrap">
       <article class="md">
+<h1>13차시 강의 노트 - 문자열 함수 II (strchr, strrchr, strnstr)</h1>
 <h2>학습 목표</h2>
 <ol><li><code>sbs_strchr</code>로 문자를 순방향 검색하고 <code>\0</code> 처리를 이해한다.</li><li><code>sbs_strrchr</code>로 문자를 역방향 검색할 수 있다.</li><li><code>sbs_strnstr</code>로 부분 문자열을 길이 제한 안에서 검색할 수 있다.</li><li>검색 알고리즘의 엣지 케이스를 처리할 수 있다.</li></ol>
+<hr />
+<h2>0부: 들어가며 — 검색 함수는 어디에 쓰이나</h2>
+<h3>왜 "찾기"가 문자열 함수의 핵심인가</h3>
+<p>12차시까지는 길이 재기·복사·비교를 했습니다. 오늘부터는 <strong>문자열 안에서 뭔가를 찾는</strong> 함수입니다. 사람이 텍스트 에디터에서 <code>Ctrl+F</code>로 단어를 찾는 것과 똑같은 동작을 C로 직접 구현합니다.</p>
+<table><thead><tr><th>분야</th><th>예시</th></tr></thead><tbody><tr><td>파일 경로</td><td><code>strrchr</code>로 마지막 <code>/</code>나 <code>.</code> 찾아 파일명/확장자 분리</td></tr><tr><td>텍스트 검색</td><td><code>strnstr</code>로 로그 파일에서 특정 단어(키워드) 위치 찾기</td></tr><tr><td>파서/토크나이저</td><td><code>strchr</code>로 구분자(<code>,</code>, <code>=</code>, 공백) 위치 찾아 문자열 자르기</td></tr><tr><td>URL/이메일 파싱</td><td><code>strchr(email, '@')</code>로 아이디/도메인 분리</td></tr></tbody></table>
+<p>세 함수 모두 <strong>"어디서 찾을까"만 다른</strong> 같은 계열입니다: 앞에서부터(<code>strchr</code>), 뒤에서부터(<code>strrchr</code>), 부분 문자열을 범위 안에서(<code>strnstr</code>).</p>
 <hr />
 <h2>1부: sbs_strchr — 순방향 검색</h2>
 <p><code>s</code>에서 문자 <code>c</code>를 <strong>앞에서부터</strong> 찾아 그 위치 포인터를 반환. 못 찾으면 <code>NULL</code>.</p>
@@ -94,6 +101,11 @@
 <ul><li><strong>빈 little</strong>: 즉시 <code>big</code> 반환(표준 동작)</li><li>이중 루프: 바깥은 시작 위치 <code>i</code>, 안쪽은 일치 검사 <code>j</code></li><li><code>i + j &lt; len</code> 으로 범위를 넘지 않음(strnstr의 n)</li><li><code>little[j] == '\0'</code>이면 little 전체가 일치 = 발견</li></ul>
 <blockquote><code>man 3 strnstr</code> 참고. 엣지 케이스(빈 needle, len이 짧을 때, needle이 끝에 걸칠 때)를 꼭 테스트하세요.</blockquote>
 <hr />
+<h2>3.5부: 손으로 추적하기 — strnstr(big, little, len)</h2>
+<p>코드를 짜기 전에 종이(또는 주석)에 <code>i</code>, <code>j</code> 값을 직접 채워보세요. <code>big = "abcabd"</code>, <code>little = "abd"</code>, <code>len = 6</code>일 때:</p>
+<table><thead><tr><th>i</th><th>j 진행 (big[i+j] vs little[j])</th><th>little[j]=='\0'?</th><th>결과</th></tr></thead><tbody><tr><td>0</td><td>b[0]='a'==l[0]'a'→j=1, b[1]='b'==l[1]'b'→j=2, b[2]='c'≠l[2]'d'</td><td>j=2에서 멈춤, 불일치</td><td>다음 i</td></tr><tr><td>1</td><td>b[1]='b'≠l[0]'a'</td><td>j=0에서 멈춤</td><td>다음 i</td></tr><tr><td>2</td><td>b[2]='c'≠l[0]'a'</td><td>j=0</td><td>다음 i</td></tr><tr><td>3</td><td>b[3]='a'==l[0], b[4]='b'==l[1], b[5]='d'==l[2]→j=3</td><td>little[3]=='\0' → 참</td><td><strong>찾음! i=3 반환</strong></td></tr></tbody></table>
+<p>직접 채워볼 것: <code>big = "aaab"</code>, <code>little = "aab"</code>, <code>len = 4</code> — 헛짚었다가(<code>i=0</code>에서 <code>j=1</code>까지 갔다 실패) 다시 처음부터 비교하는 지점(<code>i=1</code>)을 표로 그려보세요.</p>
+<hr />
 <h2>4부: 채점</h2>
 <p><code>strchr</code>/<code>strrchr</code>는 표준과 비교, <code>strnstr</code>은 BSD 함수라 테스트 안의 정답 동작과 비교합니다.</p>
 <pre><code class="language-bash">$ bash grade.sh
@@ -108,8 +120,10 @@
 <h2>다음 차시 예고</h2>
 <p>14차시에서는 문자열 함수 III(<code>sbs_strncmp</code>, <code>sbs_atoi</code>, <code>sbs_strdup</code>)를 구현합니다. 문자열 비교, 문자열→정수 변환(부호·공백·오버플로 처리), 동적 메모리로 문자열 복제를 다룹니다.</p>
 <div class="section-split"><h2>실습</h2><p>아래 문제를 직접 풀어본 뒤, 맨 아래 정답 코드로 확인하세요.</p></div>
+<h1>13차시 실습 - 문자열 함수 II</h1>
 <h2>실습 목표</h2>
 <ul><li><code>sbs_strchr</code>, <code>sbs_strrchr</code>로 순/역방향 문자 검색을 구현한다.</li><li><code>sbs_strnstr</code>로 부분 문자열을 길이 제한 안에서 검색한다.</li><li>엣지 케이스(빈 needle, \0 검색, 범위 경계)를 처리한다.</li></ul>
+<p><strong>진행 순서</strong>: 과제 1~4는 <strong>필수</strong>(전원 완료), 맨 아래 "도전 과제"는 필수를 끝낸 사람만 진행합니다.</p>
 <blockquote><strong>금지</strong>: <code>&lt;string.h&gt;</code>, <code>&lt;strings.h&gt;</code>. 직접 구현해야 합니다.</blockquote>
 <hr />
 <h2>준비: libsbs.h에 추가</h2>
@@ -183,6 +197,22 @@ return (NULL);</code></pre>
 <hr />
 <h2>더 생각해볼 거리</h2>
 <ol><li><code>strchr</code>가 <code>\0</code>을 찾을 수 있어야 하는 이유는? (문자열 끝 위치를 얻으려고)</li><li><code>strrchr</code>를 앞에서부터 돌면서도 구현할 수 있을까? (마지막 일치를 변수에 기억)</li><li><code>strnstr</code>의 <code>n</code>이 <code>strstr</code>과 다른 점은? (검색 범위를 len으로 제한)</li></ol>
+<hr />
+<h2>도전 과제 (필수 4개를 마친 사람만)</h2>
+<p>시간이 남으면 아래 순서대로 도전하세요. 정답 예시는 이 페이지 맨 아래 "정답 코드"에서 확인할 수 있습니다.</p>
+<h3>도전 1: 미니 프로젝트 — 단어 검색기 (word_finder.c)</h3>
+<p>방금 만든 <code>sbs_strnstr</code>을 반복 호출해 문자열 안에서 특정 단어가 <strong>등장하는 모든 위치</strong>를 찾아 출력하는 프로그램을 작성하세요.</p>
+<p>요구사항:</p>
+<ul><li><code>char *text</code>, <code>char *word</code> 두 문자열을 코드 안에 준비(하드코딩 가능)</li><li><code>sbs_strnstr</code>로 찾은 위치부터 <code>sbs_strlen(text) - (찾은 위치 - text)</code>를 남은 길이로 다음 검색 시작</li><li>겹치지 않게: 찾으면 <code>찾은 위치 + strlen(word)</code>부터 다시 검색</li><li>출력 예: <code>"is"를 3번 찾음: 인덱스 2, 5, 21</code></li><li>못 찾으면 "찾지 못함" 출력</li></ul>
+<h3>도전 2: 미니 프로젝트 — 파일 경로 분리기 (file_ext.c)</h3>
+<p><code>"/home/user/report.final.txt"</code> 같은 경로 문자열에서 <strong>파일명</strong>과 <strong>확장자</strong>를 분리해 출력하세요.</p>
+<p>요구사항:</p>
+<ul><li><code>sbs_strrchr(path, '/')</code>로 마지막 <code>/</code> 찾기 → 그 다음이 파일명</li><li><code>sbs_strrchr(filename, '.')</code>로 마지막 <code>.</code> 찾기 → 그 다음이 확장자(<code>.</code>이 없으면 "확장자 없음")</li><li>경로에 <code>/</code>가 없는 경우(<code>"report.txt"</code>)도 처리</li><li>출력 예: <code>파일명: report.final.txt, 확장자: txt</code></li></ul>
+<h3>도전 3: 심화 함수 — sbs_strcasestr</h3>
+<p>대소문자를 무시하고 부분 문자열을 찾는 <code>sbs_strcasestr</code>을 구현하세요. <a href="advanced.md">advanced.md</a>를 참고하세요. 힌트: <code>sbs_strnstr</code>과 구조는 같고, 비교할 때 두 글자를 소문자로 맞춰 비교합니다(12차시 <code>sbs_strcasecmp</code>의 <code>to_lower</code> 헬퍼와 같은 방식).</p>
+<h3>도전 4: 짝 코드 리뷰</h3>
+<p>옆 사람과 <code>sbs_strchr.c</code>/<code>sbs_strrchr.c</code>/<code>sbs_strnstr.c</code>를 서로 바꿔서 <code>session_16/CODE_REVIEW.md</code> 체크리스트로 리뷰하세요.</p>
+<ul><li>엣지 케이스(빈 문자열, <code>\0</code> 검색, <code>len=0</code>)를 놓치지 않았는지 질문형으로 코멘트</li><li>좋은 점 최소 1개 언급</li><li>리뷰 받은 내용으로 자기 코드를 한 번 고쳐보기</li></ul>
 <div class="section-split"><h2>정답 코드</h2><p>각 항목의 "정답 보기"를 눌러 펼치세요. 먼저 직접 풀어본 뒤 확인하는 것을 권장합니다.</p></div>
 <div class="answer"><div class="answer-head"><span class="answer-name">📄 <span class="file">libsbs.h</span></span><button class="answer-toggle">정답 보기</button></div><div class="answer-body"><pre><code class="language-c">#ifndef LIBSBS_H
 # define LIBSBS_H
@@ -194,7 +224,65 @@ char	*sbs_strchr(const char *s, int c);
 char	*sbs_strrchr(const char *s, int c);
 char	*sbs_strnstr(const char *big, const char *little, size_t len);
 
+/* 심화(bonus) — 대소문자 무시 검색 */
+char	*sbs_strcasestr(const char *big, const char *little, size_t len);
+
 #endif</code></pre></div></div>
+<div class="answer"><div class="answer-head"><span class="answer-name">📄 <span class="file">file_ext.c</span></span><button class="answer-toggle">정답 보기</button></div><div class="answer-body"><pre><code class="language-c">#include "libsbs.h"
+#include &lt;stdio.h&gt;
+
+/* 도전 2 예시 답안: sbs_strrchr로 마지막 '/'와 '.'을 찾아 파일명/확장자를 분리한다. */
+int	main(void)
+{
+	char	*path;
+	char	*slash;
+	char	*dot;
+	char	*filename;
+
+	path = "/home/user/report.final.txt";
+	slash = sbs_strrchr(path, '/');
+	if (slash)
+		filename = slash + 1;
+	else
+		filename = path;
+	dot = sbs_strrchr(filename, '.');
+	if (dot)
+		printf("파일명: %s, 확장자: %s\n", filename, dot + 1);
+	else
+		printf("파일명: %s, 확장자 없음\n", filename);
+	return (0);
+}</code></pre></div></div>
+<div class="answer"><div class="answer-head"><span class="answer-name">📄 <span class="file">sbs_strcasestr.c</span></span><button class="answer-toggle">정답 보기</button></div><div class="answer-body"><pre><code class="language-c">#include "libsbs.h"
+
+/* 9차시 sbs_tolower와 같은 원리. 13차시엔 그 파일이 없으므로 여기서 직접 변환(12차시 strcasecmp 컨벤션과 동일). */
+static int	to_lower(int c)
+{
+	if (c &gt;= 'A' &amp;&amp; c &lt;= 'Z')
+		return (c + 32);
+	return (c);
+}
+
+char	*sbs_strcasestr(const char *big, const char *little, size_t len)
+{
+	size_t	i;
+	size_t	j;
+
+	if (little[0] == '\0')
+		return ((char *)big);
+	i = 0;
+	while (big[i] &amp;&amp; i &lt; len)
+	{
+		j = 0;
+		while (big[i + j] &amp;&amp; i + j &lt; len
+			&amp;&amp; to_lower((unsigned char)big[i + j])
+				== to_lower((unsigned char)little[j]))
+			j++;
+		if (little[j] == '\0')
+			return ((char *)(big + i));
+		i++;
+	}
+	return (NULL);
+}</code></pre></div></div>
 <div class="answer"><div class="answer-head"><span class="answer-name">📄 <span class="file">sbs_strchr.c</span></span><button class="answer-toggle">정답 보기</button></div><div class="answer-body"><pre><code class="language-c">#include "libsbs.h"
 
 char	*sbs_strchr(const char *s, int c)
@@ -251,6 +339,51 @@ char	*sbs_strrchr(const char *s, int c)
 			return ((char *)(s + i));
 	}
 	return (NULL);
+}</code></pre></div></div>
+<div class="answer"><div class="answer-head"><span class="answer-name">📄 <span class="file">word_finder.c</span></span><button class="answer-toggle">정답 보기</button></div><div class="answer-body"><pre><code class="language-c">#include "libsbs.h"
+#include &lt;stdio.h&gt;
+
+/* 도전 1 예시 답안: sbs_strnstr을 반복 호출해 단어가 등장하는 모든 위치를 찾는다. */
+static size_t	str_len(const char *s)
+{
+	size_t	i;
+
+	i = 0;
+	while (s[i])
+		i++;
+	return (i);
+}
+
+int	main(void)
+{
+	char	*text;
+	char	*word;
+	size_t	text_len;
+	size_t	word_len;
+	size_t	pos;
+	char	*found;
+	int		count;
+
+	text = "this is a test, this is only a test";
+	word = "is";
+	text_len = str_len(text);
+	word_len = str_len(word);
+	pos = 0;
+	count = 0;
+	while (pos &lt; text_len)
+	{
+		found = sbs_strnstr(text + pos, word, text_len - pos);
+		if (!found)
+			break ;
+		printf("인덱스 %zu에서 발견\n", (size_t)(found - text));
+		count++;
+		pos = (size_t)(found - text) + word_len;
+	}
+	if (count == 0)
+		printf("\"%s\"를 찾지 못함\n", word);
+	else
+		printf("\"%s\"를 %d번 찾음\n", word, count);
+	return (0);
 }</code></pre></div></div>
 
       </article>

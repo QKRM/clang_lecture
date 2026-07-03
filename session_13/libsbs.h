@@ -8,4 +8,7 @@ char	*sbs_strchr(const char *s, int c);
 char	*sbs_strrchr(const char *s, int c);
 char	*sbs_strnstr(const char *big, const char *little, size_t len);
 
+/* 심화(bonus) — 대소문자 무시 검색 */
+char	*sbs_strcasestr(const char *big, const char *little, size_t len);
+
 #endif

@@ -26,6 +26,7 @@
     </header>
     <main class="wrap">
       <article class="md">
+<h1>11차시 강의 노트 - 동적 메모리와 malloc</h1>
 <h2>학습 목표</h2>
 <ol><li>스택과 힙의 차이, 동적 메모리가 왜 필요한지 설명할 수 있다.</li><li><code>malloc</code> / <code>free</code>로 메모리를 할당하고 반환할 수 있다.</li><li><code>sbs_calloc</code>(0 초기화 할당)을 구현할 수 있다.</li><li><code>malloc</code>으로 <strong>새 문자열을 만드는</strong> 함수(<code>substr</code>, <code>strjoin</code>, <code>itoa</code>, <code>strdup</code>)를 구현할 수 있다.</li><li>메모리 누수를 이해하고 <code>free</code> 책임을 설명할 수 있다.</li></ol>
 <hr />
@@ -216,6 +217,7 @@ $ valgrind --leak-check=full ./test    # leak 0 bytes 목표</code></pre>
 <h2>다음 차시 예고</h2>
 <p>12차시부터 문자열 함수입니다. <code>sbs_strlen</code>으로 시작해 <code>sbs_strlcpy</code>, <code>sbs_strlcat</code>의 버퍼 안전 처리를 다룹니다. 오늘 만든 malloc 감각(strjoin)과 대조하며, 고정 버퍼 vs 동적 할당의 차이를 익힙니다.</p>
 <div class="section-split"><h2>실습</h2><p>아래 문제를 직접 풀어본 뒤, 맨 아래 정답 코드로 확인하세요.</p></div>
+<h1>11차시 실습 - 동적 메모리와 malloc</h1>
 <h2>실습 목표</h2>
 <ul><li><code>malloc</code> / <code>free</code>로 동적 메모리를 다룬다.</li><li><code>sbs_calloc</code>(0 초기화 할당)을 구현한다.</li><li><code>malloc</code>으로 <strong>새 문자열을 만드는</strong> 함수 <code>substr</code>, <code>strjoin</code>, <code>itoa</code>를 구현한다.</li><li><code>valgrind</code>로 메모리 누수를 점검한다.</li></ul>
 <blockquote><strong>금지</strong>: <code>&lt;string.h&gt;</code>, <code>&lt;strings.h&gt;</code>. 동적 메모리에 필요한 <code>&lt;stdlib.h&gt;</code>(malloc/free)는 허용.</blockquote>
