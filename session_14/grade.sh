@@ -1,9 +1,8 @@
 #!/usr/bin/env bash
 # =============================================================
-# libsbs 14차시 채점 스크립트  (문자열 함수 III)
+# libsbs 14차시 채점 스크립트  (문자열 비교와 변환)
 #   사용법:  bash grade.sh         (요약)
 #            bash grade.sh -v      (실패 케이스 상세)
-#   - strdup은 <stdlib.h>(malloc/free) 허용. <string.h>는 금지.
 # =============================================================
 
 CFLAGS="-Wall -Wextra -Werror"

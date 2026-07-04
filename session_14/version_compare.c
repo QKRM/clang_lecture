@@ -1,7 +1,7 @@
 #include "libsbs.h"
 #include <stdio.h>
 
-/* 도전 1 예시 답안: '.'로 구분된 버전 문자열을 부분별로 sbs_atoi 변환해 비교한다. */
+/* 도전 2 예시 답안: '.'로 구분된 버전 문자열을 부분별로 sbs_atoi 변환해 비교한다. */
 static int	next_part(const char *s, int *idx)
 {
 	int	start;

@@ -29,15 +29,23 @@ int		sbs_atoi(const char *str);
 - `unsigned char`로 차이 계산
 - 부호가 정확해야 함
 
-::: hint 막히면 힌트 보기 (sbs_strncmp)
+::: hint 막히면 힌트 보기 (sbs_strncmp 완성 코드)
 ```c
-while (i < n)
+#include "libsbs.h"
+
+int	sbs_strncmp(const char *s1, const char *s2, size_t n)
 {
-    if (s1[i] != s2[i] || s1[i] == '\0')
-        return ((unsigned char)s1[i] - (unsigned char)s2[i]);
-    i++;
+	size_t	i;
+
+	i = 0;
+	while (i < n)
+	{
+		if (s1[i] != s2[i] || s1[i] == '\0')
+			return ((unsigned char)s1[i] - (unsigned char)s2[i]);
+		i++;
+	}
+	return (0);
 }
-return (0);
 ```
 :::
 
@@ -55,20 +63,40 @@ return (0);
 - 숫자가 아닌 문자를 만나면 중단
 - 숫자 없으면 0
 
-::: hint 막히면 힌트 보기 (sbs_atoi)
+::: hint 막히면 힌트 보기 (sbs_atoi 완성 코드)
 ```c
-while (is_space(str[i])) i++;
-if (str[i] == '+' || str[i] == '-')
+#include "libsbs.h"
+
+static int	is_space(char c)
 {
-    if (str[i] == '-') sign = -1;
-    i++;
+	return (c == ' ' || c == '\t' || c == '\n'
+		|| c == '\v' || c == '\f' || c == '\r');
 }
-while (str[i] >= '0' && str[i] <= '9')
+
+int	sbs_atoi(const char *str)
 {
-    result = result * 10 + (str[i] - '0');
-    i++;
+	int		i;
+	int		sign;
+	long	result;
+
+	i = 0;
+	sign = 1;
+	result = 0;
+	while (is_space(str[i]))
+		i++;
+	if (str[i] == '+' || str[i] == '-')
+	{
+		if (str[i] == '-')
+			sign = -1;
+		i++;
+	}
+	while (str[i] >= '0' && str[i] <= '9')
+	{
+		result = result * 10 + (str[i] - '0');
+		i++;
+	}
+	return ((int)(result * sign));
 }
-return ((int)(result * sign));
 ```
 :::
 
@@ -108,6 +136,7 @@ $ valgrind --leak-check=full ./a.out
 - [ ] `sbs_atoi.c` - 공백·부호·숫자 처리, 엣지 케이스
 - [ ] `<string.h>` 미사용
 - [ ] `bash grade.sh` → 2 / 2 통과
+- [ ] (선택) 도전 과제 — `cmd_match.c` / `version_compare.c` / `calc_cli.c` / `sbs_atol.c`(BONUS 채점)
 
 ---
 
@@ -116,6 +145,8 @@ $ valgrind --leak-check=full ./a.out
 1. strncmp가 `\0`에서 멈추는 이유는? (문자열은 \0이 끝)
 2. atoi가 오버플로(범위 초과 숫자)를 만나면? (표준은 정의되지 않음 — 여기선 long으로 완화)
 3. strncmp를 `char`로 비교하면 왜 부호가 뒤집힐까? (0x80 이상 바이트가 음수)
+4. `if (strncmp(a, b, n) == -1)`이 위험한 이유는? (반환값은 부호만 의미. 강의노트 2.5부)
+5. `atoi(itoa(n)) == n`은 항상 성립할까? (itoa는 11차시 — 서로 반대 방향 변환)
 
 ---
 
@@ -125,7 +156,59 @@ $ valgrind --leak-check=full ./a.out
 
 > 스켈레톤 코드는 **TODO를 채우기 전에는 컴파일이 안 될 수 있습니다** (`-Werror`가 미사용 변수 경고를 에러로 처리). TODO를 다 채운 뒤 컴파일하세요.
 
-### 도전 1: 미니 프로젝트 — 버전 비교기 (version_compare.c)
+### 도전 1: 미니 프로젝트 — 명령어 매처 (cmd_match.c)
+
+사용자가 입력한 문자열이 **어떤 명령어로 시작하는지** `sbs_strncmp`로 판별하는 프로그램을 작성하세요. 강의노트 0부의 "명령어 파싱"(`strncmp(input, "exit", 4)`) 예시를 실제로 만들어 봅니다.
+
+요구사항:
+- 명령어 목록: `"help"`, `"exit"`, `"list"`, `"load"` (배열로 준비, 끝은 `NULL`)
+- 입력의 **앞부분(prefix)** 만 `sbs_strncmp(input, cmd, 명령어길이)`로 비교 — 명령어 뒤에 인자가 붙어도(`"list all files"`) 인식되게
+- **프리픽스 함정 주의**: `"listen"`이 `"list"`로 잘못 인식되지 않게, 명령어 길이 위치의 글자가 공백이나 `\0`인지도 확인 (`"list"` 4글자가 같아도 그 **다음 글자**까지 봐야 완전한 단어)
+- 이 폴더에는 `sbs_strlen`이 없으므로 **간단한 길이 헬퍼를 직접 작성**(13차시 word_finder와 동일한 5줄짜리)
+- 못 맞으면 "알 수 없는 명령어" 출력
+- 출력 예 (`input = "list all files"`): `명령어 인식: list`
+
+스켈레톤 (`cmd_match.c`로 저장 후 TODO를 채우세요):
+```c
+#include "libsbs.h"
+#include <stdio.h>
+
+static size_t	str_len(const char *s)
+{
+	size_t	i;
+
+	i = 0;
+	/* TODO: \0까지 세기 (13차시 word_finder와 동일) */
+	return (i);
+}
+
+int	main(void)
+{
+	char	*commands[] = {"help", "exit", "list", "load", NULL};
+	char	*input = "list all files";
+	size_t	len;
+	int		i;
+
+	i = 0;
+	while (commands[i])
+	{
+		len = str_len(commands[i]);
+		/* TODO 1: input이 commands[i]로 시작하는지 sbs_strncmp로 비교 */
+		/* TODO 2: 시작한다면 input[len]이 ' ' 또는 '\0'인지 확인 (프리픽스 함정 방지) */
+		/* TODO 3: 둘 다 참이면 "명령어 인식: ..." 출력 후 return 0 */
+		i++;
+	}
+	printf("알 수 없는 명령어\n");
+	return (0);
+}
+```
+
+컴파일·실행:
+```bash
+cc -Wall -Wextra -Werror -I. cmd_match.c sbs_strncmp.c -o cmd_match && ./cmd_match
+```
+
+### 도전 2: 미니 프로젝트 — 버전 비교기 (version_compare.c)
 
 `"1.2.3"`, `"1.10.0"` 같은 버전 문자열 두 개를 받아 어느 쪽이 더 높은 버전인지 출력하세요.
 
@@ -184,9 +267,9 @@ int	main(void)
 cc -Wall -Wextra -Werror -I. version_compare.c sbs_atoi.c -o vcmp && ./vcmp
 ```
 
-### 도전 2: 미니 프로젝트 — 커맨드라인 계산기 (calc_cli.c)
+### 도전 3: 미니 프로젝트 — 커맨드라인 계산기 (calc_cli.c)
 
-`argc`/`argv`로 `숫자 연산자 숫자` 형태의 인자 3개를 받아 계산하는 프로그램을 작성하세요(예: `./calc 3 + 5`).
+`argc`/`argv`로 `숫자 연산자 숫자` 형태의 인자 3개를 받아 계산하는 프로그램을 작성하세요(예: `./calc 3 + 5`). `argc`/`argv`가 처음이라면 강의노트 **0.5부**를 먼저 읽으세요.
 
 요구사항:
 - `argv[1]`, `argv[3]`을 `sbs_atoi`로 정수 변환
@@ -221,7 +304,7 @@ int	main(int argc, char **argv)
 cc -Wall -Wextra -Werror -I. calc_cli.c sbs_atoi.c sbs_strncmp.c -o calc && ./calc 3 + 5
 ```
 
-### 도전 3: 심화 함수 — sbs_atol
+### 도전 4: 심화 함수 — sbs_atol
 
 `int` 범위를 넘는 큰 정수도 다루는 `sbs_atol`(문자열 → `long`)을 구현하세요. [advanced.md](advanced.md)를 참고하세요. 힌트: `sbs_atoi`와 로직은 같고, `result`와 반환 타입만 `long`으로 바꿉니다.
 

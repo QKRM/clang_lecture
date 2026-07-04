@@ -1,7 +1,7 @@
 #include "libsbs.h"
 #include <stdio.h>
 
-/* 도전 2 예시 답안: argv로 "숫자 연산자 숫자" 형태를 받아 계산한다. */
+/* 도전 3 예시 답안: argv로 "숫자 연산자 숫자" 형태를 받아 계산한다. */
 int	main(int argc, char **argv)
 {
 	int	a;

@@ -29,12 +29,13 @@
 <h1>14차시 강의 노트 - 문자열 비교와 변환 (strncmp, atoi)</h1>
 <p>이번 차시는 문자열을 <strong>비교</strong>하고(<code>strncmp</code>), 문자열을 <strong>정수로 변환</strong>하는(<code>atoi</code>) 함수를 만듭니다. 둘 다 새 메모리를 만들지 않고 입력을 읽어 결과를 계산하는 함수입니다. (문자열 복제 <code>strdup</code>은 11차시에서 다뤘습니다.)</p>
 <h2>학습 목표</h2>
-<ol><li><code>sbs_strncmp</code>로 문자열을 n글자까지 비교할 수 있다.</li><li><code>sbs_atoi</code>로 문자열을 정수로 변환하며 부호·공백을 처리할 수 있다.</li></ol>
+<ol><li><code>sbs_strncmp</code>로 문자열을 n글자까지 비교할 수 있다.</li><li><code>sbs_atoi</code>로 문자열을 정수로 변환하며 부호·공백을 처리할 수 있다.</li><li>비교 함수의 반환값 규약(음수/0/양수)을 이해하고 올바르게 사용할 수 있다.</li><li>(도전) <code>argc</code>/<code>argv</code>로 커맨드라인 인자를 받아 처리할 수 있다.</li></ol>
 <hr />
 <h2>0부: 들어가며 — 비교와 변환은 어디에 쓰이나</h2>
 <h3>문자열 "비교"가 필요한 곳</h3>
 <p>컴퓨터는 문자열을 <code>==</code>로 비교 못 합니다(12차시에서 배웠듯 주소 비교라 소용없음). <code>strncmp</code>는 접두어(prefix)만 비교할 때 특히 유용합니다.</p>
 <table><thead><tr><th>분야</th><th>예시</th></tr></thead><tbody><tr><td>버전 비교</td><td><code>"v1.2"</code> vs <code>"v1.10"</code> 앞자리만 비교해 같은 메이저 버전인지</td></tr><tr><td>명령어 파싱</td><td>사용자가 입력한 문자열이 <code>"exit"</code>로 시작하는지(<code>strncmp(input, "exit", 4)</code>)</td></tr><tr><td>파일 매직 넘버</td><td>파일 앞 몇 바이트로 포맷 판별(<code>"PNG"</code>, <code>"GIF8"</code> 등)</td></tr></tbody></table>
+<p>이 중 "명령어 파싱"과 "버전 비교"는 오늘 도전 과제(명령어 매처, 버전 비교기)에서 직접 만들어 봅니다.</p>
 <h3>문자열 → 정수 "변환"이 필요한 곳</h3>
 <p>프로그램 입력은 대부분 <strong>문자열</strong>로 들어옵니다(커맨드라인 인자, 사용자 입력, 설정 파일). 하지만 계산하려면 <strong>정수</strong>가 필요합니다. <code>argv[1]</code>은 항상 <code>char *</code>이지 <code>int</code>가 아닙니다.</p>
 <pre><code class="language-c">int main(int argc, char *argv[])
@@ -42,6 +43,37 @@
     int n = sbs_atoi(argv[1]);   // "42" (문자열) → 42 (정수)
 }</code></pre>
 <table><thead><tr><th>분야</th><th>예시</th></tr></thead><tbody><tr><td>커맨드라인 인자</td><td><code>./calc 3 + 5</code> → <code>argv[1]</code>, <code>argv[3]</code>을 정수로 변환</td></tr><tr><td>설정 파일</td><td><code>"port=8080"</code>에서 <code>8080</code> 부분을 정수로</td></tr><tr><td>사용자 입력</td><td>나이·개수 등 숫자를 입력받아 계산</td></tr></tbody></table>
+<h3>규약 하나만 미리 — 비교 함수의 반환값</h3>
+<p><code>strcmp</code> 계열(12차시)과 오늘의 <code>strncmp</code>는 모두 같은 규약을 씁니다:</p>
+<table><thead><tr><th>반환값</th><th>의미</th></tr></thead><tbody><tr><td><strong>음수</strong></td><td>s1이 s2보다 사전순으로 <strong>앞</strong></td></tr><tr><td><strong>0</strong></td><td>두 문자열이 (본 범위까지) <strong>같음</strong></td></tr><tr><td><strong>양수</strong></td><td>s1이 s2보다 사전순으로 <strong>뒤</strong></td></tr></tbody></table>
+<p>값 자체(-20인지 -1인지)는 구현마다 다를 수 있고 <strong>부호만 의미가 있습니다</strong>. 그래서 비교 결과는 항상 <code>== 0</code>, <code>&lt; 0</code>, <code>&gt; 0</code>으로만 판단합니다.</p>
+<pre><code class="language-c">if (sbs_strncmp(a, b, n) == 0)   // 같다  ← 올바름
+if (sbs_strncmp(a, b, n) == -1)  // 💥 위험! -20이 나와도 "다르다"인데 놓침</code></pre>
+<hr />
+<h2>0.5부: 준비 개념 — 커맨드라인 인자 (argc / argv)</h2>
+<p>오늘 도전 과제(계산기)에서 <strong>프로그램 실행 시 붙인 인자</strong>를 받아 계산합니다. <code>main</code>의 진짜 시그니처를 처음 씁니다.</p>
+<pre><code class="language-c">int main(int argc, char *argv[])</code></pre>
+<table><thead><tr><th>이름</th><th>뜻</th><th><code>./calc 3 + 5</code> 실행 시</th></tr></thead><tbody><tr><td><code>argc</code></td><td>인자 개수 (프로그램 이름 포함)</td><td>4</td></tr><tr><td><code>argv[0]</code></td><td>프로그램 이름</td><td><code>"./calc"</code></td></tr><tr><td><code>argv[1]</code></td><td>첫 번째 인자</td><td><code>"3"</code></td></tr><tr><td><code>argv[2]</code></td><td>두 번째 인자</td><td><code>"+"</code></td></tr><tr><td><code>argv[3]</code></td><td>세 번째 인자</td><td><code>"5"</code></td></tr></tbody></table>
+<h3>예시: 받은 인자를 그대로 출력</h3>
+<pre><code class="language-c">#include &lt;stdio.h&gt;
+
+int main(int argc, char *argv[])
+{
+    int i = 0;
+
+    while (i &lt; argc)
+    {
+        printf("argv[%d] = %s\n", i, argv[i]);
+        i++;
+    }
+    return (0);
+}</code></pre>
+<pre><code class="language-bash">$ cc -Wall -Wextra -Werror args.c -o args &amp;&amp; ./args hello 42
+argv[0] = ./args
+argv[1] = hello
+argv[2] = 42</code></pre>
+<p>핵심 포인트:</p>
+<ul><li><strong><code>argv</code>는 전부 문자열(<code>char *</code>)입니다.</strong> <code>./calc 3 + 5</code>의 <code>3</code>도 숫자가 아니라 문자열 <code>"3"</code> → 계산하려면 <strong>오늘 만드는 <code>sbs_atoi</code>로 변환</strong>해야 합니다. (이 차시에 argv와 atoi를 같이 배우는 이유!)</li><li><code>argc</code> 검사부터: 사용자가 인자를 빼먹으면 <code>argv[1]</code>이 없을 수 있음 → <code>if (argc != 4)</code> 같은 개수 검사 없이 접근하면 크래시.</li><li><code>argv[2]</code>가 연산자인지 확인할 때는 오늘의 <code>sbs_strncmp</code> 사용 — 두 함수가 한 프로그램에서 만납니다.</li></ul>
 <hr />
 <h2>1부: sbs_strncmp</h2>
 <p><code>s1</code>과 <code>s2</code>를 최대 <code>n</code>글자 비교. 처음 다른 글자의 차이를 반환, 같으면 0. <strong><code>\0</code>을 만나면 멈춤</strong>(memcmp와 다른 점).</p>
@@ -52,6 +84,9 @@
  a  p  p  l  y
  =  =  =  =  ≠   → 'e'(101) - 'y'(121) = -20 (음수 = s1이 앞선다)</code></pre>
 <p>한쪽이 짧으면? <code>"app"</code> vs <code>"apple"</code> → <code>i=3</code>에서 <code>s1[3]</code>이 <code>\0</code> → <code>'\0'(0) - 'l'(108)</code> = 음수. <strong>짧은 쪽이 사전순으로 앞</strong>이라는 결과가 자연스럽게 나옵니다.</p>
+<h3>1.5 손으로 추적하기 — strncmp("apple", "apply", 5)</h3>
+<table><thead><tr><th>i</th><th>s1[i]</th><th>s2[i]</th><th>같은가?</th><th>진행</th></tr></thead><tbody><tr><td>0</td><td>'a'</td><td>'a'</td><td>같음</td><td>i++</td></tr><tr><td>1</td><td>'p'</td><td>'p'</td><td>같음</td><td>i++</td></tr><tr><td>2</td><td>'p'</td><td>'p'</td><td>같음</td><td>i++</td></tr><tr><td>3</td><td>'l'</td><td>'l'</td><td>같음</td><td>i++</td></tr><tr><td>4</td><td>'e'(101)</td><td>'y'(121)</td><td><strong>다름!</strong></td><td>101 - 121 = <strong>-20 반환</strong></td></tr></tbody></table>
+<p>직접 채워볼 것: <code>strncmp("apple", "apply", 4)</code> — 다른 글자에 <strong>도달하기 전에</strong> n이 끝나면? (<code>i=4</code>가 되는 순간 <code>i &lt; n</code> 거짓 → 0 반환). <code>strncmp("app", "apple", 5)</code>도 그려보세요.</p>
 <p>핵심 포인트:</p>
 <ul><li><code>s1[i] == '\0'</code>이면 종료(문자열 끝). 한쪽이 짧으면 그 자리에서 결판</li><li><code>unsigned char</code>로 캐스팅해 차이 계산(부호 정확)</li><li>반환값의 <strong>부호</strong>가 중요</li></ul>
 <blockquote>memcmp(11차시)는 n바이트를 무조건 보지만, strncmp는 <code>\0</code>에서 멈춥니다.</blockquote>
@@ -77,6 +112,26 @@
 <p>최종 반환값: <code>result * sign</code> = <code>42 * -1</code> = <strong>-42</strong>.</p>
 <p>직접 채워볼 것: <code>atoi("+007")</code>과 <code>atoi("abc")</code> — 각각 몇 단계에서 루프가 끝나는지 표로 그려보세요.</p>
 <hr />
+<h2>2.5부: 함정 두 가지</h2>
+<h3>함정 1 — 비교 결과를 특정 값과 비교하지 마라</h3>
+<p>0부 규약의 실전판. <code>strncmp</code>의 반환값은 <strong>부호만</strong> 의미가 있습니다.</p>
+<pre><code class="language-c">if (sbs_strncmp(a, b, n) == -1)   // 💥 구현에 따라 -20이 나오면 놓침
+if (sbs_strncmp(a, b, n) &lt; 0)     // ✓ 항상 올바름
+if (sbs_strncmp(a, b, n) == 0)    // ✓ "같다" 판단은 == 0</code></pre>
+<p>13차시의 NULL 역참조가 검색 함수의 대표 사고라면, <strong><code>== 1</code>/<code>== -1</code> 비교는 비교 함수의 대표 사고</strong>입니다.</p>
+<h3>함정 2 — unsigned char 캐스팅을 빼먹으면 부호가 뒤집힌다</h3>
+<p><code>char</code>는 컴파일러에 따라 부호가 있을 수 있습니다. 0x80 이상 바이트(확장 ASCII, UTF-8 한글 등)가 들어오면:</p>
+<pre><code class="language-c">char c = 0xE0;                 // 한글 UTF-8 첫 바이트라면
+(int)c                         // -32 (음수로 해석!)
+(unsigned char)c               // 224 (올바른 바이트 값)</code></pre>
+<p>캐스팅 없이 <code>s1[i] - s2[i]</code>로 빼면 이런 바이트에서 <strong>부호가 반대로</strong> 나옵니다. 그래서 요구사항이 <code>(unsigned char)</code> 캐스팅 — 10차시 <code>memcmp</code> 때와 같은 이유입니다.</p>
+<blockquote><code>sbs_atoi</code>에도 함정이 있습니다: <code>int</code> 범위(약 ±21억)를 넘는 입력은 표준도 "정의되지 않음". 심화 <code>sbs_atol</code>(advanced.md)이 이 여유를 한 단계 넓히는 연습입니다.</blockquote>
+<hr />
+<h2>2.7부: 지금까지의 비교 함수 한눈에 보기</h2>
+<p>10차시 <code>memcmp</code>부터 오늘까지, 비교 함수가 5개 쌓였습니다.</p>
+<table><thead><tr><th>함수</th><th>무엇을 비교</th><th>어디까지</th><th>대소문자</th><th>차시</th></tr></thead><tbody><tr><td><code>sbs_memcmp</code></td><td>바이트</td><td><code>n</code>바이트 (\0 무시)</td><td>구분</td><td>10</td></tr><tr><td><code>sbs_strcmp</code></td><td>문자열</td><td><code>\0</code>까지</td><td>구분</td><td>12</td></tr><tr><td><code>sbs_strcasecmp</code></td><td>문자열</td><td><code>\0</code>까지</td><td><strong>무시</strong></td><td>12</td></tr><tr><td><code>sbs_strncasecmp</code></td><td>문자열</td><td><code>n</code>글자와 <code>\0</code> 중 먼저</td><td><strong>무시</strong></td><td>12</td></tr><tr><td><code>sbs_strncmp</code></td><td>문자열</td><td><code>n</code>글자와 <code>\0</code> 중 먼저</td><td>구분</td><td>14</td></tr></tbody></table>
+<blockquote>변환 쪽도 쌍이 맞습니다: <code>sbs_atoi</code>(문자열→정수, 오늘)와 <code>sbs_itoa</code>(정수→문자열, 11차시)는 서로 반대 방향의 같은 문제입니다. <code>atoi(itoa(n)) == n</code>이 성립하는지 생각해 보세요.</blockquote>
+<hr />
 <h2>3부: 채점</h2>
 <p><code>strncmp</code>와 <code>atoi</code> 모두 표준 함수와 결과를 비교합니다.</p>
 <pre><code class="language-bash">$ bash grade.sh
@@ -85,7 +140,7 @@
 결과: 2 / 2 통과</code></pre>
 <hr />
 <h2>핵심 정리</h2>
-<ol><li><code>strncmp</code>는 n글자 비교, <code>\0</code>에서 멈춤, 부호 중요(unsigned char)</li><li><code>atoi</code>는 공백 → 부호 → 숫자 순으로 처리</li><li><code>'문자' - '0'</code>로 숫자 문자를 정수로</li><li>엣지 케이스가 점수를 가른다(빈 입력, 부호만, 혼합)</li></ol>
+<ol><li><code>strncmp</code>는 n글자 비교, <code>\0</code>에서 멈춤, 부호 중요(unsigned char)</li><li>비교 결과는 <code>&lt; 0</code> / <code>== 0</code> / <code>&gt; 0</code>으로만 판단 — <code>== -1</code> 금지</li><li><code>atoi</code>는 공백 → 부호 → 숫자 순으로 처리</li><li><code>'문자' - '0'</code>로 숫자 문자를 정수로</li><li>엣지 케이스가 점수를 가른다(빈 입력, 부호만, 혼합)</li><li><code>argv</code>는 전부 문자열 — 숫자로 쓰려면 <code>atoi</code>, 판별하려면 <code>strncmp</code></li></ol>
 <hr />
 <h2>다음 차시 예고</h2>
 <p>15차시에서는 Makefile과 정적 라이브러리를 다룹니다. 지금까지 만든 모든 <code>sbs_*.c</code>를 <code>ar</code>로 묶어 <code>libsbs.a</code>를 만들고, Makefile로 빌드를 자동화합니다. 16차시 종합 프로젝트의 준비 단계입니다.</p>
@@ -104,14 +159,22 @@ int		sbs_atoi(const char *str);</code></pre>
 <p><code>sbs_strncmp.c</code> — 최대 n글자 비교, 처음 다른 글자 차이, 같으면 0.</p>
 <p>요구사항:</p>
 <ul><li><code>\0</code>을 만나면 종료(문자열 끝)</li><li><code>unsigned char</code>로 차이 계산</li><li>부호가 정확해야 함</li></ul>
-<details class="hint"><summary>💡 막히면 힌트 보기 (sbs_strncmp)</summary><div class="hint-body">
-<pre><code class="language-c">while (i &lt; n)
+<details class="hint"><summary>💡 막히면 힌트 보기 (sbs_strncmp 완성 코드)</summary><div class="hint-body">
+<pre><code class="language-c">#include "libsbs.h"
+
+int	sbs_strncmp(const char *s1, const char *s2, size_t n)
 {
-    if (s1[i] != s2[i] || s1[i] == '\0')
-        return ((unsigned char)s1[i] - (unsigned char)s2[i]);
-    i++;
-}
-return (0);</code></pre>
+	size_t	i;
+
+	i = 0;
+	while (i &lt; n)
+	{
+		if (s1[i] != s2[i] || s1[i] == '\0')
+			return ((unsigned char)s1[i] - (unsigned char)s2[i]);
+		i++;
+	}
+	return (0);
+}</code></pre>
 </div></details>
 <blockquote>memcmp와 달리 <code>\0</code>에서 멈춥니다. 한쪽이 짧으면 거기서 결판.</blockquote>
 <hr />
@@ -119,19 +182,39 @@ return (0);</code></pre>
 <p><code>sbs_atoi.c</code> — 문자열을 정수로. 공백 → 부호 → 숫자 순서.</p>
 <p>요구사항:</p>
 <ul><li>선행 공백 건너뛰기(<code> </code>, <code>\t</code>, <code>\n</code>, <code>\v</code>, <code>\f</code>, <code>\r</code>)</li><li><code>+</code>/<code>-</code> 부호 한 개 처리</li><li>숫자가 아닌 문자를 만나면 중단</li><li>숫자 없으면 0</li></ul>
-<details class="hint"><summary>💡 막히면 힌트 보기 (sbs_atoi)</summary><div class="hint-body">
-<pre><code class="language-c">while (is_space(str[i])) i++;
-if (str[i] == '+' || str[i] == '-')
+<details class="hint"><summary>💡 막히면 힌트 보기 (sbs_atoi 완성 코드)</summary><div class="hint-body">
+<pre><code class="language-c">#include "libsbs.h"
+
+static int	is_space(char c)
 {
-    if (str[i] == '-') sign = -1;
-    i++;
+	return (c == ' ' || c == '\t' || c == '\n'
+		|| c == '\v' || c == '\f' || c == '\r');
 }
-while (str[i] &gt;= '0' &amp;&amp; str[i] &lt;= '9')
+
+int	sbs_atoi(const char *str)
 {
-    result = result * 10 + (str[i] - '0');
-    i++;
-}
-return ((int)(result * sign));</code></pre>
+	int		i;
+	int		sign;
+	long	result;
+
+	i = 0;
+	sign = 1;
+	result = 0;
+	while (is_space(str[i]))
+		i++;
+	if (str[i] == '+' || str[i] == '-')
+	{
+		if (str[i] == '-')
+			sign = -1;
+		i++;
+	}
+	while (str[i] &gt;= '0' &amp;&amp; str[i] &lt;= '9')
+	{
+		result = result * 10 + (str[i] - '0');
+		i++;
+	}
+	return ((int)(result * sign));
+}</code></pre>
 </div></details>
 <p>엣지 케이스 (꼭 테스트):</p>
 <pre><code class="nohighlight">"42"→42  "-42"→-42  "  +7"→7  "12ab"→12
@@ -149,15 +232,53 @@ return ((int)(result * sign));</code></pre>
 <pre><code class="language-bash">$ valgrind --leak-check=full ./a.out</code></pre>
 <hr />
 <h2>제출 확인 사항</h2>
-<ul><li>[ ] <code>libsbs.h</code>에 2개 프로토타입 추가</li><li>[ ] <code>sbs_strncmp.c</code> - n글자 비교, \0 종료, 부호 정확</li><li>[ ] <code>sbs_atoi.c</code> - 공백·부호·숫자 처리, 엣지 케이스</li><li>[ ] <code>&lt;string.h&gt;</code> 미사용</li><li>[ ] <code>bash grade.sh</code> → 2 / 2 통과</li></ul>
+<ul><li>[ ] <code>libsbs.h</code>에 2개 프로토타입 추가</li><li>[ ] <code>sbs_strncmp.c</code> - n글자 비교, \0 종료, 부호 정확</li><li>[ ] <code>sbs_atoi.c</code> - 공백·부호·숫자 처리, 엣지 케이스</li><li>[ ] <code>&lt;string.h&gt;</code> 미사용</li><li>[ ] <code>bash grade.sh</code> → 2 / 2 통과</li><li>[ ] (선택) 도전 과제 — <code>cmd_match.c</code> / <code>version_compare.c</code> / <code>calc_cli.c</code> / <code>sbs_atol.c</code>(BONUS 채점)</li></ul>
 <hr />
 <h2>더 생각해볼 거리</h2>
-<ol><li>strncmp가 <code>\0</code>에서 멈추는 이유는? (문자열은 \0이 끝)</li><li>atoi가 오버플로(범위 초과 숫자)를 만나면? (표준은 정의되지 않음 — 여기선 long으로 완화)</li><li>strncmp를 <code>char</code>로 비교하면 왜 부호가 뒤집힐까? (0x80 이상 바이트가 음수)</li></ol>
+<ol><li>strncmp가 <code>\0</code>에서 멈추는 이유는? (문자열은 \0이 끝)</li><li>atoi가 오버플로(범위 초과 숫자)를 만나면? (표준은 정의되지 않음 — 여기선 long으로 완화)</li><li>strncmp를 <code>char</code>로 비교하면 왜 부호가 뒤집힐까? (0x80 이상 바이트가 음수)</li><li><code>if (strncmp(a, b, n) == -1)</code>이 위험한 이유는? (반환값은 부호만 의미. 강의노트 2.5부)</li><li><code>atoi(itoa(n)) == n</code>은 항상 성립할까? (itoa는 11차시 — 서로 반대 방향 변환)</li></ol>
 <hr />
 <h2>도전 과제 (필수 3개를 마친 사람만)</h2>
 <p>시간이 남으면 아래 순서대로 도전하세요. 정답 예시는 이 페이지 맨 아래 "정답 코드"에서 확인할 수 있습니다.</p>
 <blockquote>스켈레톤 코드는 <strong>TODO를 채우기 전에는 컴파일이 안 될 수 있습니다</strong> (<code>-Werror</code>가 미사용 변수 경고를 에러로 처리). TODO를 다 채운 뒤 컴파일하세요.</blockquote>
-<h3>도전 1: 미니 프로젝트 — 버전 비교기 (version_compare.c)</h3>
+<h3>도전 1: 미니 프로젝트 — 명령어 매처 (cmd_match.c)</h3>
+<p>사용자가 입력한 문자열이 <strong>어떤 명령어로 시작하는지</strong> <code>sbs_strncmp</code>로 판별하는 프로그램을 작성하세요. 강의노트 0부의 "명령어 파싱"(<code>strncmp(input, "exit", 4)</code>) 예시를 실제로 만들어 봅니다.</p>
+<p>요구사항:</p>
+<ul><li>명령어 목록: <code>"help"</code>, <code>"exit"</code>, <code>"list"</code>, <code>"load"</code> (배열로 준비, 끝은 <code>NULL</code>)</li><li>입력의 <strong>앞부분(prefix)</strong> 만 <code>sbs_strncmp(input, cmd, 명령어길이)</code>로 비교 — 명령어 뒤에 인자가 붙어도(<code>"list all files"</code>) 인식되게</li><li><strong>프리픽스 함정 주의</strong>: <code>"listen"</code>이 <code>"list"</code>로 잘못 인식되지 않게, 명령어 길이 위치의 글자가 공백이나 <code>\0</code>인지도 확인 (<code>"list"</code> 4글자가 같아도 그 <strong>다음 글자</strong>까지 봐야 완전한 단어)</li><li>이 폴더에는 <code>sbs_strlen</code>이 없으므로 <strong>간단한 길이 헬퍼를 직접 작성</strong>(13차시 word_finder와 동일한 5줄짜리)</li><li>못 맞으면 "알 수 없는 명령어" 출력</li><li>출력 예 (<code>input = "list all files"</code>): <code>명령어 인식: list</code></li></ul>
+<p>스켈레톤 (<code>cmd_match.c</code>로 저장 후 TODO를 채우세요):</p>
+<pre><code class="language-c">#include "libsbs.h"
+#include &lt;stdio.h&gt;
+
+static size_t	str_len(const char *s)
+{
+	size_t	i;
+
+	i = 0;
+	/* TODO: \0까지 세기 (13차시 word_finder와 동일) */
+	return (i);
+}
+
+int	main(void)
+{
+	char	*commands[] = {"help", "exit", "list", "load", NULL};
+	char	*input = "list all files";
+	size_t	len;
+	int		i;
+
+	i = 0;
+	while (commands[i])
+	{
+		len = str_len(commands[i]);
+		/* TODO 1: input이 commands[i]로 시작하는지 sbs_strncmp로 비교 */
+		/* TODO 2: 시작한다면 input[len]이 ' ' 또는 '\0'인지 확인 (프리픽스 함정 방지) */
+		/* TODO 3: 둘 다 참이면 "명령어 인식: ..." 출력 후 return 0 */
+		i++;
+	}
+	printf("알 수 없는 명령어\n");
+	return (0);
+}</code></pre>
+<p>컴파일·실행:</p>
+<pre><code class="language-bash">cc -Wall -Wextra -Werror -I. cmd_match.c sbs_strncmp.c -o cmd_match &amp;&amp; ./cmd_match</code></pre>
+<h3>도전 2: 미니 프로젝트 — 버전 비교기 (version_compare.c)</h3>
 <p><code>"1.2.3"</code>, <code>"1.10.0"</code> 같은 버전 문자열 두 개를 받아 어느 쪽이 더 높은 버전인지 출력하세요.</p>
 <p>요구사항:</p>
 <ul><li>단순히 <code>sbs_strncmp</code>로 전체 비교하면 안 됨! (<code>"1.2"</code> vs <code>"1.10"</code>을 문자 그대로 비교하면 <code>'2' &gt; '1'</code>이라 <code>1.2</code>가 더 크다고 잘못 나옴)</li><li><code>sbs_atoi</code>로 <code>.</code>로 구분된 각 부분을 숫자로 변환한 뒤 비교(메이저.마이너.패치 순서로)</li><li>출력 예: <code>1.2.3 &lt; 1.10.0</code></li></ul>
@@ -205,8 +326,8 @@ int	main(void)
 }</code></pre>
 <p>컴파일·실행:</p>
 <pre><code class="language-bash">cc -Wall -Wextra -Werror -I. version_compare.c sbs_atoi.c -o vcmp &amp;&amp; ./vcmp</code></pre>
-<h3>도전 2: 미니 프로젝트 — 커맨드라인 계산기 (calc_cli.c)</h3>
-<p><code>argc</code>/<code>argv</code>로 <code>숫자 연산자 숫자</code> 형태의 인자 3개를 받아 계산하는 프로그램을 작성하세요(예: <code>./calc 3 + 5</code>).</p>
+<h3>도전 3: 미니 프로젝트 — 커맨드라인 계산기 (calc_cli.c)</h3>
+<p><code>argc</code>/<code>argv</code>로 <code>숫자 연산자 숫자</code> 형태의 인자 3개를 받아 계산하는 프로그램을 작성하세요(예: <code>./calc 3 + 5</code>). <code>argc</code>/<code>argv</code>가 처음이라면 강의노트 <strong>0.5부</strong>를 먼저 읽으세요.</p>
 <p>요구사항:</p>
 <ul><li><code>argv[1]</code>, <code>argv[3]</code>을 <code>sbs_atoi</code>로 정수 변환</li><li><code>argv[2]</code>가 <code>"+"</code>, <code>"-"</code>, <code>"*"</code>, <code>"/"</code> 중 무엇인지 <code>sbs_strncmp</code>로 판별(<code>argv[2][1]</code>이 <code>\0</code>인지도 확인해 한 글자짜리 연산자만 허용)</li><li><code>argc != 4</code>면 사용법 출력 후 종료</li><li><code>0</code>으로 나누기 방지</li></ul>
 <p>스켈레톤 (<code>calc_cli.c</code>로 저장 후 TODO를 채우세요):</p>
@@ -230,7 +351,7 @@ int	main(int argc, char **argv)
 }</code></pre>
 <p>컴파일·실행:</p>
 <pre><code class="language-bash">cc -Wall -Wextra -Werror -I. calc_cli.c sbs_atoi.c sbs_strncmp.c -o calc &amp;&amp; ./calc 3 + 5</code></pre>
-<h3>도전 3: 심화 함수 — sbs_atol</h3>
+<h3>도전 4: 심화 함수 — sbs_atol</h3>
 <p><code>int</code> 범위를 넘는 큰 정수도 다루는 <code>sbs_atol</code>(문자열 → <code>long</code>)을 구현하세요. <a href="advanced.md">advanced.md</a>를 참고하세요. 힌트: <code>sbs_atoi</code>와 로직은 같고, <code>result</code>와 반환 타입만 <code>long</code>으로 바꿉니다.</p>
 <p>스켈레톤 (<code>sbs_atol.c</code>로 저장 후 TODO를 채우세요):</p>
 <pre><code class="language-c">#include "libsbs.h"
@@ -273,7 +394,7 @@ long	sbs_atol(const char *str);
 <div class="answer"><div class="answer-head"><span class="answer-name">📄 <span class="file">calc_cli.c</span></span><button class="answer-toggle">정답 보기</button></div><div class="answer-body"><pre><code class="language-c">#include "libsbs.h"
 #include &lt;stdio.h&gt;
 
-/* 도전 2 예시 답안: argv로 "숫자 연산자 숫자" 형태를 받아 계산한다. */
+/* 도전 3 예시 답안: argv로 "숫자 연산자 숫자" 형태를 받아 계산한다. */
 int	main(int argc, char **argv)
 {
 	int	a;
@@ -309,6 +430,43 @@ int	main(int argc, char **argv)
 		return (1);
 	}
 	printf("%d %s %d = %d\n", a, argv[2], b, result);
+	return (0);
+}</code></pre></div></div>
+<div class="answer"><div class="answer-head"><span class="answer-name">📄 <span class="file">cmd_match.c</span></span><button class="answer-toggle">정답 보기</button></div><div class="answer-body"><pre><code class="language-c">#include "libsbs.h"
+#include &lt;stdio.h&gt;
+
+/* 도전 1 예시 답안: 입력이 어떤 명령어로 시작하는지 sbs_strncmp 프리픽스 비교로 판별한다. */
+static size_t	str_len(const char *s)
+{
+	size_t	i;
+
+	i = 0;
+	while (s[i])
+		i++;
+	return (i);
+}
+
+int	main(void)
+{
+	char	*commands[] = {"help", "exit", "list", "load", NULL};
+	char	*input;
+	size_t	len;
+	int		i;
+
+	input = "list all files";
+	i = 0;
+	while (commands[i])
+	{
+		len = str_len(commands[i]);
+		if (sbs_strncmp(input, commands[i], len) == 0
+			&amp;&amp; (input[len] == ' ' || input[len] == '\0'))
+		{
+			printf("명령어 인식: %s\n", commands[i]);
+			return (0);
+		}
+		i++;
+	}
+	printf("알 수 없는 명령어\n");
 	return (0);
 }</code></pre></div></div>
 <div class="answer"><div class="answer-head"><span class="answer-name">📄 <span class="file">sbs_atoi.c</span></span><button class="answer-toggle">정답 보기</button></div><div class="answer-body"><pre><code class="language-c">#include "libsbs.h"
@@ -393,7 +551,7 @@ int	sbs_strncmp(const char *s1, const char *s2, size_t n)
 <div class="answer"><div class="answer-head"><span class="answer-name">📄 <span class="file">version_compare.c</span></span><button class="answer-toggle">정답 보기</button></div><div class="answer-body"><pre><code class="language-c">#include "libsbs.h"
 #include &lt;stdio.h&gt;
 
-/* 도전 1 예시 답안: '.'로 구분된 버전 문자열을 부분별로 sbs_atoi 변환해 비교한다. */
+/* 도전 2 예시 답안: '.'로 구분된 버전 문자열을 부분별로 sbs_atoi 변환해 비교한다. */
 static int	next_part(const char *s, int *idx)
 {
 	int	start;
