@@ -26,7 +26,6 @@
     </header>
     <main class="wrap">
       <article class="md">
-<h1>10차시 강의 노트 - 메모리 함수 I</h1>
 <p>이번 차시부터 <strong>메모리를 직접 다루는</strong> 함수를 만듭니다. 9차시 문자 함수는 글자 하나를 다뤘다면, 메모리 함수는 <strong>바이트 덩어리</strong>(여러 칸의 메모리)를 한꺼번에 채우고·복사하고·찾고·비교합니다. 핵심 도구는 <code>void *</code>와 <code>unsigned char *</code> 두 가지입니다.</p>
 <h2>학습 목표</h2>
 <ol><li><code>void *</code>(범용 포인터)가 무엇이고 왜 쓰는지 설명할 수 있다.</li><li><code>unsigned char *</code>로 캐스팅해 메모리를 바이트 단위로 다룰 수 있다.</li><li>채우기·복사 함수 <code>sbs_memset</code>, <code>sbs_bzero</code>, <code>sbs_memcpy</code>, <code>sbs_memccpy</code>를 구현한다.</li><li>찾기·비교 함수 <code>sbs_memchr</code>, <code>sbs_memcmp</code>를 구현하고 반환값 규칙을 설명한다.</li></ol>
@@ -176,7 +175,6 @@ $ bash grade.sh -v     # 실패 상세</code></pre>
 <h2>다음 차시 예고</h2>
 <p>11차시에서는 <strong>동적 메모리(malloc)</strong> 를 배웁니다. 스택과 힙의 차이, <code>malloc</code>/<code>free</code>로 실행 중에 메모리를 빌리고 돌려주는 법, 그리고 <code>malloc</code>으로 <strong>새 문자열을 만드는</strong> 함수(<code>sbs_calloc</code>, <code>sbs_substr</code>, <code>sbs_strjoin</code>, <code>sbs_itoa</code>)를 구현합니다. 오늘 만든 <code>libsbs.h</code>에 함수를 계속 추가합니다.</p>
 <div class="section-split"><h2>실습</h2><p>아래 문제를 직접 풀어본 뒤, 맨 아래 정답 코드로 확인하세요.</p></div>
-<h1>10차시 실습 - 메모리 함수 I</h1>
 <h2>실습 목표</h2>
 <ul><li><code>void *</code>를 <code>unsigned char *</code>로 캐스팅해 바이트 단위로 다룬다.</li><li><code>sbs_memset</code>, <code>sbs_bzero</code>, <code>sbs_memcpy</code>, <code>sbs_memccpy</code>를 구현한다.</li><li>심화: <code>sbs_memchr</code>(탐색), <code>sbs_memcmp</code>(비교)까지 구현한다.</li><li><code>bash grade.sh</code>로 표준 함수와 비교해 자동 채점한다.</li></ul>
 <hr />

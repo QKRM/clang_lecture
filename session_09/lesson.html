@@ -26,7 +26,6 @@
     </header>
     <main class="wrap">
       <article class="md">
-<h1>9차시 강의 노트 - 헤더 파일 + 문자 분류 함수 구현</h1>
 <p>오늘부터 <strong>libsbs</strong>를 직접 만듭니다. 표준 C 라이브러리에 있는 함수들(<code>isalpha</code>, <code>toupper</code> 등)을 우리 손으로 똑같이 구현합니다. 그 전에, 함수가 많아질 때 코드를 정리하는 도구인 <strong>헤더 파일</strong>을 먼저 배웁니다.</p>
 <h2>학습 목표</h2>
 <ol><li>전처리기(<code>#</code>)가 컴파일 전에 무엇을 하는지 설명할 수 있다.</li><li>헤더 파일(<code>.h</code>)의 역할과 "선언/정의 분리"를 설명할 수 있다.</li><li><code>#include "libsbs.h"</code>로 직접 만든 헤더를 포함하고 <code>&lt;&gt;</code>와 <code>""</code>의 차이를 안다.</li><li>인클루드 가드(<code>#ifndef / #define / #endif</code>)가 왜 필요하고 어떻게 동작하는지 안다.</li><li>ASCII 범위 판별로 문자 분류·변환 함수 7개를 구현할 수 있다.</li></ol>
@@ -205,7 +204,6 @@ $ bash grade.sh -v     # 실패 케이스 상세 출력</code></pre>
 <h2>다음 차시 예고</h2>
 <p>10차시에서는 메모리 함수 I(<code>sbs_memset</code>, <code>sbs_bzero</code>, <code>sbs_memcpy</code>, <code>sbs_memccpy</code>)을 구현합니다. <code>void *</code>(범용 포인터)의 개념과 바이트 단위 복사 원리를 다루고, 오늘 만든 <code>libsbs.h</code>에 함수를 계속 추가합니다. 채점 스크립트도 같은 방식으로 사용합니다.</p>
 <div class="section-split"><h2>실습</h2><p>아래 문제를 직접 풀어본 뒤, 맨 아래 정답 코드로 확인하세요.</p></div>
-<h1>9차시 실습 - 헤더 파일 + 문자 분류 함수 구현</h1>
 <h2>실습 목표</h2>
 <ul><li><code>libsbs.h</code>를 직접 작성한다 (인클루드 가드 + 7개 프로토타입).</li><li>문자 분류·변환 함수 7개를 구현한다.</li><li><code>bash grade.sh</code>로 표준 함수와 비교해 자동 채점한다.</li></ul>
 <blockquote><strong>표준 헤더 우회 금지</strong>: <code>&lt;ctype.h&gt;</code>를 include하거나 표준 <code>isalpha</code> 등을 호출하면 안 됩니다. 직접 구현해야 합니다. 채점 스크립트가 검사합니다.</blockquote>
