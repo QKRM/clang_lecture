@@ -43,6 +43,11 @@ int	main(void)
 	while (1)
 	{
 		printf("minishell$ ");
+		/*
+		 * 프롬프트에는 개행이 없다. stdout은 줄 단위로 모았다가 내보내므로,
+		 * 개행이 올 때까지 화면에 안 나올 수 있다. fflush로 지금 당장 내보낸다.
+		 */
+		fflush(stdout);
 		/* fgets가 NULL → 입력이 끝났다는 뜻 (Ctrl+D) */
 		if (fgets(line, BUF_SIZE, stdin) == NULL)
 		{

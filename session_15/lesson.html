@@ -40,7 +40,7 @@
 <h3>지금까지 우리가 하던 일</h3>
 <p>9차시부터 컴파일할 때마다 이렇게 쳤습니다.</p>
 <pre><code class="language-bash">$ cc -Wall -Wextra -Werror sbs_strlen.c sbs_strlcpy.c sbs_strlcat.c tests/test_strlen.c -o run</code></pre>
-<p>함수가 4개일 땐 참을 만합니다. 그런데 16차시에는 함수가 <strong>30개가 넘습니다.</strong> 매번 30개 파일 이름을 손으로 칠 건가요? 오타 하나 나면 또 처음부터.</p>
+<p>함수가 4개일 땐 참을 만합니다. 그런데 9~14차시에 만든 함수를 다 합치면 <strong>30개가 넘습니다.</strong> 매번 30개 파일 이름을 손으로 칠 건가요? 오타 하나 나면 또 처음부터.</p>
 <h3>Makefile이 해결하는 3가지</h3>
 <p><strong>① 긴 명령어를 이름 하나로 줄인다</strong></p>
 <pre><code class="language-bash">$ make          # 위의 그 긴 cc 명령을 대신 실행</code></pre>
@@ -173,7 +173,11 @@ make: 'clean' is up to date.     # ← .o가 안 지워짐!</code></pre>
   대문자 : C99
   알파벳 : 아니오</code></pre>
 <p>명령줄 인자로 받은 단어마다 길이·대문자·알파벳 여부를 출력합니다. 쓰는 함수는 전부 <code>sbs_</code> 버전입니다.</p>
-<h3>5.2 코드</h3>
+<h3>5.2 컴파일은 어떻게?</h3>
+<pre><code class="language-bash">$ cc -Wall -Wextra -Werror main.c -L. -lsbs -o wordinfo   # 손으로 직접
+$ make wordinfo                                            # Makefile로 (오늘 만들 것)</code></pre>
+<p>두 줄은 <strong>똑같은 일</strong>을 합니다. 위를 Makefile에 적어두는 게 아래입니다. (<code>libsbs.a</code>가 먼저 있어야 하니 <code>make</code>부터 돌리세요.)</p>
+<h3>5.3 코드</h3>
 <pre><code class="language-c">#include &lt;stdio.h&gt;
 #include &lt;stdlib.h&gt;
 #include "libsbs.h"
@@ -183,9 +187,23 @@ static void print_upper(const char *s)
     int i = 0;
     while (s[i])
     {
-        printf("%c", sbs_toupper((unsigned char)s[i]));
+        printf("%c", sbs_toupper((unsigned char)s[i]));  /* 9차시 toupper */
         i++;
     }
+}
+
+static int all_alpha(const char *s)
+{
+    int i = 0;
+    if (s[0] == '\0')
+        return (0);
+    while (s[i])
+    {
+        if (!sbs_isalpha((unsigned char)s[i]))           /* 9차시 isalpha */
+            return (0);
+        i++;
+    }
+    return (1);
 }
 
 int main(int argc, char **argv)
@@ -205,16 +223,20 @@ int main(int argc, char **argv)
         if (copy == NULL)
             return (1);
         printf("[%s]\n", copy);
-        printf("  길이   : %zu\n", sbs_strlen(copy));   /* 12차시 */
+        printf("  길이   : %zu\n", sbs_strlen(copy));   /* 12차시 strlen */
         printf("  대문자 : ");
-        print_upper(copy);                              /* 9차시 toupper */
+        print_upper(copy);
         printf("\n");
+        if (all_alpha(copy))
+            printf("  알파벳 : 예\n");
+        else
+            printf("  알파벳 : 아니오\n");
         free(copy);                     /* strdup은 malloc → free 필수 */
         i++;
     }
     return (0);
 }</code></pre>
-<h3>5.3 여기서 짚을 점</h3>
+<h3>5.4 여기서 짚을 점</h3>
 <p><strong>① <code>main.c</code>는 라이브러리에 넣지 않는다</strong></p>
 <pre><code class="language-makefile">SRCS = sbs_isalpha.c sbs_toupper.c ...    # main.c 없음!</code></pre>
 <p>라이브러리는 <strong>부품 모음</strong>입니다. <code>main</code>은 프로그램의 시작점이라 부품이 아닙니다. 라이브러리에 <code>main</code>이 들어 있으면 나중에 그 라이브러리를 쓰는 다른 프로그램과 <code>main</code>이 충돌합니다.</p>
@@ -224,6 +246,14 @@ int main(int argc, char **argv)
 <pre><code class="language-makefile">$(WORDINFO): main.o $(NAME)
 	$(CC) $(CFLAGS) main.o -L. -lsbs -o $(WORDINFO)</code></pre>
 <p>의존성에 <code>$(NAME)</code>을 넣은 게 핵심입니다. "wordinfo를 만들려면 libsbs.a가 먼저 있어야 한다"고 알려주면, make가 알아서 라이브러리부터 만듭니다.</p>
+<p><strong>④ clean / fclean도 같이 늘려야 한다</strong></p>
+<p>4부에서 배운 <code>clean</code>은 <code>$(OBJS)</code>만 지웠습니다. 그런데 이제 <code>main.o</code>·<code>minishell.o</code>와 실행 파일까지 생기죠. 이것들도 치워야 합니다.</p>
+<pre><code class="language-makefile">clean:
+	$(RM) $(OBJS) main.o minishell.o                  # 프로그램 .o도
+
+fclean: clean
+	$(RM) $(NAME) $(WORDINFO) $(MINISHELL)            # 실행 파일도</code></pre>
+<blockquote><code>main.o</code>가 <code>$(OBJS)</code>에 없는 이유를 생각해보세요. <code>OBJS</code>는 <code>SRCS</code>에서 나오고, <code>SRCS</code>에는 <code>main.c</code>가 없으니까요(위 ①). 그래서 손으로 따로 적어줘야 합니다.</blockquote>
 <hr />
 <h2>6부: 16차시 예고 — 미니셸의 뼈대</h2>
 <p>16차시에는 <strong>셸(shell)</strong> 을 직접 만듭니다. 오늘은 그 <strong>껍데기</strong>까지만 만들어 둡니다.</p>
@@ -269,6 +299,7 @@ int main(void)
     while (1)
     {
         printf("minishell$ ");                      /* 1. 프롬프트 */
+        fflush(stdout);                             /* 프롬프트를 지금 화면에! */
         if (fgets(line, BUF_SIZE, stdin) == NULL)   /* 2. 읽기 */
         {
             printf("\n");
@@ -301,6 +332,8 @@ $</code></pre>
 <p>표준 입력에서 최대 <code>BUF_SIZE - 1</code>글자를 읽어 <code>line</code>에 담고 <code>\0</code>을 붙입니다. <code>scanf("%s")</code>와 달리 <strong>공백을 포함한 한 줄 전체</strong>를 읽고, <strong>버퍼 크기를 받으므로 오버플로우가 안 납니다.</strong> 12차시에서 배운 "크기를 받는 안전한 함수"의 또 다른 예입니다.</p>
 <p><strong><code>fgets</code>가 NULL을 반환하는 때</strong></p>
 <p>입력이 끝났을 때입니다. 키보드로는 <strong>Ctrl+D</strong>를 누르면 "더 이상 입력 없음(EOF)" 신호가 갑니다. 이걸 처리 안 하면 Ctrl+D를 눌렀을 때 무한 루프에 빠집니다.</p>
+<p><strong><code>fflush(stdout)</code> — 프롬프트가 안 보일 때</strong></p>
+<p><code>printf</code>로 찍은 글자는 바로 화면에 안 나오고 잠시 <strong>버퍼에 모입니다.</strong> 보통 개행(<code>\n</code>)을 만나면 한꺼번에 내보냅니다. 그런데 프롬프트 <code>"minishell$ "</code>에는 개행이 없죠. 그래서 그냥 두면 프롬프트가 안 뜬 채로 입력을 기다리는 것처럼 보입니다. <code>fflush(stdout)</code>은 "버퍼에 든 걸 지금 당장 내보내라"는 명령입니다. 프롬프트를 찍은 직후에 꼭 넣어주세요.</p>
 <p><strong><code>while (1)</code> + <code>break</code></strong></p>
 <p>셸은 사용자가 끝내라고 할 때까지 도는 게 정상입니다. 무한 루프는 여기선 버그가 아니라 설계입니다.</p>
 <h3>6.7 16차시 맛보기 — 알맹이는 이렇게 생겼다</h3>
@@ -318,7 +351,7 @@ else
     printf("minishell: %s: command not found\n", args[0]);
 
 free_args(args);                          /* split이 malloc했으니 해제 */</code></pre>
-<p>보이나요? <strong>전부 우리가 만든 함수</strong>입니다. 문자열 쪼개기(11차시 malloc + 12차시 strlen), 명령 비교(strcmp), 메모리 해제(free). 16차시는 새로운 걸 배우는 시간이 아니라, <strong>지금까지 만든 걸 조립하는 시간</strong>입니다.</p>
+<p>보이나요? 새 문법이 하나도 없습니다. 명령 비교는 이미 만든 <code>sbs_strcmp</code>, 메모리 해제는 <code>free</code>. 유일하게 새로 만들 게 <code>sbs_split</code>인데, 그것도 11차시 <code>malloc</code>·<code>substr</code>와 12차시 <code>strlen</code>을 조합하면 나옵니다. 16차시는 새로운 걸 배우는 시간이 아니라, <strong>지금까지 만든 걸 조립하는 시간</strong>입니다.</p>
 <blockquote>미리 생각해보세요: <code>"echo   hello   world"</code> 처럼 공백이 여러 개면 어떻게 쪼개야 할까요? 빈 칸은 건너뛰어야겠죠. 이게 16차시 split의 핵심 난제입니다.</blockquote>
 <hr />
 <h2>7부: 채점</h2>
@@ -334,7 +367,9 @@ free_args(args);                          /* split이 malloc했으니 해제 */<
 <ol><li><code>make</code>로 <code>libsbs.a</code>가 생기는가</li><li>아카이브에 <code>.o</code>가 들어있는가</li><li>링크해서 함수가 동작하는가(<code>-lsbs</code>)</li><li><code>clean</code>/<code>fclean</code>/<code>re</code>가 제대로 동작하는가</li><li><code>make wordinfo</code>가 빌드되고 올바른 결과를 내는가</li><li><code>make minishell</code>이 빌드되고 입력/종료가 동작하는가</li></ol>
 <hr />
 <h2>핵심 정리</h2>
-<ol><li>Makefile은 <strong>조립 설명서</strong>. 타겟·의존성·레시피, 레시피는 <strong>탭</strong> 들여쓰기</li><li>make는 <strong>타임스탬프</strong>를 비교해 바뀐 파일만 다시 컴파일</li><li>변수와 <code>$(SRCS:.c=.o)</code>로 중복 제거 — 파일 추가는 SRCS 한 줄만</li><li>패턴 규칙 <code>%.o: %.c</code>, 자동 변수 <code>$&lt;</code>(소스) <code>$@</code>(타겟)</li><li><code>ar rcs libsbs.a *.o</code>로 정적 라이브러리 생성, 이름은 반드시 <code>lib***.a</code></li><li><code>all/clean/fclean/re</code> + <code>.PHONY</code>(동작은 파일이 아니다)</li><li><code>-L. -lsbs</code>로 링크, <strong>라이브러리는 소스 뒤에</strong> 써야 함</li><li><code>main.c</code>는 라이브러리에 넣지 않는다 (부품 아님)</li><li>셸 = <strong>REPL 루프</strong>(프롬프트 → 읽기 → 해석·실행 → 반복)</li><li>껍데기에서도 <code>sbs_strlen</code>(개행 제거) · <code>sbs_strcmp</code>("exit" 비교)가 이미 일한다</li></ol>
+<ol><li>Makefile은 <strong>조립 설명서</strong>. 타겟·의존성·레시피, 레시피는 <strong>탭</strong> 들여쓰기</li><li>make는 <strong>타임스탬프</strong>를 비교해 바뀐 파일만 다시 컴파일</li><li>변수와 <code>$(SRCS:.c=.o)</code>로 중복 제거 — 파일 추가는 SRCS 한 줄만</li><li>패턴 규칙 <code>%.o: %.c</code>, 자동 변수 <code>$&lt;</code>(소스) <code>$@</code>(타겟)</li><li><code>ar rcs $(NAME) $(OBJS)</code>로 정적 라이브러리 생성, 이름은 반드시 <code>lib***.a</code></li></ol>
+<p>   (<code>*.o</code>로 뭉뚱그리면 <code>main.o</code>까지 딸려 들어간다 — 8번 참고)</p>
+<ol><li><code>all/clean/fclean/re</code> + <code>.PHONY</code>(동작은 파일이 아니다)</li><li><code>-L. -lsbs</code>로 링크, <strong>라이브러리는 소스 뒤에</strong> 써야 함</li><li><code>main.c</code>는 라이브러리에 넣지 않는다 (부품 아님)</li><li>셸 = <strong>REPL 루프</strong>(프롬프트 → 읽기 → 해석·실행 → 반복)</li><li>껍데기에서도 <code>sbs_strlen</code>(개행 제거) · <code>sbs_strcmp</code>("exit" 비교)가 이미 일한다</li></ol>
 <hr />
 <h2>다음 차시 예고</h2>
 <p>16차시는 <strong>미니셸 완성</strong>입니다. 오늘 만든 껍데기의 3단계(해석·실행) 자리에 진짜 명령 해석기를 넣습니다. 입력을 단어로 쪼개고(<code>split</code>), 명령 이름을 비교하고(<code>strcmp</code>), <code>echo</code>·<code>pwd</code>·<code>help</code>·<code>exit</code> 같은 내장 명령을 직접 구현합니다. 9~14차시에 만든 함수들이 총출동하는, 이 과정의 마지막 조립입니다.</p>
@@ -671,6 +706,11 @@ int	main(void)
 	while (1)
 	{
 		printf("minishell$ ");
+		/*
+		 * 프롬프트에는 개행이 없다. stdout은 줄 단위로 모았다가 내보내므로,
+		 * 개행이 올 때까지 화면에 안 나올 수 있다. fflush로 지금 당장 내보낸다.
+		 */
+		fflush(stdout);
 		/* fgets가 NULL → 입력이 끝났다는 뜻 (Ctrl+D) */
 		if (fgets(line, BUF_SIZE, stdin) == NULL)
 		{

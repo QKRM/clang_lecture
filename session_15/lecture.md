@@ -27,7 +27,7 @@
 $ cc -Wall -Wextra -Werror sbs_strlen.c sbs_strlcpy.c sbs_strlcat.c tests/test_strlen.c -o run
 ```
 
-함수가 4개일 땐 참을 만합니다. 그런데 16차시에는 함수가 **30개가 넘습니다.** 매번 30개 파일 이름을 손으로 칠 건가요? 오타 하나 나면 또 처음부터.
+함수가 4개일 땐 참을 만합니다. 그런데 9~14차시에 만든 함수를 다 합치면 **30개가 넘습니다.** 매번 30개 파일 이름을 손으로 칠 건가요? 오타 하나 나면 또 처음부터.
 
 ### Makefile이 해결하는 3가지
 
@@ -306,7 +306,16 @@ $ ./wordinfo hello C99
 
 명령줄 인자로 받은 단어마다 길이·대문자·알파벳 여부를 출력합니다. 쓰는 함수는 전부 `sbs_` 버전입니다.
 
-### 5.2 코드
+### 5.2 컴파일은 어떻게?
+
+```bash
+$ cc -Wall -Wextra -Werror main.c -L. -lsbs -o wordinfo   # 손으로 직접
+$ make wordinfo                                            # Makefile로 (오늘 만들 것)
+```
+
+두 줄은 **똑같은 일**을 합니다. 위를 Makefile에 적어두는 게 아래입니다. (`libsbs.a`가 먼저 있어야 하니 `make`부터 돌리세요.)
+
+### 5.3 코드
 
 ```c
 #include <stdio.h>
@@ -318,9 +327,23 @@ static void print_upper(const char *s)
     int i = 0;
     while (s[i])
     {
-        printf("%c", sbs_toupper((unsigned char)s[i]));
+        printf("%c", sbs_toupper((unsigned char)s[i]));  /* 9차시 toupper */
         i++;
     }
+}
+
+static int all_alpha(const char *s)
+{
+    int i = 0;
+    if (s[0] == '\0')
+        return (0);
+    while (s[i])
+    {
+        if (!sbs_isalpha((unsigned char)s[i]))           /* 9차시 isalpha */
+            return (0);
+        i++;
+    }
+    return (1);
 }
 
 int main(int argc, char **argv)
@@ -340,10 +363,14 @@ int main(int argc, char **argv)
         if (copy == NULL)
             return (1);
         printf("[%s]\n", copy);
-        printf("  길이   : %zu\n", sbs_strlen(copy));   /* 12차시 */
+        printf("  길이   : %zu\n", sbs_strlen(copy));   /* 12차시 strlen */
         printf("  대문자 : ");
-        print_upper(copy);                              /* 9차시 toupper */
+        print_upper(copy);
         printf("\n");
+        if (all_alpha(copy))
+            printf("  알파벳 : 예\n");
+        else
+            printf("  알파벳 : 아니오\n");
         free(copy);                     /* strdup은 malloc → free 필수 */
         i++;
     }
@@ -351,7 +378,7 @@ int main(int argc, char **argv)
 }
 ```
 
-### 5.3 여기서 짚을 점
+### 5.4 여기서 짚을 점
 
 **① `main.c`는 라이브러리에 넣지 않는다**
 
@@ -373,6 +400,20 @@ $(WORDINFO): main.o $(NAME)
 ```
 
 의존성에 `$(NAME)`을 넣은 게 핵심입니다. "wordinfo를 만들려면 libsbs.a가 먼저 있어야 한다"고 알려주면, make가 알아서 라이브러리부터 만듭니다.
+
+**④ clean / fclean도 같이 늘려야 한다**
+
+4부에서 배운 `clean`은 `$(OBJS)`만 지웠습니다. 그런데 이제 `main.o`·`minishell.o`와 실행 파일까지 생기죠. 이것들도 치워야 합니다.
+
+```makefile
+clean:
+	$(RM) $(OBJS) main.o minishell.o                  # 프로그램 .o도
+
+fclean: clean
+	$(RM) $(NAME) $(WORDINFO) $(MINISHELL)            # 실행 파일도
+```
+
+> `main.o`가 `$(OBJS)`에 없는 이유를 생각해보세요. `OBJS`는 `SRCS`에서 나오고, `SRCS`에는 `main.c`가 없으니까요(위 ①). 그래서 손으로 따로 적어줘야 합니다.
 
 ---
 
@@ -445,6 +486,7 @@ int main(void)
     while (1)
     {
         printf("minishell$ ");                      /* 1. 프롬프트 */
+        fflush(stdout);                             /* 프롬프트를 지금 화면에! */
         if (fgets(line, BUF_SIZE, stdin) == NULL)   /* 2. 읽기 */
         {
             printf("\n");
@@ -493,6 +535,10 @@ $
 
 입력이 끝났을 때입니다. 키보드로는 **Ctrl+D**를 누르면 "더 이상 입력 없음(EOF)" 신호가 갑니다. 이걸 처리 안 하면 Ctrl+D를 눌렀을 때 무한 루프에 빠집니다.
 
+**`fflush(stdout)` — 프롬프트가 안 보일 때**
+
+`printf`로 찍은 글자는 바로 화면에 안 나오고 잠시 **버퍼에 모입니다.** 보통 개행(`\n`)을 만나면 한꺼번에 내보냅니다. 그런데 프롬프트 `"minishell$ "`에는 개행이 없죠. 그래서 그냥 두면 프롬프트가 안 뜬 채로 입력을 기다리는 것처럼 보입니다. `fflush(stdout)`은 "버퍼에 든 걸 지금 당장 내보내라"는 명령입니다. 프롬프트를 찍은 직후에 꼭 넣어주세요.
+
 **`while (1)` + `break`**
 
 셸은 사용자가 끝내라고 할 때까지 도는 게 정상입니다. 무한 루프는 여기선 버그가 아니라 설계입니다.
@@ -517,7 +563,7 @@ else
 free_args(args);                          /* split이 malloc했으니 해제 */
 ```
 
-보이나요? **전부 우리가 만든 함수**입니다. 문자열 쪼개기(11차시 malloc + 12차시 strlen), 명령 비교(strcmp), 메모리 해제(free). 16차시는 새로운 걸 배우는 시간이 아니라, **지금까지 만든 걸 조립하는 시간**입니다.
+보이나요? 새 문법이 하나도 없습니다. 명령 비교는 이미 만든 `sbs_strcmp`, 메모리 해제는 `free`. 유일하게 새로 만들 게 `sbs_split`인데, 그것도 11차시 `malloc`·`substr`와 12차시 `strlen`을 조합하면 나옵니다. 16차시는 새로운 걸 배우는 시간이 아니라, **지금까지 만든 걸 조립하는 시간**입니다.
 
 > 미리 생각해보세요: `"echo   hello   world"` 처럼 공백이 여러 개면 어떻게 쪼개야 할까요? 빈 칸은 건너뛰어야겠죠. 이게 16차시 split의 핵심 난제입니다.
 
@@ -552,7 +598,8 @@ $ bash grade.sh
 2. make는 **타임스탬프**를 비교해 바뀐 파일만 다시 컴파일
 3. 변수와 `$(SRCS:.c=.o)`로 중복 제거 — 파일 추가는 SRCS 한 줄만
 4. 패턴 규칙 `%.o: %.c`, 자동 변수 `$<`(소스) `$@`(타겟)
-5. `ar rcs libsbs.a *.o`로 정적 라이브러리 생성, 이름은 반드시 `lib***.a`
+5. `ar rcs $(NAME) $(OBJS)`로 정적 라이브러리 생성, 이름은 반드시 `lib***.a`
+   (`*.o`로 뭉뚱그리면 `main.o`까지 딸려 들어간다 — 8번 참고)
 6. `all/clean/fclean/re` + `.PHONY`(동작은 파일이 아니다)
 7. `-L. -lsbs`로 링크, **라이브러리는 소스 뒤에** 써야 함
 8. `main.c`는 라이브러리에 넣지 않는다 (부품 아님)
