@@ -1,94 +1,125 @@
-# 16차시: libsbs 종합 프로젝트 + 코드 리뷰
+# 16차시: 종합 프로젝트 — 미니셸 만들기
 
 ## 학습 목표
 
-1. 32개 함수를 libsbs로 통합
-2. 통합 Makefile 완성
-3. libsbs.h 정리
-4. 동료 코드 리뷰
+1. 셸 껍데기(REPL)에 명령 해석·실행 채우기
+2. `sbs_split`으로 입력을 단어 배열로 쪼개기
+3. echo/upper/len/help/exit 내장 명령 구현
+4. libsbs 전체를 링크해 minishell 완성
+5. `char **` 메모리 구조와 해제
 
 ---
 
 ## 핵심 개념
 
-### 1. 32개 함수 통합
+### 1. 셸의 알맹이 3단계
 
-| 분류 | 개수 | 차시 |
-|------|------|------|
-| 문자 분류/변환 | 7 | 9 |
-| 메모리 함수 | 6 | 10 |
-| 동적 메모리(malloc) | 5 | 11 |
-| 문자열 함수 | 14 | 12~14 |
+```
+"echo hi"  ──split──▶  {"echo","hi",NULL}  ──strcmp──▶  builtin_echo
+   입력          쪼개기          단어 배열         판별          실행
+```
 
-> 한 폴더로 모으고 libsbs.h에 프로토타입 정리(차시별 주석).
+15차시 껍데기(REPL)의 "그냥 되돌려 출력" 자리를 이 3단계로 교체.
 
 ---
 
-### 2. 통합 Makefile
+### 2. sbs_split — char ** 반환
+
+```c
+char **sbs_split(const char *s, char c);
+// "echo hi" → {"echo", "hi", NULL}
+```
+
+- 배열 끝은 **NULL**, 크기는 **단어 수 + 1**
+- 연속·앞뒤 구분자는 무시(빈 단어 안 만듦)
+- 2단계: ① 단어 세기 → ② `sbs_substr`로 잘라 복사
+
+```c
+words = count_words(s, c);
+arr = malloc(sizeof(char *) * (words + 1));   // +1 = NULL 자리
+// 단어마다: arr[k] = sbs_substr(s, start, i - start);
+arr[k] = NULL;
+```
+
+---
+
+### 3. char ** 해제 — 순서가 핵심
+
+```c
+while (arr[i]) free(arr[i++]);   // ① 단어부터
+free(arr);                        // ② 배열은 마지막
+```
+
+> 배열을 먼저 free하면 단어 주소를 잃어 누수. **안쪽→바깥쪽.**
+
+---
+
+### 4. 디스패치 (run_command)
+
+```c
+if (args[0] == NULL) return (0);          // 빈 줄 먼저! (NULL 역참조 방지)
+if (sbs_strcmp(args[0], "exit") == 0) return (1);
+if (sbs_strcmp(args[0], "echo") == 0) builtin_echo(args);
+else if ...
+else printf("minishell: %s: command not found\n", args[0]);
+```
+
+---
+
+### 5. 내장 명령 (전부 libsbs 조합)
+
+| 명령 | 쓰는 함수 |
+|------|-----------|
+| echo | 인자 이어 출력 |
+| upper | 9차시 sbs_toupper |
+| len | 12차시 sbs_strlen |
+| exit | 12차시 sbs_strcmp |
+
+---
+
+### 6. 메인 루프 (15차시 + 3줄)
+
+```c
+printf("minishell$ "); fflush(stdout);       // 15차시
+if (fgets(line, BUF_SIZE, stdin) == NULL) break;
+strip_newline(line);
+args = sbs_split(line, ' ');                 // +
+if (args == NULL) break;                     // +
+done = run_command(args);                    // +
+sbs_free_split(args);                        // + (누수 방지!)
+```
+
+---
+
+### 7. 빌드
 
 ```makefile
-SRCS = sbs_isalpha.c ... sbs_strdup.c   # 32개
-OBJS = $(SRCS:.c=.o)
-$(NAME): $(OBJS)
-	ar rcs $(NAME) $(OBJS)
-```
-
-```bash
-make            # libsbs.a
-ar t libsbs.a   # 32개 확인
-```
-
----
-
-### 3. 코드 리뷰 체크리스트
-
-- **정확성**: 엣지 케이스, 반환값, \0, 버퍼 범위
-- **메모리**: NULL 검사, free, 오버플로, const
-- **스타일**: 들여쓰기, snake_case, 경고 0
-- **재사용**: 작은 함수 조합(isalnum→isalpha+isdigit 등)
-
----
-
-### 4. 리뷰 코멘트 원칙
-
-1. 코드를 리뷰(사람 X)
-2. 질문형
-3. 좋은 점도
-4. 구체적
-5. 제안형
-
----
-
-### 5. 함수 재사용 관계
-
-```
-isalnum  → isalpha + isdigit
-bzero    → memset
-calloc   → memset
-strlcpy  → strlen
-strlcat  → strlen
-strdup   → strlen
+SRCS = sbs_*.c ... sbs_split.c sbs_free_split.c   # minishell.c는 제외!
+$(MINISHELL): minishell.o $(NAME)
+	$(CC) $(CFLAGS) minishell.o -L. -lsbs -o $(MINISHELL)
 ```
 
 ---
 
 ## 실행 전 체크리스트
 
-- [ ] sbs_*.c 32개 통합?
-- [ ] libsbs.h 전체 프로토타입?
-- [ ] make → libsbs.a 경고 없이?
-- [ ] test_all → ALL_OK?
-- [ ] 코드 리뷰 1회 이상?
-- [ ] `bash grade.sh` → 4/4?
+- [ ] sbs_split 끝에 NULL, 크기 단어수+1?
+- [ ] sbs_free_split 단어→배열 순서?
+- [ ] run_command가 args[0]==NULL 먼저 검사?
+- [ ] 메인 루프에서 sbs_free_split 호출?
+- [ ] minishell.c가 SRCS에 없나?
+- [ ] `bash grade.sh` → 5/5?
 
 ---
 
 ## 과정 완료
 
-9~16차시: 헤더 → 문자 함수 → 메모리 함수 → 문자열 함수 → Makefile → 통합.
-표준 라이브러리를 직접 구현하며 C의 본질(포인터·메모리·빌드)에 닿았다.
+9~16차시: 헤더 → 문자 함수 → 메모리 함수 → 동적 메모리 → 문자열 함수 → Makefile/라이브러리 → **미니셸**.
+표준 라이브러리를 직접 구현하고, 그것으로 동작하는 프로그램을 만들었다.
 
 **libsbs 과정 수료. 수고하셨습니다.**
+
+> 다음 단계: cd/pwd(chdir/getcwd), 외부 명령 실행(fork+execve).
 
 ---
 
@@ -96,8 +127,9 @@ strdup   → strlen
 
 | 증상 | 확인 사항 |
 |------|----------|
-| ar t가 32개 미만 | SRCS에 빠진 파일 |
-| 통합 테스트 FAIL | 해당 함수 -v로 점검 |
-| make 경고 | 개별 차시에서 -Werror 통과했는지 |
-| 링크 실패 | -L. -lsbs, libsbs.a 존재 |
-| 함수 충돌 | 중복 정의(같은 함수 2번) |
+| 빈 줄 입력 시 크래시 | run_command에서 args[0]==NULL 먼저 |
+| 메모리 누수(valgrind) | sbs_free_split 호출 빠짐 |
+| free 중 크래시 | 배열을 단어보다 먼저 free함 |
+| echo 공백 여러 개 | 정상 — split이 연속 구분자 무시 |
+| undefined reference: sbs_split | SRCS에 sbs_split.c 추가, -lsbs 순서 |
+| multiple definition of main | minishell.c를 SRCS에 넣었다 |

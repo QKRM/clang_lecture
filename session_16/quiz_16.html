@@ -20,7 +20,7 @@ NEITHER Mermaid JS NOR SVG were used anywhere in this output.
     <div class="bg-slate-900 border-b border-slate-800 px-6 py-4 flex flex-wrap items-center justify-between gap-4 sticky top-0 z-50">
       <div class="flex items-center gap-3">
         <span class="bg-amber-600 text-white text-xs font-bold px-2.5 py-1 rounded-full uppercase tracking-wider">Quiz 16 · Final</span>
-        <h1 class="text-sm md:text-base font-bold text-slate-200">16차시 퀴즈 — libsbs 종합 프로젝트</h1>
+        <h1 class="text-sm md:text-base font-bold text-slate-200">16차시 퀴즈 — 종합 프로젝트: 미니셸</h1>
       </div>
       <div class="flex items-center gap-2 bg-slate-800 px-3 py-1.5 rounded-lg border border-slate-700">
         <span class="text-xs text-slate-400">진행:</span>
@@ -31,7 +31,7 @@ NEITHER Mermaid JS NOR SVG were used anywhere in this output.
     <div class="max-w-3xl mx-auto p-4 md:p-8">
       <div id="intro" class="bg-slate-900 rounded-3xl p-8 border border-slate-800 mb-6">
         <h2 class="text-2xl font-black text-white mb-2">최종 마무리 퀴즈</h2>
-        <p class="text-slate-400 text-sm mb-4">통합, Makefile, 코드 리뷰, 전체 과정을 점검합니다. 총 15문항. 답을 고르면 바로 정답·해설이 표시됩니다.</p>
+        <p class="text-slate-400 text-sm mb-4">미니셸, sbs_split, char ** 메모리, 내장 명령, 전체 과정을 점검합니다. 총 15문항. 답을 고르면 바로 정답·해설이 표시됩니다.</p>
         <button onclick="startQuiz()" class="bg-cyan-600 hover:bg-cyan-700 text-white text-sm font-semibold px-5 py-2.5 rounded-lg transition-colors">퀴즈 시작</button>
       </div>
       <div id="quizArea" class="hidden space-y-4"></div>
@@ -45,21 +45,21 @@ NEITHER Mermaid JS NOR SVG were used anywhere in this output.
 
     <script>
       const QUESTIONS = [
-        { q: "libsbs에 통합되는 함수는 총 몇 개인가? (9~14차시)", opts: ["16개", "24개", "30개", "12개"], answer: 1, why: "문자 7 + 메모리 8 + 문자열 9 = 24개입니다." },
-        { q: "여러 .c를 다른 프로젝트에서 쓰려면 필요한 두 가지는?", opts: ["libsbs.a + libsbs.h", "Makefile만", "각 .c 파일 전부", "grade.sh"], answer: 0, why: "정적 라이브러리(libsbs.a)와 헤더(libsbs.h)만 있으면 링크해서 쓸 수 있습니다." },
-        { q: "통합 Makefile에서 24개 소스를 나열하는 변수는?", opts: ["OBJS", "SRCS", "NAME", "CFLAGS"], answer: 1, why: "SRCS에 모든 .c를 나열하고 OBJS = $(SRCS:.c=.o)로 변환합니다." },
-        { q: "libsbs.a에 24개 오브젝트가 들어있는지 확인하는 명령은?", opts: ["ls libsbs.a", "ar t libsbs.a", "make check", "cat"], answer: 1, why: "ar t libsbs.a로 아카이브 내부 목록을 확인합니다." },
-        { q: "코드 리뷰의 목적이 아닌 것은?", opts: ["버그를 미리 발견", "지식 공유", "코드 일관성", "동료를 비난"], answer: 3, why: "코드 리뷰는 코드를 개선하는 것이지 사람을 비난하는 게 아닙니다." },
-        { q: "좋은 리뷰 코멘트의 특징은?", opts: ["짧게 '버그'라고만", "질문형·구체적·존중", "지적만 나열", "익명으로"], answer: 1, why: "질문형으로, 구체적으로, 존중하며, 좋은 점도 언급하는 것이 좋은 리뷰입니다." },
-        { q: "리뷰 체크리스트의 '메모리 안전' 항목은?", opts: ["들여쓰기", "malloc 후 NULL 검사 / free", "함수 이름", "주석 분량"], answer: 1, why: "메모리 안전은 NULL 검사, free, 오버플로 방어, const 등을 봅니다." },
-        { q: "sbs_isalnum이 재사용하는 함수는?", opts: ["memset", "isalpha + isdigit", "strlen", "malloc"], answer: 1, why: "isalnum은 isalpha와 isdigit를 호출해 조합합니다." },
-        { q: "sbs_bzero가 재사용하는 함수는?", opts: ["strlen", "memset", "calloc", "memcpy"], answer: 1, why: "bzero는 memset(s, 0, n)을 호출하면 한 줄로 구현됩니다." },
-        { q: "sbs_strlcpy / strlcat / strdup이 공통으로 재사용하는 함수는?", opts: ["malloc", "sbs_strlen", "memcmp", "atoi"], answer: 1, why: "세 함수 모두 길이 계산에 sbs_strlen을 사용합니다." },
-        { q: "통합 테스트(test_all)가 성공하면 출력하는 것은?", opts: ["DONE", "ALL_OK", "PASS", "SUCCESS"], answer: 1, why: "24개 함수가 모두 정상이면 ALL_OK를 출력합니다." },
-        { q: "make로 빌드 시 경고가 하나라도 있으면?", opts: ["무시됨", "-Werror로 빌드 실패", "경고만 표시", "자동 수정"], answer: 1, why: "CFLAGS의 -Werror 때문에 경고가 에러로 처리되어 빌드가 실패합니다." },
-        { q: "리뷰에서 '매직 넘버'란?", opts: ["빠른 숫자", "의미 없이 박힌 숫자 상수", "마법 함수", "에러 코드"], answer: 1, why: "맥락 없이 코드에 박힌 숫자. 의미 있는 표현으로 바꾸면 가독성이 좋아집니다." },
-        { q: "libsbs 과정에서 배운 핵심이 아닌 것은?", opts: ["포인터와 메모리", "빌드 시스템(Makefile)", "표준 함수 구현", "웹 프론트엔드"], answer: 3, why: "libsbs는 C 표준 라이브러리 구현 과정입니다. 웹 프론트엔드는 다루지 않습니다." },
-        { q: "9~16차시 채점 스크립트의 공통 정답 기준은?", opts: ["강사 코드", "표준 라이브러리(또는 정의된 정답 동작)", "다른 학생", "랜덤"], answer: 1, why: "표준 함수(libc) 또는 테스트에 구현된 정답 동작(oracle)과 비교해 채점합니다." }
+        { q: "셸의 명령 처리 알맹이 3단계 순서는?", opts: ["실행 → 쪼개기 → 판별", "쪼개기(split) → 판별(strcmp) → 실행(builtin)", "판별 → 실행 → 쪼개기", "읽기 → 저장 → 종료"], answer: 1, why: "입력을 단어로 쪼개고(split), 첫 단어로 명령을 판별하고(strcmp), 해당 내장 명령을 실행합니다." },
+        { q: "sbs_split이 반환하는 타입은?", opts: ["char *", "char **", "int", "char"], answer: 1, why: "단어(문자열)들의 배열이므로 char ** 입니다. 배열 끝은 NULL로 표시합니다." },
+        { q: "sbs_split이 만드는 배열의 크기는?", opts: ["단어 수", "단어 수 + 1", "입력 길이", "1024"], answer: 1, why: "마지막 NULL 자리 때문에 단어 수 + 1. strlen이 \\0 자리를 남기는 것과 같은 발상입니다." },
+        { q: "sbs_split 배열의 끝을 무엇으로 표시하나?", opts: ["\\0", "NULL", "-1", "빈 문자열"], answer: 1, why: "포인터 배열이므로 끝은 NULL 포인터로 표시합니다." },
+        { q: "sbs_split이 각 단어를 잘라 복사할 때 재사용하는 함수는?", opts: ["malloc만", "sbs_substr", "strcpy", "memset"], answer: 1, why: "11차시에 만든 sbs_substr(s, start, len)로 단어를 잘라 새 메모리에 복사합니다." },
+        { q: "\"  a   b  \"를 공백으로 split하면 단어 수는?", opts: ["4개", "2개", "6개", "3개"], answer: 1, why: "연속·앞뒤 구분자는 무시하므로 빈 단어를 만들지 않아 {\"a\",\"b\"} 2개입니다." },
+        { q: "char ** (split 결과)를 해제하는 올바른 순서는?", opts: ["배열 먼저, 단어 나중", "단어 먼저, 배열 나중", "순서 무관", "free 한 번이면 됨"], answer: 1, why: "배열을 먼저 free하면 단어들의 주소를 잃어 누수. 안쪽 단어부터, 배열은 마지막." },
+        { q: "sbs_free_split에 NULL을 넣으면?", opts: ["크래시", "안전하게 아무것도 안 함", "무한 루프", "에러 반환"], answer: 1, why: "맨 앞에서 arr==NULL이면 바로 return 하도록 방어합니다." },
+        { q: "run_command에서 가장 먼저 검사해야 하는 것은?", opts: ["exit인지", "args[0] == NULL(빈 줄)", "echo인지", "인자 개수"], answer: 1, why: "빈 줄이면 args[0]이 NULL이라, 먼저 안 보고 strcmp하면 NULL 역참조로 크래시합니다." },
+        { q: "내장 명령 exit는 run_command에서 어떻게 처리하나?", opts: ["exit() 호출", "종료 신호(예: 1) 반환해 루프 종료", "무시", "break를 직접"], answer: 1, why: "1을 반환해 main의 done을 세우고 while 루프를 정상 종료합니다." },
+        { q: "upper 명령이 쓰는 libsbs 함수는?", opts: ["sbs_toupper", "sbs_strdup", "sbs_atoi", "sbs_memcpy"], answer: 0, why: "각 글자를 9차시 sbs_toupper로 대문자로 바꿔 출력합니다." },
+        { q: "없는 명령을 입력하면 minishell은?", opts: ["종료", "command not found 출력하고 계속", "크래시", "무시하고 조용히"], answer: 1, why: "\"minishell: 이름: command not found\"를 출력하고 루프를 계속합니다." },
+        { q: "minishell.c를 Makefile SRCS에 넣으면?", opts: ["문제 없음", "libsbs.a에 main이 박혀 충돌(multiple definition)", "더 빨라짐", "링크가 필요 없어짐"], answer: 1, why: "라이브러리는 부품 모음. main이 든 파일은 넣지 않습니다. 넣으면 multiple definition of main." },
+        { q: "이번 미니셸이 ls 같은 외부 프로그램을 실행하지 않는 이유는?", opts: ["느려서", "fork/execve는 이 과정 범위 밖(내장 명령만)", "불가능해서", "libsbs에 없어서"], answer: 1, why: "외부 실행은 fork+execve가 필요한 다음 단계 주제라, 이번엔 내장 명령만 구현합니다." },
+        { q: "libsbs 과정(9~16차시)의 최종 도달점은?", opts: ["웹사이트 제작", "내가 만든 라이브러리로 동작하는 프로그램(셸) 완성", "게임 개발", "DB 설계"], answer: 1, why: "표준 함수를 직접 구현하고, 그 라이브러리를 링크해 진짜 프로그램(미니셸)을 만드는 것이 목표였습니다." }
       ];
 
       let current = 0, score = 0;

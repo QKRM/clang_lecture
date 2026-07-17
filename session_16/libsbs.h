@@ -47,4 +47,8 @@ char	*sbs_strnstr(const char *big, const char *little, size_t len);
 int		sbs_strncmp(const char *s1, const char *s2, size_t n);
 int		sbs_atoi(const char *str);
 
+/* 16차시 — 미니셸용 문자열 쪼개기 */
+char	**sbs_split(const char *s, char c);
+void	sbs_free_split(char **arr);
+
 #endif

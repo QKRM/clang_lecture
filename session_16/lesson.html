@@ -17,6 +17,10 @@
       <div class="lesson-hero-inner">
         <span class="badge">libsbs 구현 · 16차시</span>
         <h1>종합 프로젝트 + 코드 리뷰</h1>
+      <div class="quiz-cta starter">
+        <span class="quiz-cta-label">📦 실습 파일 (Makefile 제외 전체)</span>
+        <a class="quiz-btn amber" href="session_16_starter.zip" download>실습 파일 내려받기</a>
+      </div>
       <div class="quiz-cta">
         <span class="quiz-cta-label">📝 수업 마무리 퀴즈 (15문항)</span>
         <a class="quiz-btn" href="quiz_16.html" target="_blank" rel="noopener">퀴즈 풀기</a>
@@ -27,138 +31,458 @@
     <main class="wrap">
       <article class="md">
 <h2>학습 목표</h2>
-<ol><li>9~14차시에서 만든 32개 함수를 하나의 <code>libsbs</code>로 통합한다.</li><li>전체를 빌드하는 통합 Makefile을 완성한다.</li><li>헤더 파일(<code>libsbs.h</code>)에 모든 프로토타입을 정리한다.</li><li>동료 코드 리뷰로 코드 품질을 점검하고 개선한다.</li></ol>
+<ol><li>15차시에 만든 셸 껍데기(REPL)에 <strong>명령 해석·실행</strong>을 채워 넣는다.</li><li>새 함수 <code>sbs_split</code>으로 입력을 단어 배열로 쪼갠다.</li><li><code>echo</code> · <code>upper</code> · <code>len</code> · <code>help</code> · <code>exit</code> 내장 명령을 구현한다.</li><li>지금까지 만든 <strong>libsbs 전체</strong>를 링크해 하나의 프로그램으로 완성한다.</li><li><code>char **</code>(문자열 배열)의 메모리 구조와 해제를 이해한다.</li></ol>
 <hr />
-<h2>1부: 통합 — 32개 함수 모으기</h2>
-<h3>1.1 전체 함수 목록</h3>
-<table><thead><tr><th>분류</th><th>함수</th><th>차시</th></tr></thead><tbody><tr><td>문자 분류/변환 (7)</td><td>isalpha, isdigit, isalnum, isascii, isprint, toupper, tolower</td><td>9</td></tr><tr><td>메모리 (6)</td><td>memset, bzero, memcpy, memccpy, memchr, memcmp</td><td>10</td></tr><tr><td>동적 메모리 (5)</td><td>calloc, substr, strjoin, itoa, strdup</td><td>11</td></tr><tr><td>문자열 I (9)</td><td>strlen, strlcpy, strlcat, strnlen, strncpy, strncat, strcmp, strcasecmp, strncasecmp</td><td>12</td></tr><tr><td>문자열 II (3)</td><td>strchr, strrchr, strnstr</td><td>13</td></tr><tr><td>문자열 비교/변환 (2)</td><td>strncmp, atoi</td><td>14</td></tr></tbody></table>
-<p>총 <strong>32개</strong>. 각 차시 폴더의 <code>sbs_*.c</code>를 한 폴더로 모읍니다.</p>
-<h3>1.2 libsbs.h 정리</h3>
-<p>모든 프로토타입을 하나의 헤더에 차시별로 정리합니다(주석으로 구분).</p>
-<pre><code class="language-c">#ifndef LIBSBS_H
-# define LIBSBS_H
-# include &lt;stddef.h&gt;
-
-/* 9차시 — 문자 분류/변환 */
-int     sbs_isalpha(int c);
-/* ... */
-
-/* 14차시 — 문자열 함수 III */
-char    *sbs_strdup(const char *s);
-
-#endif</code></pre>
+<h2>0부: 과정을 마무리하며</h2>
+<p>9차시부터 한 함수씩, 표준 라이브러리를 손으로 다시 만들었습니다. 문자 판별, 메모리 복사, 동적 할당, 문자열 처리, 그리고 그것들을 묶는 Makefile까지. 오늘은 그 <strong>모든 것을 한꺼번에 써서</strong> 진짜로 돌아가는 프로그램 — 작은 셸(shell) — 을 만듭니다.</p>
+<p>새로 배우는 문법은 거의 없습니다. <code>sbs_split</code> 하나만 새로 만들고, 나머지는 전부 <strong>이미 여러분이 만든 함수의 조합</strong>입니다. 이게 이 과정의 목적지였습니다: 남이 준 라이브러리가 아니라 <strong>내가 만든 라이브러리로 내 프로그램을 짠다.</strong></p>
+<pre><code class="nohighlight">                여러분이 9~15차시에 만든 것
+   ┌──────────────────────────────────────────┐
+   │  isalpha  memcpy  calloc  strlen  strcmp  │
+   │  toupper  substr  strjoin  split  ...     │  →  libsbs.a
+   └──────────────────────────────────────────┘
+                        │  링크(-lsbs)
+                        ▼
+                   minishell  ← 오늘 만들 프로그램</code></pre>
 <hr />
-<h2>2부: 통합 Makefile</h2>
-<p>모든 소스를 <code>SRCS</code>에 나열하고 하나의 <code>libsbs.a</code>로 빌드합니다(15차시 문법).</p>
-<pre><code class="language-makefile">NAME    = libsbs.a
-CC      = cc
-CFLAGS  = -Wall -Wextra -Werror
-AR      = ar
-ARFLAGS = rcs
-
-SRCS    = sbs_isalpha.c sbs_isdigit.c ... \
-          sbs_strncmp.c sbs_atoi.c sbs_strdup.c
-OBJS    = $(SRCS:.c=.o)
-
-all: $(NAME)
-$(NAME): $(OBJS)
-	$(AR) $(ARFLAGS) $(NAME) $(OBJS)
-%.o: %.c libsbs.h
-	$(CC) $(CFLAGS) -c $&lt; -o $@
-clean:
-	$(RM) $(OBJS)
-fclean: clean
-	$(RM) $(NAME)
-re: fclean all
-.PHONY: all clean fclean re</code></pre>
-<pre><code class="language-bash">$ make          # 32개 컴파일 → libsbs.a
-$ ar t libsbs.a # 32개 오브젝트 확인</code></pre>
+<h2>1부: 미니셸 설계</h2>
+<h3>1.1 15차시 껍데기 복습</h3>
+<p>15차시에서 셸의 뼈대가 <strong>REPL 루프</strong>(프롬프트 → 읽기 → 해석·실행 → 반복)라고 배웠습니다. 그때 만든 껍데기는 3번(해석·실행)을 "입력을 그대로 되돌려 출력"으로 때웠습니다.</p>
+<pre><code class="language-c">/* 15차시: 알맹이가 빈 자리 */
+printf("입력: %s\n", line);   // ← 여기를 오늘 채운다</code></pre>
+<h3>1.2 오늘 채울 알맹이</h3>
+<p>그 자리에 들어갈 진짜 명령 처리기는 세 단계입니다.</p>
+<pre><code class="nohighlight">"echo hello world"   (사용자가 친 한 줄)
+        │
+        │  ① sbs_split(line, ' ')        ← 새 함수
+        ▼
+   {"echo", "hello", "world", NULL}     (단어 배열)
+        │
+        │  ② args[0]을 sbs_strcmp로 판별
+        ▼
+   "echo"구나 → builtin_echo(args)       ③ 실행
+        │
+        ▼
+   hello world                           (출력)</code></pre>
+<p>핵심은 <strong>입력 한 줄을 단어들로 쪼개는 것</strong>입니다. 그게 <code>sbs_split</code>이고, 오늘의 유일한 새 함수입니다.</p>
+<h3>1.3 이번 셸의 규칙</h3>
+<ul><li><strong>내장(builtin) 명령만</strong> 지원합니다. <code>ls</code>나 <code>cat</code> 같은 외부 프로그램은 실행하지 않습니다(그건 <code>fork</code>/<code>exec</code>라는 다음 단계 주제).</li><li>지원 명령: <code>echo</code>, <code>upper</code>, <code>len</code>, <code>help</code>, <code>exit</code>.</li><li>모든 명령은 우리가 직접 구현합니다. libsbs 함수만으로.</li></ul>
 <hr />
-<h2>3부: 코드 리뷰 방법론</h2>
-<h3>3.1 코드 리뷰란?</h3>
-<p>동료가 내 코드를 읽고 개선점을 제안하는 과정입니다. 버그를 미리 잡고, 더 읽기 쉬운 코드를 만듭니다. 실무에서 PR(Pull Request)마다 합니다.</p>
-<h3>3.2 리뷰 체크리스트</h3>
-<p><strong>정확성</strong></p>
-<ul><li>[ ] 엣지 케이스 처리?(빈 문자열, NULL, 0 길이, 경계값)</li><li>[ ] 반환값이 표준 명세와 일치?</li><li>[ ] <code>\0</code> 종결, 버퍼 범위 확인?</li></ul>
-<p><strong>메모리 안전</strong></p>
-<ul><li>[ ] <code>malloc</code> 후 NULL 검사?</li><li>[ ] 할당한 메모리를 free(또는 호출자에게 책임 명시)?</li><li>[ ] 버퍼 오버플로우 없음?(범위 확인)</li></ul>
-<p><strong>스타일/일관성</strong></p>
-<ul><li>[ ] 들여쓰기 일관(탭), 변수는 함수 상단 선언?</li><li>[ ] 함수 이름 <code>sbs_</code> 접두사, snake_case?</li><li>[ ] 컴파일 경고 없음(<code>-Wall -Wextra -Werror</code>)?</li></ul>
-<p><strong>중복/재사용</strong></p>
-<ul><li>[ ] 같은 로직 반복 대신 작은 함수 재사용?(예: isalnum이 isalpha 호출)</li><li>[ ] 매직 넘버 대신 의미 있는 표현?</li></ul>
-<h3>3.3 리뷰 코멘트 예절</h3>
-<ul><li>코드를 비판하되 사람을 비판하지 않는다</li><li>"이 부분은 왜 이렇게 했나요?" 처럼 질문형</li><li>좋은 점도 언급한다</li><li>구체적으로: "여기 NULL 검사가 빠진 것 같아요" (X "버그 있음")</li></ul>
+<h2>2부: sbs_split — 문자열을 단어로 쪼개기</h2>
+<p>오늘의 주인공입니다. <code>char **</code>를 반환하는, 지금까지 중 가장 복잡한 함수입니다. 천천히 봅시다.</p>
+<h3>2.1 무엇을 반환하나</h3>
+<pre><code class="language-c">char **sbs_split(const char *s, char c);</code></pre>
+<p><code>s</code>를 구분자 <code>c</code>로 쪼개, <strong>단어들의 배열</strong>을 돌려줍니다. 배열의 끝은 <code>NULL</code>로 표시합니다(문자열의 끝을 <code>\0</code>으로 표시하듯이).</p>
+<pre><code class="nohighlight">sbs_split("echo hello world", ' ')
+
+   arr ─▶ ┌───────┐
+          │  •────┼──▶ "echo\0"
+          ├───────┤
+          │  •────┼──▶ "hello\0"
+          ├───────┤
+          │  •────┼──▶ "world\0"
+          ├───────┤
+          │ NULL  │   ← 끝 표시
+          └───────┘</code></pre>
+<p><code>char **</code>는 "문자열을 가리키는 포인터들의 배열"입니다. 그림처럼 <strong>2단계</strong>입니다: 배열 한 개 + 그 안에 든 문자열 여러 개. 그래서 나중에 해제할 때도 2단계로 풀어야 합니다(4.3에서).</p>
+<h3>2.2 규칙 — 공백을 어떻게 다루나</h3>
+<p>15차시 끝에 던진 질문입니다. <code>"echo   hello"</code>처럼 공백이 여러 개면?</p>
+<ul><li><strong>연속된 구분자는 하나로</strong> 취급 → 빈 단어를 만들지 않음</li><li><strong>앞뒤 구분자는 무시</strong></li></ul>
+<pre><code class="nohighlight">"  a   b  "  ──split(' ')──▶  {"a", "b", NULL}   (빈 칸은 전부 건너뜀)</code></pre>
+<h3>2.3 2단계 전략</h3>
+<p>배열을 malloc하려면 <strong>단어가 몇 개인지 먼저 알아야</strong> 합니다. 그래서 두 번 훑습니다.</p>
+<ol><li><strong>1차: 단어 개수 세기</strong> → 배열 크기 결정</li><li><strong>2차: 단어마다 잘라 복사</strong> → <code>sbs_substr</code> 재사용</li></ol>
+<h3>2.4 1차 — 단어 세기</h3>
+<pre><code class="language-c">static size_t count_words(const char *s, char c)
+{
+    size_t count = 0;
+    size_t i = 0;
+    while (s[i])
+    {
+        while (s[i] == c)          // 구분자 구간 건너뛰기
+            i++;
+        if (s[i])                  // 단어가 시작되면
+        {
+            count++;               // 개수 +1
+            while (s[i] &amp;&amp; s[i] != c)  // 단어 끝까지 이동
+                i++;
+        }
+    }
+    return (count);
+}</code></pre>
+<p>읽는 법: "구분자를 건너뛴다 → 글자가 있으면 그게 새 단어다(세고) → 단어 끝까지 간다 → 반복." 연속 공백이 자동으로 하나처럼 처리됩니다.</p>
+<h3>2.5 2차 — 잘라서 복사</h3>
+<pre><code class="language-c">char **sbs_split(const char *s, char c)
+{
+    char   **arr;
+    size_t words, i, start, k;
+
+    if (s == NULL)
+        return (NULL);
+    words = count_words(s, c);
+    arr = (char **)malloc(sizeof(char *) * (words + 1));   // +1은 NULL 자리
+    if (arr == NULL)
+        return (NULL);
+    i = 0;
+    k = 0;
+    while (k &lt; words)
+    {
+        while (s[i] == c)                 // 구분자 건너뛰기
+            i++;
+        start = i;                        // 단어 시작 위치 기억
+        while (s[i] &amp;&amp; s[i] != c)         // 단어 끝 찾기
+            i++;
+        arr[k] = sbs_substr(s, start, i - start);   // 11차시 substr 재사용!
+        if (arr[k] == NULL)
+            return (free_partial(arr, k), NULL);    // 중간 실패 시 정리
+        k++;
+    }
+    arr[k] = NULL;                        // 끝 표시
+    return (arr);
+}</code></pre>
+<p>여기서 두 가지가 핵심입니다.</p>
+<p><strong>① <code>sizeof(char *) * (words + 1)</code></strong> — 배열은 단어 수보다 <strong>1 크게</strong>. 마지막 <code>NULL</code> 자리 때문입니다. <code>strlen</code>이 <code>\0</code> 자리를 남기는 것과 똑같은 발상입니다.</p>
+<p><strong>② <code>sbs_substr(s, start, i - start)</code></strong> — 11차시에 만든 <code>substr</code>이 여기서 빛납니다. 시작 위치와 길이만 주면 잘라서 새 메모리에 복사해줍니다. 바퀴를 다시 발명하지 않습니다.</p>
+<h3>2.6 중간 실패 처리</h3>
+<p>단어를 3개 만들다가 4번째 <code>malloc</code>이 실패하면? 이미 만든 3개가 <strong>메모리 누수</strong>로 남습니다. 그래서 정리 함수를 둡니다.</p>
+<pre><code class="language-c">static void free_partial(char **arr, size_t n)
+{
+    while (n &gt; 0)
+        free(arr[--n]);   // 만든 단어들을 역순으로 해제
+    free(arr);            // 배열 자체도 해제
+}</code></pre>
+<blockquote><code>return (free_partial(arr, k), NULL);</code>의 쉼표는 "왼쪽을 실행하고, 오른쪽 값을 반환"하는 콤마 연산자입니다. 정리하고 NULL을 돌려줍니다.</blockquote>
 <hr />
-<h2>4부: 최종 빌드 + 통합 테스트</h2>
-<p>채점 스크립트가 전체를 검증합니다:</p>
+<h2>3부: 내장 명령 만들기</h2>
+<p><code>sbs_split</code>으로 <code>args</code>(단어 배열)를 얻었으면, <code>args[0]</code>이 명령 이름이고 <code>args[1]</code>부터가 인자입니다. 명령 하나가 함수 하나입니다.</p>
+<h3>3.1 echo — 그대로 되돌리기</h3>
+<pre><code class="language-c">static void builtin_echo(char **args)
+{
+    size_t i = 1;                 // args[0]은 "echo"니까 1부터
+    while (args[i])
+    {
+        printf("%s", args[i]);
+        if (args[i + 1])          // 마지막이 아니면
+            printf(" ");          // 단어 사이에 공백
+        i++;
+    }
+    printf("\n");
+}</code></pre>
+<p><code>echo hello world</code> → <code>hello world</code>. 인자가 없으면(<code>echo</code>만) 빈 줄만 출력합니다.</p>
+<h3>3.2 upper — 대문자로 (9차시 toupper)</h3>
+<pre><code class="language-c">static void builtin_upper(char **args)
+{
+    size_t i = 1, j;
+    while (args[i])
+    {
+        j = 0;
+        while (args[i][j])
+        {
+            printf("%c", sbs_toupper((unsigned char)args[i][j]));
+            j++;
+        }
+        if (args[i + 1])
+            printf(" ");
+        i++;
+    }
+    printf("\n");
+}</code></pre>
+<p><code>upper abc def</code> → <code>ABC DEF</code>. 9차시 <code>sbs_toupper</code>가 글자 하나씩 대문자로 바꿉니다.</p>
+<h3>3.3 len — 길이 재기 (12차시 strlen)</h3>
+<pre><code class="language-c">static void builtin_len(char **args)
+{
+    size_t i = 1;
+    if (args[1] == NULL)
+    {
+        printf("len: 인자가 필요합니다\n");
+        return ;
+    }
+    while (args[i])
+    {
+        printf("%s: %zu\n", args[i], sbs_strlen(args[i]));
+        i++;
+    }
+}</code></pre>
+<p><code>len hello world</code> → <code>hello: 5</code> / <code>world: 5</code>.</p>
+<h3>3.4 help — 도움말</h3>
+<pre><code class="language-c">static void builtin_help(void)
+{
+    printf("사용 가능한 명령:\n");
+    printf("  echo [말...]   입력한 말을 그대로 출력\n");
+    printf("  upper [말...]  대문자로 출력\n");
+    printf("  len [말...]    각 말의 길이 출력\n");
+    printf("  help          이 도움말\n");
+    printf("  exit          종료\n");
+}</code></pre>
+<hr />
+<h2>4부: 조립 — 디스패치 + 메인 루프</h2>
+<h3>4.1 run_command — 명령을 알맞은 함수로 보내기</h3>
+<p><code>args[0]</code>을 <code>sbs_strcmp</code>로 비교해 해당 명령을 호출합니다. 이런 "이름 보고 갈래를 정하는" 구조를 <strong>디스패치(dispatch)</strong>라 합니다.</p>
+<pre><code class="language-c">static int run_command(char **args)
+{
+    if (args[0] == NULL)               // 빈 줄(공백만 입력)
+        return (0);
+    if (sbs_strcmp(args[0], "exit") == 0)
+        return (1);                    // 1 = 종료 신호
+    if (sbs_strcmp(args[0], "echo") == 0)
+        builtin_echo(args);
+    else if (sbs_strcmp(args[0], "upper") == 0)
+        builtin_upper(args);
+    else if (sbs_strcmp(args[0], "len") == 0)
+        builtin_len(args);
+    else if (sbs_strcmp(args[0], "help") == 0)
+        builtin_help();
+    else
+        printf("minishell: %s: command not found\n", args[0]);
+    return (0);
+}</code></pre>
+<ul><li><code>args[0] == NULL</code>을 <strong>먼저</strong> 봅니다. 빈 줄이면 <code>args[0]</code>이 없어서, 바로 <code>strcmp</code>하면 NULL을 읽어 크래시하니까요. (13차시에서 배운 NULL 역참조 함정)</li><li><code>exit</code>만 <code>1</code>을 반환합니다. 이 신호로 메인 루프를 끝냅니다.</li></ul>
+<h3>4.2 main — 15차시 껍데기 + 알맹이</h3>
+<pre><code class="language-c">int main(void)
+{
+    char   line[BUF_SIZE];
+    char   **args;
+    int    done = 0;
+
+    while (!done)
+    {
+        printf("minishell$ ");
+        fflush(stdout);                          // 프롬프트를 지금 화면에(15차시)
+        if (fgets(line, BUF_SIZE, stdin) == NULL) // Ctrl+D
+        {
+            printf("\n");
+            break ;
+        }
+        strip_newline(line);                     // 줄 끝 \n 제거(sbs_strlen)
+        args = sbs_split(line, ' ');             // ① 쪼개기
+        if (args == NULL)                        // malloc 실패
+            break ;
+        done = run_command(args);                // ②③ 판별·실행
+        sbs_free_split(args);                    // ④ 해제 (누수 방지!)
+    }
+    printf("bye\n");
+    return (0);
+}</code></pre>
+<p>15차시 껍데기와 비교하면 딱 세 줄이 늘었습니다: <code>split</code> → <code>run_command</code> → <code>free_split</code>. 뼈대는 그대로입니다.</p>
+<h3>4.3 char ** 해제 — 왜 2번 free 하나</h3>
+<p><code>sbs_split</code>이 malloc을 <strong>여러 번</strong> 했습니다: 배열 1번 + 단어마다 1번씩. 그래서 해제도 그만큼 해야 합니다. 하나라도 빠지면 메모리 누수입니다.</p>
+<pre><code class="language-c">void sbs_free_split(char **arr)
+{
+    size_t i = 0;
+    if (arr == NULL)
+        return ;
+    while (arr[i])         // 단어들을 먼저 하나씩
+    {
+        free(arr[i]);
+        i++;
+    }
+    free(arr);             // 배열 자체는 마지막에
+}</code></pre>
+<pre><code class="nohighlight">   arr ─▶ ┌───────┐
+          │  •────┼──▶ "echo"    ← free(arr[0])
+          │  •────┼──▶ "hello"   ← free(arr[1])
+          │  •────┼──▶ "world"   ← free(arr[2])
+          │ NULL  │
+          └───────┘  ← free(arr)  (배열은 맨 마지막)</code></pre>
+<p><strong>순서가 중요</strong>합니다. 배열(<code>arr</code>)을 먼저 free하면, 그 안에 있던 단어들의 주소를 잃어버려 영영 해제 못 합니다. 안쪽(단어)부터, 바깥(배열)은 마지막.</p>
+<hr />
+<h2>5부: 빌드하고 실행하기</h2>
+<h3>5.1 Makefile</h3>
+<p>15차시에서 배운 그대로입니다. 다만 <code>SRCS</code>에 이제 <strong>지금까지 만든 함수 전체 + <code>sbs_split</code> + <code>sbs_free_split</code></strong>가 들어갑니다.</p>
+<pre><code class="language-makefile">SRCS = sbs_isalpha.c ... sbs_atoi.c \
+       sbs_split.c sbs_free_split.c      # 오늘 추가한 2개
+
+$(MINISHELL): minishell.o $(NAME)
+	$(CC) $(CFLAGS) minishell.o -L. -lsbs -o $(MINISHELL)</code></pre>
+<p><code>minishell.c</code>는 <code>SRCS</code>에 <strong>넣지 않습니다.</strong> <code>main</code>이 있으니 라이브러리가 아니라 프로그램입니다(15차시 규칙).</p>
+<h3>5.2 빌드 &amp; 실행</h3>
+<pre><code class="language-bash">$ make            # libsbs.a 빌드
+$ make minishell  # libsbs.a를 링크해 minishell 실행 파일
+$ ./minishell
+minishell$ echo hello world
+hello world
+minishell$ upper hello
+HELLO
+minishell$ len minishell
+minishell: 9
+minishell$ help
+사용 가능한 명령:
+  echo [말...]   입력한 말을 그대로 출력
+  ...
+minishell$ nosuch
+minishell: nosuch: command not found
+minishell$ exit
+bye
+$</code></pre>
+<hr />
+<h2>6부: 채점</h2>
 <pre><code class="language-bash">$ bash grade.sh
-=== libsbs 16차시 종합 채점 ===
-✓ 파일 구성 (libsbs.h + sbs_*.c 32개)
-✓ make → libsbs.a 빌드 (32개 함수)
-✓ 32개 함수 통합 동작 (ALL_OK)
-✓ make re / fclean 동작
-결과: 4 / 4 통과
-🎉 libsbs 종합 프로젝트 완성!</code></pre>
-<ol><li>32개 파일 + 헤더가 모두 있는가</li><li><code>make</code>로 경고 없이 <code>libsbs.a</code>가 빌드되는가</li><li>링크해서 32개 함수가 모두 동작하는가</li><li><code>re</code>/<code>fclean</code>이 동작하는가</li></ol>
+=== libsbs 16차시 종합 채점 (미니셸) ===
+✓ make → libsbs.a 빌드
+✓ sbs_split / sbs_free_split 동작 (SPLIT_OK)
+✓ make minishell — 빌드
+✓ minishell 동작 (echo/upper/len/미존재/exit)
+✓ clean / fclean / re 동작
+결과: 5 / 5 통과
+🎉 libsbs 미니셸 완성! 과정을 모두 마쳤습니다.</code></pre>
+<ol><li><code>libsbs.a</code>가 빌드되는가(금지 헤더 없이)</li><li><code>sbs_split</code>이 규칙대로(연속 공백·빈 문자열) 동작하는가</li><li><code>minishell</code>이 빌드되는가</li><li>각 내장 명령이 올바로 동작하는가</li><li><code>clean</code>/<code>fclean</code>/<code>re</code>가 동작하는가</li></ol>
 <hr />
 <h2>핵심 정리</h2>
-<ol><li>32개 함수를 한 폴더로 모으고 <code>libsbs.h</code>에 프로토타입 정리</li><li>통합 Makefile의 <code>SRCS</code>에 모든 소스 나열 → <code>libsbs.a</code></li><li>코드 리뷰: 정확성 · 메모리 안전 · 스타일 · 중복 점검</li><li>질문형·구체적·존중하는 리뷰 코멘트</li><li>통합 테스트로 32개 함수가 함께 동작함을 확인</li><li><code>make / clean / fclean / re</code>로 빌드 자동화</li></ol>
+<ol><li>셸의 알맹이 = <strong>쪼개기(split) → 판별(strcmp) → 실행(builtin)</strong></li><li><code>sbs_split</code>은 <code>char **</code> 반환, 배열 끝은 <code>NULL</code>, 크기는 단어 수 <strong>+1</strong></li><li>단어 세기 → 배열 malloc → <code>sbs_substr</code>로 잘라 복사 (2단계)</li><li>연속·앞뒤 구분자는 무시(빈 단어 안 만듦)</li><li><code>char **</code> 해제는 <strong>안쪽 단어부터, 배열은 마지막</strong> — 순서 지켜야 누수 없음</li><li><code>run_command</code>는 <code>args[0] == NULL</code>을 <strong>먼저</strong> 검사(빈 줄 NULL 역참조 방지)</li><li>내장 명령은 전부 libsbs 조합: echo(strlen 흐름) · upper(toupper) · len(strlen) · exit(strcmp)</li><li><code>minishell.c</code>는 라이브러리(SRCS)가 아니라 프로그램 — <code>-L. -lsbs</code>로 링크</li></ol>
 <hr />
 <h2>과정을 마치며</h2>
-<p>9차시부터 한 함수씩, 표준 라이브러리를 직접 구현했습니다. 포인터·메모리·문자열·동적 할당을 손으로 다루며 C의 본질에 닿았습니다. 이제 여러분은:</p>
-<ul><li>표준 함수의 동작 원리를 안다</li><li>메모리를 바이트 단위로 다룬다</li><li>빌드 시스템을 직접 만든다</li><li>동료의 코드를 읽고 개선한다</li></ul>
-<p>이것이 libsbs 과정의 목표였습니다. 수고하셨습니다.</p>
+<p>9차시부터 16차시까지, 표준 라이브러리를 직접 구현하고 그것으로 진짜 프로그램을 만들었습니다. 여러분은 이제:</p>
+<ul><li>표준 함수가 <strong>속으로 어떻게 동작하는지</strong> 압니다.</li><li>메모리를 <strong>바이트 단위로, 손으로</strong> 다룹니다.</li><li><code>malloc</code>한 것을 빠짐없이 <code>free</code>합니다.</li><li>빌드 시스템(Makefile)과 라이브러리(.a)를 직접 만듭니다.</li><li>그 모두를 조합해 <strong>동작하는 프로그램</strong>을 짭니다.</li></ul>
+<p>이게 C의 본질입니다. 포인터·메모리·빌드를 손으로 겪은 사람만이 그 위의 모든 것(운영체제, 네트워크, 임베디드)을 두려움 없이 배웁니다. 수고하셨습니다.</p>
+<blockquote>더 해보고 싶다면: <code>cd</code>/<code>pwd</code>(디렉토리 이동, <code>chdir</code>/<code>getcwd</code>), 그리고 진짜 외부 명령 실행(<code>fork</code>+<code>execve</code>)이 다음 단계입니다. 오늘 만든 껍데기가 그대로 그 출발점이 됩니다.</blockquote>
 <div class="section-split"><h2>실습</h2><p>아래 문제를 직접 풀어본 뒤, 맨 아래 정답 코드로 확인하세요.</p></div>
 <h2>실습 목표</h2>
-<ul><li>9~14차시 32개 함수를 한 폴더로 통합한다.</li><li>통합 Makefile로 <code>libsbs.a</code>를 빌드한다.</li><li>동료와 코드 리뷰를 주고받는다.</li><li>최종 통합 테스트를 통과한다.</li></ul>
-<blockquote>이번 폴더에는 32개 함수 정답 + 통합 Makefile + 통합 테스트가 제공됩니다. 본인이 9~14차시에서 만든 코드로 교체해 빌드해보세요.</blockquote>
+<ul><li>새 함수 <code>sbs_split</code>으로 입력을 단어 배열로 쪼갠다.</li><li><code>sbs_free_split</code>으로 <code>char **</code>를 누수 없이 해제한다.</li><li><code>echo</code> · <code>upper</code> · <code>len</code> · <code>help</code> · <code>exit</code> 내장 명령을 구현한다.</li><li>libsbs 전체를 링크해 <code>minishell</code>을 완성한다.</li></ul>
+<blockquote><strong>금지</strong>: <code>sbs_split.c</code>에서 <code>&lt;string.h&gt;</code>, <code>&lt;strings.h&gt;</code> 사용. <code>&lt;stdlib.h&gt;</code>(malloc)는 허용.</blockquote>
 <hr />
-<h2>과제 1: 함수 통합</h2>
-<p>요구사항:</p>
-<ul><li>9~14차시 각 폴더에서 <code>sbs_*.c</code> 32개를 한 폴더로 모은다</li><li><code>libsbs.h</code>에 모든 프로토타입을 차시별로 정리(주석 구분)</li></ul>
-<p>체크:</p>
-<pre><code class="language-bash">$ ls sbs_*.c | wc -l
-24</code></pre>
+<h2>준비: 실습 파일 내려받기</h2>
+<p>페이지 맨 위 <strong>실습 파일 내려받기</strong>로 <code>session_16_starter.zip</code>을 받으세요. 9~14차시에 만든 함수 전체가 라이브러리로 들어 있고, 여러분이 채울 부분만 비어 있습니다.</p>
+<pre><code class="nohighlight">session_16_starter/
+├── libsbs.h                 전체 프로토타입 (split 2개 포함)
+├── sbs_*.c                  9~14차시 함수 32개 (제공)
+├── sbs_split.c              ⭐ 직접 구현 (스켈레톤)
+├── sbs_free_split.c         ⭐ 직접 구현 (스켈레톤)
+├── minishell.c              ⭐ 내장 명령 채우기 (스켈레톤)
+├── Makefile                 제공 (libsbs.a + minishell)
+├── tests/test_split.c       split 단위 테스트
+├── grade.sh                 채점 스크립트
+└── README.md</code></pre>
+<pre><code class="language-bash">$ unzip session_16_starter.zip
+$ cd session_16_starter</code></pre>
+<blockquote>정답은 이 페이지 맨 아래 <strong>정답 코드</strong>에 있습니다. 먼저 직접 해본 뒤 확인하세요.</blockquote>
 <hr />
-<h2>과제 2: 통합 Makefile</h2>
+<h2>과제 1: sbs_split — 단어 세기</h2>
+<p><code>sbs_split.c</code>의 <code>count_words</code>부터 완성하세요. 구분자로 나뉜 단어가 몇 개인지 셉니다.</p>
 <p>요구사항:</p>
-<ul><li><code>SRCS</code>에 32개 소스를 모두 나열</li><li><code>make</code> → <code>libsbs.a</code> 빌드 (경고 없이)</li><li><code>clean / fclean / re</code> 규칙</li></ul>
-<p>확인:</p>
+<ul><li>연속된 구분자는 하나로 취급</li><li>앞뒤 구분자는 무시</li></ul>
+<p>힌트:</p>
+<pre><code class="language-c">static size_t count_words(const char *s, char c)
+{
+    size_t count = 0, i = 0;
+    while (s[i])
+    {
+        while (s[i] == c)              // 구분자 건너뛰기
+            i++;
+        if (s[i])                      // 단어 시작
+        {
+            count++;
+            while (s[i] &amp;&amp; s[i] != c)  // 단어 끝까지
+                i++;
+        }
+    }
+    return (count);
+}</code></pre>
+<hr />
+<h2>과제 2: sbs_split — 잘라서 복사</h2>
+<p>배열을 malloc하고, 단어마다 <code>sbs_substr</code>로 잘라 채우세요.</p>
+<p>요구사항:</p>
+<ul><li>배열 크기는 <code>단어 수 + 1</code> (마지막 NULL 자리)</li><li>각 단어는 <code>sbs_substr(s, start, 길이)</code>로 복사</li><li>마지막 칸에 <code>NULL</code></li><li><code>s == NULL</code>이면 <code>NULL</code> 반환</li></ul>
+<p>힌트:</p>
+<pre><code class="language-c">arr = (char **)malloc(sizeof(char *) * (words + 1));
+if (arr == NULL)
+    return (NULL);
+// while (k &lt; words): 구분자 건너뛰고 → start 기억 → 단어 끝 찾고
+//                    → arr[k] = sbs_substr(s, start, i - start);
+arr[k] = NULL;</code></pre>
+<blockquote><code>sbs_substr</code>은 11차시에 만든 함수입니다. 시작 위치와 길이만 주면 잘라서 새 메모리에 복사해줍니다. 다시 만들지 마세요.</blockquote>
+<hr />
+<h2>과제 3: sbs_free_split — 2단계 해제</h2>
+<p><code>char **</code>는 malloc이 여러 번(배열 + 단어들) 됐습니다. 순서대로 해제하세요.</p>
+<p>힌트:</p>
+<pre><code class="language-c">void sbs_free_split(char **arr)
+{
+    size_t i = 0;
+    if (arr == NULL)
+        return ;
+    while (arr[i])       // 단어부터
+    {
+        free(arr[i]);
+        i++;
+    }
+    free(arr);           // 배열은 마지막
+}</code></pre>
+<blockquote><strong>순서 주의</strong>: 배열을 먼저 free하면 단어들의 주소를 잃어 해제 못 합니다. 안쪽부터.</blockquote>
+<p>확인 — split 단위 테스트:</p>
 <pre><code class="language-bash">$ make
-$ ar t libsbs.a | wc -l    # 24
-$ make re                   # 재빌드</code></pre>
+$ cc -Wall -Wextra -Werror -I. tests/test_split.c -L. -lsbs -o tsplit
+$ ./tsplit
+SPLIT_OK</code></pre>
 <hr />
-<h2>과제 3: 통합 테스트</h2>
-<pre><code class="language-bash">$ cc -Wall -Wextra -Werror tests/test_all.c -L. -lsbs -o run
-$ ./run
-ALL_OK</code></pre>
-<p><code>ALL_OK</code>가 나오면 32개 함수가 모두 정상 동작합니다. <code>[FAIL]</code>이 나오면 해당 함수를 점검하세요.</p>
+<h2>과제 4: 내장 명령 구현</h2>
+<p><code>minishell.c</code>의 빈 내장 명령들을 채우세요.</p>
+<ul><li><code>builtin_echo(args)</code> — <code>args[1]</code>부터 공백으로 이어 출력</li><li><code>builtin_upper(args)</code> — 각 글자를 <code>sbs_toupper</code>로 대문자</li><li><code>builtin_len(args)</code> — 각 인자를 <code>sbs_strlen</code>으로 길이 출력</li><li><code>builtin_help()</code> — 명령 목록 출력</li></ul>
+<p>힌트(echo):</p>
+<pre><code class="language-c">size_t i = 1;
+while (args[i])
+{
+    printf("%s", args[i]);
+    if (args[i + 1])
+        printf(" ");
+    i++;
+}
+printf("\n");</code></pre>
 <hr />
-<h2>과제 4: 코드 리뷰</h2>
-<p>동료와 짝을 지어 서로의 코드를 리뷰합니다. <code>CODE_REVIEW.md</code>(제공) 체크리스트를 사용하세요.</p>
-<p>리뷰 절차:</p>
-<ol><li>동료의 함수 1~2개를 골라 읽는다</li><li>체크리스트 항목을 확인한다 (정확성·메모리·스타일·중복)</li><li>코멘트를 작성한다 (질문형·구체적·존중)</li><li>받은 피드백으로 코드를 개선한다</li></ol>
-<p>리뷰 코멘트 예시:</p>
-<pre><code class="nohighlight">[sbs_strdup.c]
-- 좋아요: malloc 실패 시 NULL 검사가 잘 되어 있어요.
-- 질문: len + 1로 할당하는 이유를 주석으로 남기면 어떨까요? (\0 자리)
-- 제안: sbs_strlen을 재사용하면 길이 측정 루프를 줄일 수 있어요.</code></pre>
+<h2>과제 5: 디스패치 + 메인 루프</h2>
+<p><code>run_command</code>에서 <code>args[0]</code>을 <code>sbs_strcmp</code>로 판별해 알맞은 내장 명령을 부르세요.</p>
+<p>요구사항:</p>
+<ul><li><code>args[0] == NULL</code>(빈 줄)을 <strong>가장 먼저</strong> 검사 (NULL 역참조 방지)</li><li><code>exit</code>는 종료 신호(예: <code>return 1</code>)</li><li>없는 명령은 <code>minishell: 이름: command not found</code></li></ul>
+<p>힌트:</p>
+<pre><code class="language-c">if (args[0] == NULL)
+    return (0);
+if (sbs_strcmp(args[0], "exit") == 0)
+    return (1);
+if (sbs_strcmp(args[0], "echo") == 0)
+    builtin_echo(args);
+else if (...)
+    ...
+else
+    printf("minishell: %s: command not found\n", args[0]);
+return (0);</code></pre>
+<p>메인 루프(15차시 껍데기 + 3줄):</p>
+<pre><code class="language-c">args = sbs_split(line, ' ');
+if (args == NULL)
+    break ;
+done = run_command(args);
+sbs_free_split(args);      // 잊으면 메모리 누수!</code></pre>
 <hr />
-<h2>과제 5: 최종 채점</h2>
+<h2>과제 6: 빌드 + 실행</h2>
+<pre><code class="language-bash">$ make minishell
+$ ./minishell
+minishell$ echo hello world
+hello world
+minishell$ upper abc def
+ABC DEF
+minishell$ len hello
+hello: 5
+minishell$ nosuch
+minishell: nosuch: command not found
+minishell$ exit
+bye
+$</code></pre>
+<p>Ctrl+D로도 종료되는지, 그냥 Enter(빈 줄)를 쳐도 안 죽는지 확인하세요.</p>
+<hr />
+<h2>과제 7: 채점</h2>
 <pre><code class="language-bash">$ bash grade.sh
-=== libsbs 16차시 종합 채점 ===
-✓ 파일 구성 (libsbs.h + sbs_*.c 32개)
-✓ make → libsbs.a 빌드 (32개 함수)
-✓ 32개 함수 통합 동작 (ALL_OK)
-✓ make re / fclean 동작
-결과: 4 / 4 통과
-🎉 libsbs 종합 프로젝트 완성!</code></pre>
+=== libsbs 16차시 종합 채점 (미니셸) ===
+✓ make → libsbs.a 빌드
+✓ sbs_split / sbs_free_split 동작 (SPLIT_OK)
+✓ make minishell — 빌드
+✓ minishell 동작 (echo/upper/len/미존재/exit)
+✓ clean / fclean / re 동작
+결과: 5 / 5 통과
+🎉 libsbs 미니셸 완성! 과정을 모두 마쳤습니다.</code></pre>
+<p>실패 시 <code>bash grade.sh -v</code>로 상세 로그를 확인하세요.</p>
 <hr />
 <h2>제출 확인 사항</h2>
-<ul><li>[ ] 32개 <code>sbs_*.c</code> 한 폴더에 통합</li><li>[ ] <code>libsbs.h</code> 전체 프로토타입 정리</li><li>[ ] 통합 Makefile (<code>make</code> → libsbs.a, 경고 없음)</li><li>[ ] <code>tests/test_all.c</code> 링크 → <code>ALL_OK</code></li><li>[ ] 동료 코드 리뷰 1회 이상 (주고/받기)</li><li>[ ] <code>bash grade.sh</code> → 4 / 4 통과</li></ul>
+<ul><li>[ ] <code>sbs_split.c</code> - 단어 세기 + 잘라 복사, 끝에 NULL, <code>&lt;string.h&gt;</code> 미사용</li><li>[ ] <code>sbs_free_split.c</code> - 단어 먼저, 배열 마지막</li><li>[ ] <code>minishell.c</code> - echo/upper/len/help 구현</li><li>[ ] <code>run_command</code> - <code>args[0]==NULL</code> 먼저 검사, exit 종료</li><li>[ ] 메인 루프에서 <code>sbs_free_split</code> 호출(누수 방지)</li><li>[ ] <code>minishell.c</code>가 SRCS에 <strong>안</strong> 들어갔는가</li><li>[ ] <code>bash grade.sh</code> → 5 / 5 통과</li></ul>
 <hr />
 <h2>더 생각해볼 거리</h2>
-<ol><li>32개 함수 중 다른 함수를 재사용하는 것은? (isalnum→isalpha/isdigit, bzero→memset, calloc→memset, strlcpy/cat/dup→strlen)</li><li>라이브러리를 다른 프로젝트에서 쓰려면 무엇이 필요한가? (libsbs.a + libsbs.h)</li><li>다음에 추가하고 싶은 함수는? (printf, split, itoa 등 — 확장 과제)</li></ol>
+<ol><li><code>sbs_split</code>이 배열을 <code>단어 수 + 1</code>로 만드는 이유는? (마지막 NULL 자리 — strlen의 \0과 같은 발상)</li><li><code>char **</code>를 free할 때 배열을 먼저 free하면 왜 안 되나? (단어들의 주소를 잃어 누수)</li><li><code>run_command</code>에서 <code>args[0]==NULL</code>을 안 보면 어떤 입력에서 죽나? (빈 줄 → NULL 역참조)</li><li><code>echo</code>가 여러 공백을 하나로 합치는 이유는? (split이 연속 구분자를 무시하니까)</li><li>진짜 셸처럼 <code>ls</code>를 실행하려면 무엇이 더 필요할까? (<code>fork</code> + <code>execve</code> — 자식 프로세스에서 외부 프로그램 실행. 다음 단계 주제)</li></ol>
 <div class="section-split"><h2>정답 코드</h2><p>각 항목의 "정답 보기"를 눌러 펼치세요. 먼저 직접 풀어본 뒤 확인하는 것을 권장합니다.</p></div>
 <div class="answer"><div class="answer-head"><span class="answer-name">📄 <span class="file">libsbs.h</span></span><button class="answer-toggle">정답 보기</button></div><div class="answer-body"><pre><code class="language-c">#ifndef LIBSBS_H
 # define LIBSBS_H
@@ -209,50 +533,218 @@ char	*sbs_strnstr(const char *big, const char *little, size_t len);
 int		sbs_strncmp(const char *s1, const char *s2, size_t n);
 int		sbs_atoi(const char *str);
 
+/* 16차시 — 미니셸용 문자열 쪼개기 */
+char	**sbs_split(const char *s, char c);
+void	sbs_free_split(char **arr);
+
 #endif</code></pre></div></div>
 <div class="answer"><div class="answer-head"><span class="answer-name">📄 <span class="file">Makefile</span></span><button class="answer-toggle">정답 보기</button></div><div class="answer-body"><pre><code class="language-makefile"># ============================================================
-# libsbs 종합 정적 라이브러리 Makefile (16차시 최종)
-#   9~14차시에서 구현한 32개 함수를 하나로 통합
+# libsbs 종합 프로젝트 Makefile (16차시 최종 — 미니셸)
+#
+#   make            → libsbs.a 만들기 (지금까지 만든 전체 함수 + split)
+#   make minishell  → libsbs.a를 링크한 minishell 실행 파일
+#   make clean      → 중간 파일(.o) 삭제
+#   make fclean     → .o + libsbs.a + minishell 삭제
+#   make re         → 전부 지우고 처음부터
 # ============================================================
 
-NAME    = libsbs.a
+NAME      = libsbs.a
+MINISHELL = minishell
 
-CC      = cc
-CFLAGS  = -Wall -Wextra -Werror
-AR      = ar
-ARFLAGS = rcs
-RM      = rm -f
+CC        = cc
+CFLAGS    = -Wall -Wextra -Werror
+AR        = ar
+ARFLAGS   = rcs
+RM        = rm -f
 
-SRCS    = sbs_isalpha.c sbs_isdigit.c sbs_isalnum.c sbs_isascii.c \
-          sbs_isprint.c sbs_toupper.c sbs_tolower.c \
-          sbs_memset.c sbs_bzero.c sbs_memcpy.c sbs_memccpy.c \
-          sbs_memchr.c sbs_memcmp.c \
-          sbs_calloc.c sbs_substr.c sbs_strjoin.c sbs_itoa.c sbs_strdup.c \
-          sbs_strlen.c sbs_strlcpy.c sbs_strlcat.c \
-          sbs_strnlen.c sbs_strncpy.c sbs_strncat.c sbs_strcmp.c \
-          sbs_strcasecmp.c sbs_strncasecmp.c \
-          sbs_strchr.c sbs_strrchr.c sbs_strnstr.c \
-          sbs_strncmp.c sbs_atoi.c
+# 라이브러리에 들어갈 소스 (minishell.c는 여기 넣지 않는다!)
+SRCS      = sbs_isalpha.c sbs_isdigit.c sbs_isalnum.c sbs_isascii.c \
+            sbs_isprint.c sbs_toupper.c sbs_tolower.c \
+            sbs_memset.c sbs_bzero.c sbs_memcpy.c sbs_memccpy.c \
+            sbs_memchr.c sbs_memcmp.c \
+            sbs_calloc.c sbs_substr.c sbs_strjoin.c sbs_itoa.c sbs_strdup.c \
+            sbs_strlen.c sbs_strlcpy.c sbs_strlcat.c \
+            sbs_strnlen.c sbs_strncpy.c sbs_strncat.c sbs_strcmp.c \
+            sbs_strcasecmp.c sbs_strncasecmp.c \
+            sbs_strchr.c sbs_strrchr.c sbs_strnstr.c \
+            sbs_strncmp.c sbs_atoi.c \
+            sbs_split.c sbs_free_split.c
 
-OBJS    = $(SRCS:.c=.o)
+OBJS      = $(SRCS:.c=.o)
 
+# 기본 타겟: 라이브러리 생성
 all: $(NAME)
 
+# .a 아카이브: 오브젝트들을 ar로 묶음
 $(NAME): $(OBJS)
 	$(AR) $(ARFLAGS) $(NAME) $(OBJS)
 
+# 패턴 규칙: .c → .o (libsbs.h가 바뀌면 전부 다시 컴파일)
 %.o: %.c libsbs.h
 	$(CC) $(CFLAGS) -c $&lt; -o $@
 
+# 미니셸: libsbs.a를 링크. 의존성에 $(NAME)을 넣어 라이브러리부터 빌드
+$(MINISHELL): minishell.o $(NAME)
+	$(CC) $(CFLAGS) minishell.o -L. -lsbs -o $(MINISHELL)
+
+# 오브젝트만 삭제 (minishell.o 포함)
 clean:
-	$(RM) $(OBJS)
+	$(RM) $(OBJS) minishell.o
 
+# 오브젝트 + 라이브러리 + 실행 파일 삭제
 fclean: clean
-	$(RM) $(NAME)
+	$(RM) $(NAME) $(MINISHELL)
 
+# 전체 재빌드
 re: fclean all
 
 .PHONY: all clean fclean re</code></pre></div></div>
+<div class="answer"><div class="answer-head"><span class="answer-name">📄 <span class="file">minishell.c</span></span><button class="answer-toggle">정답 보기</button></div><div class="answer-body"><pre><code class="language-c">#include &lt;stdio.h&gt;
+#include &lt;stdlib.h&gt;
+#include "libsbs.h"
+
+/*
+ * minishell — libsbs로 만든 아주 작은 셸 (16차시 종합 프로젝트)
+ *
+ * 15차시에 만든 '껍데기'(REPL 루프)에 이번엔 알맹이를 채운다:
+ *   1) 입력 한 줄을 sbs_split으로 단어 배열로 쪼갠다
+ *   2) 첫 단어(명령 이름)를 sbs_strcmp로 판별한다
+ *   3) 해당 내장(builtin) 명령을 실행한다
+ *   4) 배열을 free하고 다시 1번으로
+ *
+ * fork/exec 같은 외부 프로그램 실행은 쓰지 않는다. 모든 명령은
+ * 우리가 직접 구현한 내장 명령이다. 지금까지 만든 libsbs 함수만으로
+ * 돌아간다는 점이 핵심이다.
+ */
+
+#define BUF_SIZE 1024
+
+/* fgets가 함께 담아온 줄 끝 개행(\n)을 지운다 (15차시와 동일) */
+static void	strip_newline(char *line)
+{
+	size_t	len;
+
+	len = sbs_strlen(line);
+	if (len &gt; 0 &amp;&amp; line[len - 1] == '\n')
+		line[len - 1] = '\0';
+}
+
+/* echo: 명령 뒤의 인자들을 공백으로 이어 그대로 출력 */
+static void	builtin_echo(char **args)
+{
+	size_t	i;
+
+	i = 1;
+	while (args[i])
+	{
+		printf("%s", args[i]);
+		if (args[i + 1])
+			printf(" ");
+		i++;
+	}
+	printf("\n");
+}
+
+/* upper: 인자들을 대문자로 바꿔 출력 (9차시 sbs_toupper) */
+static void	builtin_upper(char **args)
+{
+	size_t	i;
+	size_t	j;
+
+	i = 1;
+	while (args[i])
+	{
+		j = 0;
+		while (args[i][j])
+		{
+			printf("%c", sbs_toupper((unsigned char)args[i][j]));
+			j++;
+		}
+		if (args[i + 1])
+			printf(" ");
+		i++;
+	}
+	printf("\n");
+}
+
+/* len: 각 인자의 길이를 출력 (12차시 sbs_strlen) */
+static void	builtin_len(char **args)
+{
+	size_t	i;
+
+	if (args[1] == NULL)
+	{
+		printf("len: 인자가 필요합니다\n");
+		return ;
+	}
+	i = 1;
+	while (args[i])
+	{
+		printf("%s: %zu\n", args[i], sbs_strlen(args[i]));
+		i++;
+	}
+}
+
+static void	builtin_help(void)
+{
+	printf("사용 가능한 명령:\n");
+	printf("  echo [말...]   입력한 말을 그대로 출력\n");
+	printf("  upper [말...]  대문자로 출력\n");
+	printf("  len [말...]    각 말의 길이 출력\n");
+	printf("  help          이 도움말\n");
+	printf("  exit          종료\n");
+}
+
+/*
+ * 명령 해석 + 실행.
+ *  - 반환 1: 셸을 종료하라는 신호(exit)
+ *  - 반환 0: 계속
+ */
+static int	run_command(char **args)
+{
+	if (args[0] == NULL)
+		return (0);
+	if (sbs_strcmp(args[0], "exit") == 0)
+		return (1);
+	if (sbs_strcmp(args[0], "echo") == 0)
+		builtin_echo(args);
+	else if (sbs_strcmp(args[0], "upper") == 0)
+		builtin_upper(args);
+	else if (sbs_strcmp(args[0], "len") == 0)
+		builtin_len(args);
+	else if (sbs_strcmp(args[0], "help") == 0)
+		builtin_help();
+	else
+		printf("minishell: %s: command not found\n", args[0]);
+	return (0);
+}
+
+int	main(void)
+{
+	char	line[BUF_SIZE];
+	char	**args;
+	int		done;
+
+	done = 0;
+	while (!done)
+	{
+		printf("minishell$ ");
+		fflush(stdout);
+		if (fgets(line, BUF_SIZE, stdin) == NULL)
+		{
+			printf("\n");
+			break ;
+		}
+		strip_newline(line);
+		args = sbs_split(line, ' ');
+		if (args == NULL)
+			break ;
+		done = run_command(args);
+		sbs_free_split(args);
+	}
+	printf("bye\n");
+	return (0);
+}</code></pre></div></div>
 <div class="answer"><div class="answer-head"><span class="answer-name">📄 <span class="file">sbs_atoi.c</span></span><button class="answer-toggle">정답 보기</button></div><div class="answer-body"><pre><code class="language-c">#include "libsbs.h"
 
 static int	is_space(char c)
@@ -307,6 +799,29 @@ void	*sbs_calloc(size_t count, size_t size)
 		return (NULL);
 	sbs_memset(ptr, 0, total);
 	return (ptr);
+}</code></pre></div></div>
+<div class="answer"><div class="answer-head"><span class="answer-name">📄 <span class="file">sbs_free_split.c</span></span><button class="answer-toggle">정답 보기</button></div><div class="answer-body"><pre><code class="language-c">#include "libsbs.h"
+#include &lt;stdlib.h&gt;
+
+/*
+ * sbs_split이 만든 배열을 통째로 해제한다.
+ *  - 각 단어(문자열)를 먼저 free
+ *  - 마지막에 배열 자체를 free
+ *  - NULL을 넣어도 안전(아무것도 안 함)
+ */
+void	sbs_free_split(char **arr)
+{
+	size_t	i;
+
+	if (arr == NULL)
+		return ;
+	i = 0;
+	while (arr[i])
+	{
+		free(arr[i]);
+		i++;
+	}
+	free(arr);
 }</code></pre></div></div>
 <div class="answer"><div class="answer-head"><span class="answer-name">📄 <span class="file">sbs_isalnum.c</span></span><button class="answer-toggle">정답 보기</button></div><div class="answer-body"><pre><code class="language-c">#include "libsbs.h"
 
@@ -483,6 +998,79 @@ void	*sbs_memset(void *b, int c, size_t len)
 		i++;
 	}
 	return (b);
+}</code></pre></div></div>
+<div class="answer"><div class="answer-head"><span class="answer-name">📄 <span class="file">sbs_split.c</span></span><button class="answer-toggle">정답 보기</button></div><div class="answer-body"><pre><code class="language-c">#include "libsbs.h"
+#include &lt;stdlib.h&gt;
+
+/*
+ * 문자열 s를 구분자 c로 쪼개 단어 배열(char **)을 만든다.
+ *  - 연속된 구분자는 하나로 취급, 앞뒤 구분자는 무시
+ *  - 마지막 원소는 NULL (끝 표시)
+ *  - 각 단어와 배열 모두 malloc → sbs_free_split으로 해제
+ *  - s가 NULL이면 NULL
+ * 예) sbs_split("  echo   hi ", ' ') → {"echo", "hi", NULL}
+ */
+
+/* 구분자로 나뉜 '단어'가 몇 개인지 센다 */
+static size_t	count_words(const char *s, char c)
+{
+	size_t	count;
+	size_t	i;
+
+	count = 0;
+	i = 0;
+	while (s[i])
+	{
+		while (s[i] == c)
+			i++;
+		if (s[i])
+		{
+			count++;
+			while (s[i] &amp;&amp; s[i] != c)
+				i++;
+		}
+	}
+	return (count);
+}
+
+/* 실패 시 지금까지 만든 단어 n개 + 배열을 해제하고 NULL 반환용 정리 */
+static void	free_partial(char **arr, size_t n)
+{
+	while (n &gt; 0)
+		free(arr[--n]);
+	free(arr);
+}
+
+char	**sbs_split(const char *s, char c)
+{
+	char	**arr;
+	size_t	words;
+	size_t	i;
+	size_t	start;
+	size_t	k;
+
+	if (s == NULL)
+		return (NULL);
+	words = count_words(s, c);
+	arr = (char **)malloc(sizeof(char *) * (words + 1));
+	if (arr == NULL)
+		return (NULL);
+	i = 0;
+	k = 0;
+	while (k &lt; words)
+	{
+		while (s[i] == c)
+			i++;
+		start = i;
+		while (s[i] &amp;&amp; s[i] != c)
+			i++;
+		arr[k] = sbs_substr(s, (unsigned int)start, i - start);
+		if (arr[k] == NULL)
+			return (free_partial(arr, k), NULL);
+		k++;
+	}
+	arr[k] = NULL;
+	return (arr);
 }</code></pre></div></div>
 <div class="answer"><div class="answer-head"><span class="answer-name">📄 <span class="file">sbs_strcasecmp.c</span></span><button class="answer-toggle">정답 보기</button></div><div class="answer-body"><pre><code class="language-c">#include "libsbs.h"
 
