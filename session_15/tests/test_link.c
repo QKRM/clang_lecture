@@ -24,6 +24,10 @@ int	main(void)
 	if (dup == NULL || sbs_strlen(dup) != 6)
 		ok = 0;
 	free(dup);
+	if (sbs_strcmp("exit", "exit") != 0)
+		ok = 0;
+	if (sbs_strcmp("exit", "quit") == 0)
+		ok = 0;
 	if (ok)
 	{
 		printf("LINK_OK\n");

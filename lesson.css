@@ -63,6 +63,10 @@ code, pre { font-family: var(--code-font); }
 .quiz-btn:hover { background: #67e8f9; }
 .quiz-btn.ghost { background: transparent; color: var(--cyan); border-color: rgba(34,211,238,0.4); }
 .quiz-btn.ghost:hover { background: rgba(34,211,238,0.12); }
+.quiz-cta.starter { background: rgba(251,191,36,0.07); border-color: rgba(251,191,36,0.28); }
+.quiz-cta.starter .quiz-cta-label { color: var(--amber-300); }
+.quiz-btn.amber { background: var(--amber-300); color: #2a1c00; }
+.quiz-btn.amber:hover { background: #fcd34d; }
 
 /* 본문 */
 .wrap { max-width: 880px; margin: 0 auto; padding: 8px 24px 80px; }

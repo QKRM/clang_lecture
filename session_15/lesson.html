@@ -17,6 +17,10 @@
       <div class="lesson-hero-inner">
         <span class="badge">libsbs 구현 · 15차시</span>
         <h1>Makefile과 라이브러리</h1>
+      <div class="quiz-cta starter">
+        <span class="quiz-cta-label">📦 실습 파일 (Makefile 제외 전체)</span>
+        <a class="quiz-btn amber" href="session_15_starter.zip" download>실습 파일 내려받기</a>
+      </div>
       <div class="quiz-cta">
         <span class="quiz-cta-label">📝 수업 마무리 퀴즈 (15문항)</span>
         <a class="quiz-btn" href="quiz_15.html" target="_blank" rel="noopener">퀴즈 풀기</a>
@@ -28,118 +32,358 @@
       <article class="md">
 <h1>15차시 강의 노트 - Makefile과 라이브러리 아카이브</h1>
 <h2>학습 목표</h2>
-<ol><li>Makefile의 기본 문법(타겟·의존성·레시피)을 이해한다.</li><li>변수와 패턴 규칙으로 중복을 줄일 수 있다.</li><li><code>ar</code>로 정적 라이브러리(<code>.a</code>)를 만들 수 있다.</li><li><code>libsbs.a</code>를 빌드하고 다른 프로그램에 링크할 수 있다.</li><li><code>all / clean / fclean / re</code> 표준 규칙을 작성할 수 있다.</li></ol>
+<ol><li>Makefile이 무엇을 대신해주는지 한 문장으로 설명한다.</li><li>Makefile의 기본 문법(타겟·의존성·레시피)을 이해한다.</li><li>변수와 패턴 규칙으로 중복을 줄인다.</li><li><code>ar</code>로 정적 라이브러리(<code>libsbs.a</code>)를 만든다.</li><li><code>all / clean / fclean / re</code> 표준 규칙을 작성한다.</li><li><code>libsbs.a</code>를 <strong>링크해서 쓰는 프로그램</strong>을 직접 만든다.</li><li>16차시에 만들 <strong>미니셸</strong>의 뼈대(REPL 루프)를 이해한다.</li></ol>
 <hr />
-<h2>1부: Makefile이 필요한 이유</h2>
-<p>지금까지 함수마다 <code>gcc ...</code>를 손으로 쳤습니다. 파일이 23개가 되면 매번 모두 컴파일하는 것은 비효율적입니다. <strong>Makefile</strong>은 빌드 규칙을 적어두고 <code>make</code> 한 번으로 자동 빌드합니다. 바뀐 파일만 다시 컴파일합니다.</p>
-<pre><code class="language-bash">$ make          # 빌드
-$ make clean    # 중간 파일 정리</code></pre>
+<h2>0부: 들어가며 — Makefile이 대체 뭔데?</h2>
+<h3>한 문장 요약</h3>
+<blockquote><strong>Makefile은 "이 프로그램은 이렇게 만든다"를 적어둔 조립 설명서다.</strong><br />설명서를 한 번 써두면, 그 다음부터는 <code>make</code> 한 단어로 빌드가 끝난다.</blockquote>
+<h3>지금까지 우리가 하던 일</h3>
+<p>9차시부터 컴파일할 때마다 이렇게 쳤습니다.</p>
+<pre><code class="language-bash">$ cc -Wall -Wextra -Werror sbs_strlen.c sbs_strlcpy.c sbs_strlcat.c tests/test_strlen.c -o run</code></pre>
+<p>함수가 4개일 땐 참을 만합니다. 그런데 16차시에는 함수가 <strong>30개가 넘습니다.</strong> 매번 30개 파일 이름을 손으로 칠 건가요? 오타 하나 나면 또 처음부터.</p>
+<h3>Makefile이 해결하는 3가지</h3>
+<p><strong>① 긴 명령어를 이름 하나로 줄인다</strong></p>
+<pre><code class="language-bash">$ make          # 위의 그 긴 cc 명령을 대신 실행</code></pre>
+<p><strong>② 바뀐 파일만 다시 컴파일한다 (이게 진짜 핵심)</strong></p>
+<p><code>make</code>는 파일의 <strong>수정 시각(타임스탬프)</strong> 을 봅니다.</p>
+<pre><code class="nohighlight">sbs_strlen.c  (오후 3시 수정)  →  sbs_strlen.o  (오후 2시 생성)
+                                   ↑ 소스가 더 최신! 다시 컴파일해야 함
+
+sbs_strdup.c  (오전 9시 수정)  →  sbs_strdup.o  (오후 2시 생성)
+                                   ↑ .o가 더 최신. 건너뛴다</code></pre>
+<p>30개 파일 중 1개만 고쳤으면 <strong>1개만</strong> 다시 컴파일합니다. 프로젝트가 커질수록 이 차이가 몇 초 vs 몇 분이 됩니다.</p>
+<p><strong>③ 팀원 누구나 똑같이 빌드한다</strong></p>
+<p>"이거 어떻게 빌드해요?" → "<code>make</code> 치세요." 끝. 컴파일 옵션(<code>-Wall -Wextra -Werror</code>)을 빠뜨리는 사람도 없어집니다.</p>
+<h3>오늘 만들 것</h3>
+<pre><code class="nohighlight">sbs_*.c  ──(make)──▶  libsbs.a  ──(링크)──▶  wordinfo   (libsbs 활용 프로그램)
+                                    └──────▶  minishell  (16차시 셸의 껍데기)</code></pre>
+<p>즉 오늘은 <strong>① 라이브러리를 만들고 ② 그걸 실제로 갖다 쓰는 것</strong>까지 합니다. 지금까지 만든 함수들이 처음으로 "진짜 프로그램"이 되는 날입니다.</p>
 <hr />
-<h2>2부: Makefile 기본 문법</h2>
-<h3>2.1 타겟 · 의존성 · 레시피</h3>
+<h2>1부: Makefile 기본 문법</h2>
+<h3>1.1 규칙 하나의 생김새</h3>
+<p>Makefile은 <strong>규칙(rule)</strong> 의 모음입니다. 규칙 하나는 세 부분입니다.</p>
 <pre><code class="language-makefile">타겟: 의존성
 	레시피     # ← 반드시 탭(Tab)으로 들여쓰기!</code></pre>
-<ul><li><strong>타겟</strong>: 만들려는 것(파일명 또는 동작 이름)</li><li><strong>의존성</strong>: 타겟을 만드는 데 필요한 것</li><li><strong>레시피</strong>: 실행할 명령 (앞에 <strong>탭</strong> 필수, 스페이스 아님)</li></ul>
+<ul><li><strong>타겟(target)</strong>: 만들려는 것. 보통 파일 이름</li><li><strong>의존성(prerequisites)</strong>: 타겟을 만드는 데 필요한 재료</li><li><strong>레시피(recipe)</strong>: 실제로 실행할 셸 명령</li></ul>
+<p>읽는 법: *"타겟은 의존성으로 만든다. 만드는 방법은 레시피다."*</p>
 <pre><code class="language-makefile">hello: hello.c
 	cc -Wall -Wextra -Werror hello.c -o hello</code></pre>
-<blockquote>레시피 들여쓰기는 <strong>반드시 탭</strong>입니다. 스페이스면 <code>missing separator</code> 에러.</blockquote>
-<h3>2.2 변수</h3>
-<p>반복을 줄입니다.</p>
+<blockquote>"hello라는 파일은 hello.c로 만든다. 만드는 법은 이 cc 명령이다."</blockquote>
+<h3>1.2 탭 함정 (제일 많이 걸림)</h3>
+<p>레시피 줄은 <strong>반드시 탭 문자</strong>로 시작해야 합니다. 스페이스 4칸은 안 됩니다. 눈으로는 똑같아 보이는데 make는 거부합니다.</p>
+<pre><code class="nohighlight">Makefile:3: *** missing separator.  Stop.</code></pre>
+<p>이 에러가 뜨면 99% 탭 문제입니다. VS Code에서 Makefile을 열면 자동으로 탭을 쓰지만, 복사·붙여넣기 하면 스페이스로 바뀔 수 있으니 주의하세요.</p>
+<h3>1.3 make는 어떻게 판단하나</h3>
+<pre><code class="language-bash">$ make hello</code></pre>
+<ol><li><code>hello</code> 파일이 있나? 없으면 → 레시피 실행</li><li>있으면 → <code>hello.c</code>가 <code>hello</code>보다 최신인가?</li></ol>
+<ul><li>최신이면(소스를 고쳤으면) → 레시피 실행</li><li>아니면 → <code>make: 'hello' is up to date.</code> 하고 아무것도 안 함</li></ul>
+<p>이 타임스탬프 비교가 앞에서 말한 "바뀐 것만 다시 만들기"의 정체입니다.</p>
+<hr />
+<h2>2부: 변수와 패턴 규칙</h2>
+<h3>2.1 변수 — 반복 줄이기</h3>
 <pre><code class="language-makefile">CC      = cc
 CFLAGS  = -Wall -Wextra -Werror
 NAME    = libsbs.a
 
-SRCS    = sbs_isalpha.c sbs_toupper.c sbs_strlen.c sbs_strdup.c
-OBJS    = $(SRCS:.c=.o)      # .c를 .o로 치환</code></pre>
-<p><code>$(SRCS:.c=.o)</code>는 "SRCS의 모든 <code>.c</code>를 <code>.o</code>로 바꾼 목록"입니다.</p>
-<h3>2.3 패턴 규칙과 자동 변수</h3>
+SRCS    = sbs_isalpha.c sbs_toupper.c sbs_strlen.c sbs_strdup.c sbs_strcmp.c
+OBJS    = $(SRCS:.c=.o)</code></pre>
+<ul><li>정의: <code>이름 = 값</code></li><li>사용: <code>$(이름)</code></li></ul>
+<p><code>$(SRCS:.c=.o)</code>는 <strong>치환 참조</strong>입니다. "SRCS의 모든 <code>.c</code>를 <code>.o</code>로 바꾼 목록"이 됩니다.</p>
+<pre><code class="nohighlight">SRCS = sbs_isalpha.c sbs_toupper.c ...
+OBJS = sbs_isalpha.o sbs_toupper.o ...      ← 자동으로 이렇게 됨</code></pre>
+<p>파일이 늘어나면 <strong>SRCS 한 줄만</strong> 고치면 됩니다. OBJS는 따라옵니다.</p>
+<h3>2.2 패턴 규칙 — 규칙 하나로 전부 처리</h3>
+<p>파일마다 규칙을 쓰면 이렇게 됩니다.</p>
+<pre><code class="language-makefile">sbs_isalpha.o: sbs_isalpha.c
+	cc -Wall -Wextra -Werror -c sbs_isalpha.c -o sbs_isalpha.o
+sbs_toupper.o: sbs_toupper.c
+	cc -Wall -Wextra -Werror -c sbs_toupper.c -o sbs_toupper.o</code></pre>
+<p>30개면 30번 반복입니다. 패턴 규칙 하나로 끝냅니다.</p>
 <pre><code class="language-makefile">%.o: %.c libsbs.h
 	$(CC) $(CFLAGS) -c $&lt; -o $@</code></pre>
-<ul><li><code>%.o: %.c</code> — 모든 <code>.o</code>는 같은 이름 <code>.c</code>로 만든다</li><li><code>$&lt;</code> — 첫 번째 의존성(여기선 <code>.c</code>)</li><li><code>$@</code> — 타겟 이름(여기선 <code>.o</code>)</li></ul>
+<ul><li><code>%</code> — 와일드카드. "모든 <code>.o</code>는 같은 이름의 <code>.c</code>로 만든다"</li><li><code>libsbs.h</code>를 의존성에 넣은 이유: <strong>헤더를 고치면 전부 다시 컴파일</strong>해야 하니까</li></ul>
+<h3>2.3 자동 변수</h3>
+<p>레시피 안에서 쓰는 특수 변수입니다.</p>
+<table><thead><tr><th>변수</th><th>의미</th><th>위 예시에서</th></tr></thead><tbody><tr><td><code>$&lt;</code></td><td>첫 번째 의존성</td><td><code>sbs_strlen.c</code></td></tr><tr><td><code>$@</code></td><td>타겟 이름</td><td><code>sbs_strlen.o</code></td></tr><tr><td><code>$^</code></td><td>의존성 전부</td><td><code>sbs_strlen.c libsbs.h</code></td></tr></tbody></table>
+<blockquote><code>-c</code> 옵션은 "컴파일만 하고 링크는 하지 마라"는 뜻입니다. 그래야 <code>.o</code>(오브젝트 파일)가 나오고, 나중에 <code>ar</code>로 묶을 수 있습니다.</blockquote>
 <hr />
 <h2>3부: ar로 정적 라이브러리 만들기</h2>
 <h3>3.1 정적 라이브러리란?</h3>
-<p>여러 <code>.o</code>(오브젝트 파일)를 하나의 <strong>아카이브</strong> <code>.a</code>로 묶은 것입니다. 다른 프로그램이 이 라이브러리를 링크해 함수를 씁니다.</p>
+<p>여러 <code>.o</code>를 하나로 묶은 <strong>압축 파일 같은 것</strong>입니다. 확장자는 <code>.a</code>(archive).</p>
+<pre><code class="nohighlight">sbs_isalpha.o ┐
+sbs_toupper.o ├──(ar)──▶  libsbs.a
+sbs_strlen.o  ┘</code></pre>
+<p>왜 묶나요? 프로그램을 빌드할 때 <code>.o</code> 30개를 일일이 나열하는 대신 <code>-lsbs</code> 한 마디로 끝나기 때문입니다. 남에게 코드를 안 주고 기능만 줄 수도 있습니다.</p>
 <h3>3.2 ar 명령</h3>
-<pre><code class="language-bash">$ ar rcs libsbs.a sbs_isalpha.o sbs_toupper.o ...</code></pre>
-<table><thead><tr><th>플래그</th><th>의미</th></tr></thead><tbody><tr><td><code>r</code></td><td>아카이브에 추가(있으면 교체)</td></tr><tr><td><code>c</code></td><td>아카이브 새로 생성</td></tr><tr><td><code>s</code></td><td>인덱스(심볼 테이블) 생성 — 링크 속도</td></tr></tbody></table>
+<pre><code class="language-bash">$ ar rcs libsbs.a sbs_isalpha.o sbs_toupper.o sbs_strlen.o</code></pre>
+<table><thead><tr><th>플래그</th><th>의미</th></tr></thead><tbody><tr><td><code>r</code></td><td>아카이브에 추가(이미 있으면 교체)</td></tr><tr><td><code>c</code></td><td>아카이브가 없으면 새로 생성</td></tr><tr><td><code>s</code></td><td>심볼 인덱스 생성 — 링커가 함수를 빨리 찾게 해줌</td></tr></tbody></table>
 <p>Makefile에서:</p>
 <pre><code class="language-makefile">$(NAME): $(OBJS)
-	$(AR) $(ARFLAGS) $(NAME) $(OBJS)   # ar rcs libsbs.a *.o</code></pre>
-<h3>3.3 아카이브 확인</h3>
-<pre><code class="language-bash">$ ar t libsbs.a       # 들어있는 오브젝트 목록
+	$(AR) $(ARFLAGS) $(NAME) $(OBJS)   # ar rcs libsbs.a sbs_*.o</code></pre>
+<h3>3.3 이름 규칙 (중요)</h3>
+<p>라이브러리 이름은 반드시 <strong><code>lib</code> + 이름 + <code>.a</code></strong> 형태여야 합니다.</p>
+<pre><code class="nohighlight">libsbs.a   →  링크할 때 -lsbs     (lib와 .a를 뗀 이름)</code></pre>
+<p><code>sbs.a</code>로 만들면 <code>-lsbs</code>로 못 찾습니다. 이건 관례가 아니라 링커의 규칙입니다.</p>
+<h3>3.4 아카이브 확인</h3>
+<pre><code class="language-bash">$ ar t libsbs.a       # t = table, 들어있는 목록 보기
 sbs_isalpha.o
 sbs_toupper.o
-...</code></pre>
+sbs_strlen.o
+sbs_strdup.o
+sbs_strcmp.o</code></pre>
+<p>빠진 게 있으면 SRCS를 확인하세요.</p>
 <hr />
 <h2>4부: 표준 규칙 + 링크</h2>
 <h3>4.1 all / clean / fclean / re</h3>
-<p>42 계열과 많은 C 프로젝트가 쓰는 관례 규칙입니다.</p>
+<p>C 프로젝트에서 널리 쓰는 관례 규칙 4개입니다.</p>
 <pre><code class="language-makefile">all: $(NAME)              # 기본 빌드
 
 clean:
-	$(RM) $(OBJS)         # .o만 삭제
+	$(RM) $(OBJS)         # 중간 파일(.o)만 삭제
 
 fclean: clean
-	$(RM) $(NAME)         # .o + .a 삭제
+	$(RM) $(NAME)         # .o + 결과물까지 삭제
 
-re: fclean all           # 전체 재빌드
+re: fclean all            # 전부 지우고 처음부터
 
-.PHONY: all clean fclean re   # 동명 파일과 충돌 방지</code></pre>
-<blockquote><code>.PHONY</code>는 "이 타겟은 파일이 아니라 동작"이라고 알려, <code>clean</code>이라는 파일이 있어도 항상 실행되게 합니다.</blockquote>
-<h3>4.2 라이브러리 링크</h3>
-<pre><code class="language-bash"># libsbs.a를 링크해 프로그램 빌드
-$ cc -Wall -Wextra -Werror main.c -L. -lsbs -o program</code></pre>
-<ul><li><code>-L.</code> — 현재 디렉토리에서 라이브러리를 찾음</li><li><code>-lsbs</code> — <code>libsbs.a</code>를 링크 (<code>lib</code>와 <code>.a</code>를 뺀 이름)</li></ul>
+.PHONY: all clean fclean re</code></pre>
+<ul><li><code>make</code>만 치면 <strong>맨 위 타겟</strong>이 실행됩니다. 그래서 <code>all</code>을 맨 위에 둡니다.</li><li><code>fclean: clean</code> — fclean은 clean을 의존성으로 가집니다. clean을 먼저 하고 나서 자기 레시피를 실행합니다.</li><li><code>re: fclean all</code> — 레시피 없이 의존성만 있습니다. "fclean 하고 all 해라"는 뜻.</li></ul>
+<h3>4.2 .PHONY가 필요한 이유</h3>
+<p><code>clean</code>은 파일 이름이 아니라 <strong>동작 이름</strong>입니다. 그런데 만약 폴더에 <code>clean</code>이라는 <strong>파일</strong>이 실수로 생기면?</p>
+<p>make는 "clean이라는 타겟(=파일)이 이미 있고, 의존성도 없으니 만들 필요 없네" 하고 <strong>아무것도 안 합니다.</strong></p>
+<pre><code class="language-bash">$ touch clean       # clean이라는 파일 생성
+$ make clean
+make: 'clean' is up to date.     # ← .o가 안 지워짐!</code></pre>
+<p><code>.PHONY: clean</code>이라고 선언하면 "이건 파일이 아니라 동작"이라고 알려줘서 항상 실행됩니다.</p>
+<h3>4.3 라이브러리 링크</h3>
+<pre><code class="language-bash">$ cc -Wall -Wextra -Werror main.c -L. -lsbs -o wordinfo</code></pre>
+<table><thead><tr><th>옵션</th><th>의미</th></tr></thead><tbody><tr><td><code>-L.</code></td><td>라이브러리를 <strong>현재 폴더(<code>.</code>)</strong> 에서 찾아라</td></tr><tr><td><code>-lsbs</code></td><td><code>libsbs.a</code>를 링크해라 (<code>lib</code>/<code>.a</code> 뗀 이름)</td></tr></tbody></table>
+<blockquote><strong>순서 주의</strong>: <code>-lsbs</code>는 <code>main.c</code> <strong>뒤에</strong> 와야 합니다. 링커는 왼쪽에서 오른쪽으로 읽으면서 "아직 못 찾은 함수"를 모으기 때문에, 라이브러리가 먼저 나오면 아직 찾을 게 없어서 그냥 지나칩니다. <code>cc -lsbs main.c</code>는 <code>undefined reference</code> 에러가 납니다.</blockquote>
 <hr />
-<h2>5부: 채점</h2>
-<p>채점 스크립트가 다음을 확인합니다:</p>
+<h2>5부: libsbs를 실제로 써보기 — wordinfo</h2>
+<p>라이브러리를 만들었으면 <strong>써봐야</strong> 의미가 있습니다. 우리가 만든 함수만으로 동작하는 작은 프로그램을 만듭니다.</p>
+<h3>5.1 무엇을 만드나</h3>
+<pre><code class="language-bash">$ ./wordinfo hello C99
+[hello]
+  길이   : 5
+  대문자 : HELLO
+  알파벳 : 예
+[C99]
+  길이   : 3
+  대문자 : C99
+  알파벳 : 아니오</code></pre>
+<p>명령줄 인자로 받은 단어마다 길이·대문자·알파벳 여부를 출력합니다. 쓰는 함수는 전부 <code>sbs_</code> 버전입니다.</p>
+<h3>5.2 코드</h3>
+<pre><code class="language-c">#include &lt;stdio.h&gt;
+#include &lt;stdlib.h&gt;
+#include "libsbs.h"
+
+static void print_upper(const char *s)
+{
+    int i = 0;
+    while (s[i])
+    {
+        printf("%c", sbs_toupper((unsigned char)s[i]));
+        i++;
+    }
+}
+
+int main(int argc, char **argv)
+{
+    int   i;
+    char  *copy;
+
+    if (argc &lt; 2)
+    {
+        printf("사용법: ./wordinfo 단어 [단어...]\n");
+        return (1);
+    }
+    i = 1;
+    while (i &lt; argc)
+    {
+        copy = sbs_strdup(argv[i]);     /* 11차시 strdup */
+        if (copy == NULL)
+            return (1);
+        printf("[%s]\n", copy);
+        printf("  길이   : %zu\n", sbs_strlen(copy));   /* 12차시 */
+        printf("  대문자 : ");
+        print_upper(copy);                              /* 9차시 toupper */
+        printf("\n");
+        free(copy);                     /* strdup은 malloc → free 필수 */
+        i++;
+    }
+    return (0);
+}</code></pre>
+<h3>5.3 여기서 짚을 점</h3>
+<p><strong>① <code>main.c</code>는 라이브러리에 넣지 않는다</strong></p>
+<pre><code class="language-makefile">SRCS = sbs_isalpha.c sbs_toupper.c ...    # main.c 없음!</code></pre>
+<p>라이브러리는 <strong>부품 모음</strong>입니다. <code>main</code>은 프로그램의 시작점이라 부품이 아닙니다. 라이브러리에 <code>main</code>이 들어 있으면 나중에 그 라이브러리를 쓰는 다른 프로그램과 <code>main</code>이 충돌합니다.</p>
+<p><strong>② <code>%zu</code>로 size_t 출력</strong></p>
+<p><code>sbs_strlen</code>은 <code>size_t</code>를 반환합니다. <code>%d</code>로 찍으면 <code>-Wall</code>에서 경고(→ <code>-Werror</code> 때문에 에러)가 납니다. <code>size_t</code>는 <code>%zu</code>입니다.</p>
+<p><strong>③ Makefile에 프로그램 타겟 추가</strong></p>
+<pre><code class="language-makefile">$(WORDINFO): main.o $(NAME)
+	$(CC) $(CFLAGS) main.o -L. -lsbs -o $(WORDINFO)</code></pre>
+<p>의존성에 <code>$(NAME)</code>을 넣은 게 핵심입니다. "wordinfo를 만들려면 libsbs.a가 먼저 있어야 한다"고 알려주면, make가 알아서 라이브러리부터 만듭니다.</p>
+<hr />
+<h2>6부: 16차시 예고 — 미니셸의 뼈대</h2>
+<p>16차시에는 <strong>셸(shell)</strong> 을 직접 만듭니다. 오늘은 그 <strong>껍데기</strong>까지만 만들어 둡니다.</p>
+<h3>6.1 셸이란 무엇인가</h3>
+<p>여러분이 매일 쓰는 그것입니다.</p>
+<pre><code class="language-bash">$ ls
+$ cd session_15
+$ make</code></pre>
+<p><code>$</code>를 찍고 기다리다가, 여러분이 명령을 치면, 그걸 해석해서 실행하고, 다시 <code>$</code>를 찍는 프로그램. bash, zsh 모두 셸입니다. <strong>터미널 창 자체가 아니라, 그 안에서 도는 프로그램</strong>입니다.</p>
+<h3>6.2 셸의 심장 — REPL 루프</h3>
+<p>셸이 하는 일은 놀랍도록 단순한 4단계 반복입니다.</p>
+<pre><code class="nohighlight">    ┌──────────────────────────────┐
+    │  1. 프롬프트 출력 ($ 찍기)     │
+    │  2. 한 줄 읽기   (Read)       │
+    │  3. 해석·실행    (Eval)       │
+    │  4. 결과 출력    (Print)      │
+    └──────────┬───────────────────┘
+               │
+               └──▶ 1번으로 (Loop)</code></pre>
+<p>이걸 <strong>REPL</strong>(Read-Eval-Print Loop)이라 부릅니다. 파이썬 대화형 셸, 브라우저 콘솔, 다 같은 구조입니다.</p>
+<h3>6.3 오늘 만들 부분 / 16차시에 만들 부분</h3>
+<table><thead><tr><th>단계</th><th>오늘(15차시)</th><th>16차시</th></tr></thead><tbody><tr><td>1. 프롬프트</td><td>✅ <code>minishell$ </code> 출력</td><td>그대로</td></tr><tr><td>2. 읽기</td><td>✅ <code>fgets</code>로 한 줄</td><td>그대로</td></tr><tr><td>3. 해석</td><td>❌ 그냥 되돌려 출력</td><td><strong>단어로 쪼개기(split)</strong></td></tr><tr><td>3. 실행</td><td>❌ 없음</td><td><strong>echo/pwd/help 등 명령 구현</strong></td></tr><tr><td>4. 반복</td><td>✅ <code>exit</code> 치면 종료</td><td>그대로</td></tr></tbody></table>
+<p>즉 오늘은 <strong>루프와 입출력</strong>이라는 뼈대를 세우고, 16차시에 <strong>알맹이(명령 해석기)</strong> 를 끼워 넣습니다.</p>
+<h3>6.4 껍데기 코드</h3>
+<pre><code class="language-c">#include &lt;stdio.h&gt;
+#include &lt;stdlib.h&gt;
+#include "libsbs.h"
+
+#define BUF_SIZE 1024
+
+/* fgets는 Enter(\n)까지 담아온다. 그대로 두면 "exit\n" != "exit". */
+static void strip_newline(char *line)
+{
+    size_t len = sbs_strlen(line);
+    if (len &gt; 0 &amp;&amp; line[len - 1] == '\n')
+        line[len - 1] = '\0';
+}
+
+int main(void)
+{
+    char line[BUF_SIZE];
+
+    while (1)
+    {
+        printf("minishell$ ");                      /* 1. 프롬프트 */
+        if (fgets(line, BUF_SIZE, stdin) == NULL)   /* 2. 읽기 */
+        {
+            printf("\n");
+            break ;                                 /* Ctrl+D = 입력 끝 */
+        }
+        strip_newline(line);
+        if (sbs_strcmp(line, "exit") == 0)          /* 3. 해석(아주 초보적) */
+            break ;
+        if (sbs_strcmp(line, "") == 0)
+            continue ;                              /* 그냥 Enter면 무시 */
+        printf("입력: %s\n", line);                 /* 4. 출력 */
+    }
+    printf("bye\n");
+    return (0);
+}</code></pre>
+<p>실행하면:</p>
+<pre><code class="nohighlight">$ ./minishell
+minishell$ hello
+입력: hello
+minishell$ 
+minishell$ exit
+bye
+$</code></pre>
+<h3>6.5 여기서 libsbs가 실제로 일한다</h3>
+<p>껍데기밖에 없는데도 우리 함수 2개가 이미 쓰이고 있습니다.</p>
+<ul><li><strong><code>sbs_strlen</code></strong> → 줄 끝의 <code>\n</code> 위치를 찾으려면 길이를 알아야 함</li><li><strong><code>sbs_strcmp</code></strong> → 입력이 정확히 <code>"exit"</code>인지 판정. <strong>C에서 문자열 비교는 <code>==</code>가 아니라 strcmp</strong>(12차시 0부에서 배운 그것)</li></ul>
+<p>12차시에 "문자열 함수가 어디에 쓰이냐"고 물었죠. 여기 있습니다.</p>
+<h3>6.6 새로 나온 것들</h3>
+<p><strong><code>fgets(line, BUF_SIZE, stdin)</code></strong></p>
+<p>표준 입력에서 최대 <code>BUF_SIZE - 1</code>글자를 읽어 <code>line</code>에 담고 <code>\0</code>을 붙입니다. <code>scanf("%s")</code>와 달리 <strong>공백을 포함한 한 줄 전체</strong>를 읽고, <strong>버퍼 크기를 받으므로 오버플로우가 안 납니다.</strong> 12차시에서 배운 "크기를 받는 안전한 함수"의 또 다른 예입니다.</p>
+<p><strong><code>fgets</code>가 NULL을 반환하는 때</strong></p>
+<p>입력이 끝났을 때입니다. 키보드로는 <strong>Ctrl+D</strong>를 누르면 "더 이상 입력 없음(EOF)" 신호가 갑니다. 이걸 처리 안 하면 Ctrl+D를 눌렀을 때 무한 루프에 빠집니다.</p>
+<p><strong><code>while (1)</code> + <code>break</code></strong></p>
+<p>셸은 사용자가 끝내라고 할 때까지 도는 게 정상입니다. 무한 루프는 여기선 버그가 아니라 설계입니다.</p>
+<h3>6.7 16차시 맛보기 — 알맹이는 이렇게 생겼다</h3>
+<p>16차시에는 3번(해석·실행) 자리에 이런 게 들어갑니다.</p>
+<pre><code class="language-c">/* 16차시에 만들 것 (미리보기) */
+char **args = sbs_split(line, ' ');       /* "echo hi" → {"echo", "hi", NULL} */
+
+if (sbs_strcmp(args[0], "echo") == 0)
+    builtin_echo(args);
+else if (sbs_strcmp(args[0], "pwd") == 0)
+    builtin_pwd();
+else if (sbs_strcmp(args[0], "help") == 0)
+    builtin_help();
+else
+    printf("minishell: %s: command not found\n", args[0]);
+
+free_args(args);                          /* split이 malloc했으니 해제 */</code></pre>
+<p>보이나요? <strong>전부 우리가 만든 함수</strong>입니다. 문자열 쪼개기(11차시 malloc + 12차시 strlen), 명령 비교(strcmp), 메모리 해제(free). 16차시는 새로운 걸 배우는 시간이 아니라, <strong>지금까지 만든 걸 조립하는 시간</strong>입니다.</p>
+<blockquote>미리 생각해보세요: <code>"echo   hello   world"</code> 처럼 공백이 여러 개면 어떻게 쪼개야 할까요? 빈 칸은 건너뛰어야겠죠. 이게 16차시 split의 핵심 난제입니다.</blockquote>
+<hr />
+<h2>7부: 채점</h2>
 <pre><code class="language-bash">$ bash grade.sh
 === libsbs 15차시 채점 (Makefile) ===
 ✓ make → libsbs.a 생성
 ✓ ar 아카이브에 오브젝트 포함
 ✓ libsbs.a 링크 + 동작 확인
 ✓ clean / fclean / re 규칙 동작
-결과: 4 / 4 통과</code></pre>
-<ol><li><code>make</code>로 <code>libsbs.a</code>가 생기는가</li><li>아카이브에 <code>.o</code>가 들어있는가</li><li>링크해서 함수가 동작하는가(<code>-lsbs</code>)</li><li><code>clean</code>/<code>fclean</code>/<code>re</code>가 제대로 동작하는가</li></ol>
+✓ make wordinfo — libsbs 활용 프로그램 동작
+✓ make minishell — 프롬프트/입력/exit 동작
+결과: 6 / 6 통과</code></pre>
+<ol><li><code>make</code>로 <code>libsbs.a</code>가 생기는가</li><li>아카이브에 <code>.o</code>가 들어있는가</li><li>링크해서 함수가 동작하는가(<code>-lsbs</code>)</li><li><code>clean</code>/<code>fclean</code>/<code>re</code>가 제대로 동작하는가</li><li><code>make wordinfo</code>가 빌드되고 올바른 결과를 내는가</li><li><code>make minishell</code>이 빌드되고 입력/종료가 동작하는가</li></ol>
 <hr />
 <h2>핵심 정리</h2>
-<ol><li>Makefile: 타겟·의존성·레시피, 레시피는 <strong>탭</strong> 들여쓰기</li><li>변수와 <code>$(SRCS:.c=.o)</code>로 중복 제거</li><li>패턴 규칙 <code>%.o: %.c</code>, 자동 변수 <code>$&lt;</code>(소스) <code>$@</code>(타겟)</li><li><code>ar rcs libsbs.a *.o</code>로 정적 라이브러리 생성</li><li><code>all/clean/fclean/re</code> + <code>.PHONY</code> 표준 규칙</li><li><code>-L. -lsbs</code>로 라이브러리 링크</li></ol>
+<ol><li>Makefile은 <strong>조립 설명서</strong>. 타겟·의존성·레시피, 레시피는 <strong>탭</strong> 들여쓰기</li><li>make는 <strong>타임스탬프</strong>를 비교해 바뀐 파일만 다시 컴파일</li><li>변수와 <code>$(SRCS:.c=.o)</code>로 중복 제거 — 파일 추가는 SRCS 한 줄만</li><li>패턴 규칙 <code>%.o: %.c</code>, 자동 변수 <code>$&lt;</code>(소스) <code>$@</code>(타겟)</li><li><code>ar rcs libsbs.a *.o</code>로 정적 라이브러리 생성, 이름은 반드시 <code>lib***.a</code></li><li><code>all/clean/fclean/re</code> + <code>.PHONY</code>(동작은 파일이 아니다)</li><li><code>-L. -lsbs</code>로 링크, <strong>라이브러리는 소스 뒤에</strong> 써야 함</li><li><code>main.c</code>는 라이브러리에 넣지 않는다 (부품 아님)</li><li>셸 = <strong>REPL 루프</strong>(프롬프트 → 읽기 → 해석·실행 → 반복)</li><li>껍데기에서도 <code>sbs_strlen</code>(개행 제거) · <code>sbs_strcmp</code>("exit" 비교)가 이미 일한다</li></ol>
 <hr />
 <h2>다음 차시 예고</h2>
-<p>16차시는 종합 프로젝트입니다. 9~14차시에서 만든 모든 함수를 하나의 <code>libsbs</code>로 통합하고, 전체를 빌드하는 Makefile을 완성합니다. 동료와 코드 리뷰를 하고 최종 빌드를 확인합니다.</p>
+<p>16차시는 <strong>미니셸 완성</strong>입니다. 오늘 만든 껍데기의 3단계(해석·실행) 자리에 진짜 명령 해석기를 넣습니다. 입력을 단어로 쪼개고(<code>split</code>), 명령 이름을 비교하고(<code>strcmp</code>), <code>echo</code>·<code>pwd</code>·<code>help</code>·<code>exit</code> 같은 내장 명령을 직접 구현합니다. 9~14차시에 만든 함수들이 총출동하는, 이 과정의 마지막 조립입니다.</p>
 <div class="section-split"><h2>실습</h2><p>아래 문제를 직접 풀어본 뒤, 맨 아래 정답 코드로 확인하세요.</p></div>
 <h1>15차시 실습 - Makefile과 라이브러리 아카이브</h1>
 <h2>실습 목표</h2>
-<ul><li>Makefile을 작성해 <code>libsbs.a</code>를 자동 빌드한다.</li><li><code>ar</code>로 정적 라이브러리를 만든다.</li><li><code>all / clean / fclean / re</code> 규칙을 구현한다.</li><li>라이브러리를 링크해 함수가 동작함을 확인한다.</li></ul>
-<blockquote>이번 차시는 함수 구현이 아니라 <strong>빌드 시스템</strong>을 만듭니다. <code>.c</code> 파일은 제공됩니다(데모용 4개).</blockquote>
+<ul><li>Makefile을 작성해 <code>libsbs.a</code>를 자동 빌드한다.</li><li><code>ar</code>로 정적 라이브러리를 만든다.</li><li><code>all / clean / fclean / re</code> 규칙을 구현한다.</li><li>라이브러리를 링크해 <strong>직접 쓰는 프로그램</strong>(wordinfo)을 빌드한다.</li><li>16차시에 완성할 <strong>미니셸의 껍데기</strong>를 빌드해 돌려본다.</li></ul>
+<blockquote>이번 차시는 함수 구현이 아니라 <strong>빌드 시스템</strong>을 만듭니다. <code>.c</code> 파일은 전부 제공됩니다. 여러분이 쓸 것은 <strong>Makefile 하나</strong>입니다.</blockquote>
 <hr />
-<h2>준비: 제공 파일</h2>
-<pre><code class="nohighlight">session_15/
-├── libsbs.h
-├── sbs_isalpha.c  sbs_toupper.c
-├── sbs_strlen.c   sbs_strdup.c
-├── Makefile          ← 직접 작성 (참고 정답 동봉)
-├── grade.sh
-└── tests/test_link.c</code></pre>
+<h2>준비: 실습 파일 내려받기</h2>
+<p>페이지 맨 위의 <strong>실습 파일 내려받기</strong> 버튼으로 <code>session_15_starter.zip</code>을 받으세요. Makefile을 만드는 데 필요한 모든 파일이 들어 있습니다(<strong>Makefile만 빠져 있습니다 — 그게 오늘 과제</strong>).</p>
+<pre><code class="nohighlight">session_15_starter/
+├── libsbs.h              헤더 (함수 5개 프로토타입)
+├── sbs_isalpha.c         ┐
+├── sbs_toupper.c         │
+├── sbs_strlen.c          ├─ 라이브러리에 들어갈 소스 (SRCS)
+├── sbs_strdup.c          │
+├── sbs_strcmp.c          ┘
+├── main.c                wordinfo 프로그램 (libsbs 활용)
+├── minishell.c           미니셸 껍데기 (16차시 예고)
+├── tests/test_link.c     링크 테스트
+├── grade.sh              채점 스크립트
+└── README.md             과제 요약</code></pre>
+<p>Codespaces에 올리는 법:</p>
+<pre><code class="language-bash">$ unzip session_15_starter.zip
+$ cd session_15_starter
+$ ls</code></pre>
+<blockquote>Makefile 정답은 이 페이지 맨 아래 <strong>정답 코드</strong>에 있습니다. 먼저 직접 써본 뒤에 여세요.</blockquote>
 <hr />
 <h2>과제 1: 변수 정의</h2>
-<p><code>Makefile</code>을 만들고 변수를 정의하세요.</p>
+<p><code>Makefile</code>을 새로 만들고 변수부터 정의하세요.</p>
 <p>요구사항:</p>
-<pre><code class="language-makefile">NAME    = libsbs.a
-CC      = cc
-CFLAGS  = -Wall -Wextra -Werror
-AR      = ar
-ARFLAGS = rcs
-RM      = rm -f
+<pre><code class="language-makefile">NAME      = libsbs.a
+WORDINFO  = wordinfo
+MINISHELL = minishell
 
-SRCS    = sbs_isalpha.c sbs_toupper.c sbs_strlen.c sbs_strdup.c
-OBJS    = $(SRCS:.c=.o)</code></pre>
-<blockquote><code>$(SRCS:.c=.o)</code>는 모든 <code>.c</code>를 <code>.o</code>로 바꾼 목록입니다.</blockquote>
+CC        = cc
+CFLAGS    = -Wall -Wextra -Werror
+AR        = ar
+ARFLAGS   = rcs
+RM        = rm -f
+
+SRCS      = sbs_isalpha.c sbs_toupper.c sbs_strlen.c sbs_strdup.c sbs_strcmp.c
+OBJS      = $(SRCS:.c=.o)</code></pre>
+<blockquote><strong>주의</strong>: <code>SRCS</code>에 <code>main.c</code>나 <code>minishell.c</code>를 넣지 마세요. 라이브러리는 부품 모음이라 <code>main</code>이 들어가면 안 됩니다.</blockquote>
 <hr />
 <h2>과제 2: 라이브러리 빌드 규칙</h2>
 <p>요구사항:</p>
-<ul><li><code>all</code> 타겟이 <code>$(NAME)</code>을 만든다</li><li><code>$(NAME)</code>은 <code>$(OBJS)</code>를 <code>ar</code>로 묶는다</li><li>패턴 규칙으로 <code>.c</code>를 <code>.o</code>로 컴파일 (libsbs.h 의존)</li></ul>
+<ul><li><code>all</code> 타겟이 <code>$(NAME)</code>을 만든다 (맨 위에 둘 것)</li><li><code>$(NAME)</code>은 <code>$(OBJS)</code>를 <code>ar</code>로 묶는다</li><li>패턴 규칙으로 <code>.c</code>를 <code>.o</code>로 컴파일 (<code>libsbs.h</code> 의존)</li></ul>
 <p>힌트:</p>
 <pre><code class="language-makefile">all: $(NAME)
 
@@ -149,46 +393,89 @@ $(NAME): $(OBJS)
 %.o: %.c libsbs.h
 	$(CC) $(CFLAGS) -c $&lt; -o $@</code></pre>
 <blockquote>레시피 줄은 <strong>반드시 탭(Tab)</strong>으로 들여쓰기. 스페이스면 <code>missing separator</code> 에러.</blockquote>
+<p>확인:</p>
+<pre><code class="language-bash">$ make
+$ ar t libsbs.a        # 5개 .o가 보여야 함</code></pre>
 <hr />
 <h2>과제 3: clean / fclean / re</h2>
 <p>요구사항:</p>
 <pre><code class="language-makefile">clean:
-	$(RM) $(OBJS)
+	$(RM) $(OBJS) main.o minishell.o
 
 fclean: clean
-	$(RM) $(NAME)
+	$(RM) $(NAME) $(WORDINFO) $(MINISHELL)
 
 re: fclean all
 
-.PHONY: all clean fclean re</code></pre>
-<blockquote><code>.PHONY</code>로 동명 파일과의 충돌을 막습니다(예: <code>clean</code>이라는 파일이 있어도 동작).</blockquote>
+.PHONY: all progs clean fclean re</code></pre>
+<blockquote><code>clean</code>은 프로그램의 <code>.o</code>(main.o, minishell.o)도 지워야 합니다. <code>fclean</code>은 실행 파일까지.</blockquote>
+<p>확인:</p>
+<pre><code class="language-bash">$ make clean       # .o 사라짐, libsbs.a는 남음
+$ make fclean      # 전부 사라짐
+$ make re          # 처음부터 다시 빌드</code></pre>
 <hr />
-<h2>과제 4: 빌드 + 링크 확인</h2>
-<pre><code class="language-bash">$ make                       # libsbs.a 생성
-$ ar t libsbs.a              # 오브젝트 목록 확인
-$ make clean                 # .o 삭제
-$ make re                    # 전체 재빌드
+<h2>과제 4: wordinfo — libsbs를 쓰는 프로그램</h2>
+<p><code>main.c</code>(제공)를 <code>libsbs.a</code>와 링크하는 규칙을 추가하세요.</p>
+<p>요구사항:</p>
+<ul><li>타겟 이름은 <code>$(WORDINFO)</code></li><li>의존성에 <code>main.o</code>와 <strong><code>$(NAME)</code></strong> 둘 다 (라이브러리가 먼저 있어야 하니까)</li><li><code>-L. -lsbs</code>로 링크</li></ul>
+<p>힌트:</p>
+<pre><code class="language-makefile">$(WORDINFO): main.o $(NAME)
+	$(CC) $(CFLAGS) main.o -L. -lsbs -o $(WORDINFO)</code></pre>
+<p>확인:</p>
+<pre><code class="language-bash">$ make wordinfo
+$ ./wordinfo hello C99
+[hello]
+  길이   : 5
+  대문자 : HELLO
+  알파벳 : 예
+[C99]
+  길이   : 3
+  대문자 : C99
+  알파벳 : 아니오</code></pre>
+<blockquote><code>-lsbs</code>를 <code>main.o</code> <strong>앞에</strong> 쓰면 <code>undefined reference</code> 에러가 납니다. 링커는 왼쪽→오른쪽으로 읽습니다.</blockquote>
+<hr />
+<h2>과제 5: minishell — 셸 껍데기 빌드</h2>
+<p><code>minishell.c</code>(제공)도 같은 방식으로 링크하세요.</p>
+<p>힌트:</p>
+<pre><code class="language-makefile">$(MINISHELL): minishell.o $(NAME)
+	$(CC) $(CFLAGS) minishell.o -L. -lsbs -o $(MINISHELL)
 
-# 라이브러리 링크 테스트
-$ cc -Wall -Wextra -Werror tests/test_link.c -L. -lsbs -o run
-$ ./run
-LINK_OK</code></pre>
-<ul><li><code>-L.</code> 현재 폴더에서 라이브러리 검색</li><li><code>-lsbs</code> → <code>libsbs.a</code> 링크 (<code>lib</code>/<code>.a</code> 뺀 이름)</li></ul>
+progs: $(WORDINFO) $(MINISHELL)</code></pre>
+<p>확인:</p>
+<pre><code class="nohighlight">$ make minishell
+$ ./minishell
+minishell$ hello
+입력: hello
+minishell$ 안녕 세계
+입력: 안녕 세계
+minishell$ exit
+bye
+$</code></pre>
+<p>Ctrl+D로도 종료되는지 확인하세요.</p>
+<pre><code class="language-bash">$ make progs       # wordinfo + minishell 한 번에</code></pre>
 <hr />
-<h2>과제 5: 채점</h2>
+<h2>과제 6: 코드 읽기 — minishell.c 분석</h2>
+<p><code>minishell.c</code>를 열어 다음 질문에 답해보세요. (코드를 고칠 필요는 없습니다)</p>
+<ol><li><code>strip_newline</code>은 왜 필요한가? 그 호출을 지우고 빌드해서 <code>exit</code>를 쳐보세요. 무슨 일이 일어나나요?</li><li><code>sbs_strcmp(line, "exit")</code> 대신 <code>line == "exit"</code>로 쓰면 왜 안 되나요?</li><li><code>fgets</code>가 <code>NULL</code>을 반환하는 경우는 언제인가요? 그때 <code>break</code>를 안 하면?</li><li><code>while (1)</code>이 무한 루프인데 왜 버그가 아닌가요?</li></ol>
+<blockquote>답은 강의 노트 6부에 있습니다. 직접 실험해보면 더 오래 남습니다.</blockquote>
+<hr />
+<h2>과제 7: 채점</h2>
 <pre><code class="language-bash">$ bash grade.sh
 === libsbs 15차시 채점 (Makefile) ===
 ✓ make → libsbs.a 생성
 ✓ ar 아카이브에 오브젝트 포함
 ✓ libsbs.a 링크 + 동작 확인
 ✓ clean / fclean / re 규칙 동작
-결과: 4 / 4 통과</code></pre>
+✓ make wordinfo — libsbs 활용 프로그램 동작
+✓ make minishell — 프롬프트/입력/exit 동작
+결과: 6 / 6 통과</code></pre>
+<p>실패 시 <code>bash grade.sh -v</code>로 상세 로그를 확인하세요.</p>
 <hr />
 <h2>제출 확인 사항</h2>
-<ul><li>[ ] <code>Makefile</code> - 변수 정의 (NAME, CC, CFLAGS, AR, SRCS, OBJS)</li><li>[ ] <code>all</code>, <code>$(NAME)</code>, 패턴 규칙</li><li>[ ] <code>clean</code>, <code>fclean</code>, <code>re</code>, <code>.PHONY</code></li><li>[ ] 레시피가 탭으로 들여쓰기 되었는가?</li><li>[ ] <code>make</code> → libsbs.a 생성, <code>-lsbs</code> 링크 동작</li><li>[ ] <code>bash grade.sh</code> → 4 / 4 통과</li></ul>
+<ul><li>[ ] <code>Makefile</code> - 변수 정의 (NAME, CC, CFLAGS, AR, SRCS, OBJS)</li><li>[ ] <code>all</code>, <code>$(NAME)</code>, 패턴 규칙 <code>%.o: %.c libsbs.h</code></li><li>[ ] <code>clean</code>, <code>fclean</code>, <code>re</code>, <code>.PHONY</code></li><li>[ ] 레시피가 <strong>탭</strong>으로 들여쓰기 되었는가?</li><li>[ ] <code>SRCS</code>에 <code>main.c</code> / <code>minishell.c</code>가 <strong>안</strong> 들어갔는가?</li><li>[ ] <code>make wordinfo</code> → <code>./wordinfo hello</code> 동작</li><li>[ ] <code>make minishell</code> → 프롬프트/입력/<code>exit</code> 동작</li><li>[ ] <code>bash grade.sh</code> → 6 / 6 통과</li></ul>
 <hr />
 <h2>더 생각해볼 거리</h2>
-<ol><li><code>make</code>가 바뀐 파일만 다시 컴파일하는 원리는? (타임스탬프 비교)</li><li>정적 라이브러리(.a)와 동적 라이브러리(.so)의 차이는? (링크 시점)</li><li><code>.PHONY</code>가 없으면 <code>clean</code>이라는 파일이 생겼을 때 무슨 일이? (규칙이 실행 안 됨)</li></ol>
+<ol><li><code>make</code>가 바뀐 파일만 다시 컴파일하는 원리는? (타임스탬프 비교)</li><li>정적 라이브러리(.a)와 동적 라이브러리(.so)의 차이는? (링크 시점 — .a는 실행 파일 안에 복사되어 박히고, .so는 실행할 때 따로 불러옴)</li><li><code>.PHONY</code>가 없으면 <code>clean</code>이라는 파일이 생겼을 때 무슨 일이? (규칙이 실행 안 됨)</li><li><code>main.c</code>를 <code>SRCS</code>에 넣으면 어떤 문제가 생길까? (libsbs.a에 main이 박혀서 다른 프로그램과 충돌)</li><li><code>minishell$ echo hello</code>를 치면 지금은 <code>입력: echo hello</code>가 나옵니다. 진짜 <code>hello</code>만 출력하려면 뭐가 더 필요할까요? (16차시 — 단어 쪼개기 + 명령 구현)</li></ol>
 <div class="section-split"><h2>정답 코드</h2><p>각 항목의 "정답 보기"를 눌러 펼치세요. 먼저 직접 풀어본 뒤 확인하는 것을 권장합니다.</p></div>
 <div class="answer"><div class="answer-head"><span class="answer-name">📄 <span class="file">libsbs.h</span></span><button class="answer-toggle">정답 보기</button></div><div class="answer-body"><pre><code class="language-c">#ifndef LIBSBS_H
 # define LIBSBS_H
@@ -200,26 +487,37 @@ int		sbs_isalpha(int c);
 int		sbs_toupper(int c);
 size_t	sbs_strlen(const char *s);
 char	*sbs_strdup(const char *s);
+int		sbs_strcmp(const char *s1, const char *s2);
 
 #endif</code></pre></div></div>
 <div class="answer"><div class="answer-head"><span class="answer-name">📄 <span class="file">Makefile</span></span><button class="answer-toggle">정답 보기</button></div><div class="answer-body"><pre><code class="language-makefile"># ============================================================
-# libsbs 정적 라이브러리 Makefile (참고 정답)
+# libsbs 정적 라이브러리 + 활용 프로그램 Makefile (참고 정답)
+#
+#   make            → libsbs.a 만들기
+#   make progs      → libsbs.a를 링크한 wordinfo / minishell 만들기
+#   make clean      → 중간 파일(.o) 삭제
+#   make fclean     → .o + 라이브러리 + 실행 파일 삭제
+#   make re         → 전부 지우고 처음부터 다시
 # ============================================================
 
-NAME    = libsbs.a
+NAME      = libsbs.a
+WORDINFO  = wordinfo
+MINISHELL = minishell
 
-CC      = cc
-CFLAGS  = -Wall -Wextra -Werror
-AR      = ar
-ARFLAGS = rcs
-RM      = rm -f
+CC        = cc
+CFLAGS    = -Wall -Wextra -Werror
+AR        = ar
+ARFLAGS   = rcs
+RM        = rm -f
 
-SRCS    = sbs_isalpha.c \
-          sbs_toupper.c \
-          sbs_strlen.c \
-          sbs_strdup.c
+# 라이브러리에 들어갈 소스 (프로그램의 main.c는 여기 넣지 않는다!)
+SRCS      = sbs_isalpha.c \
+            sbs_toupper.c \
+            sbs_strlen.c \
+            sbs_strdup.c \
+            sbs_strcmp.c
 
-OBJS    = $(SRCS:.c=.o)
+OBJS      = $(SRCS:.c=.o)
 
 # 기본 타겟: 라이브러리 생성
 all: $(NAME)
@@ -228,22 +526,168 @@ all: $(NAME)
 $(NAME): $(OBJS)
 	$(AR) $(ARFLAGS) $(NAME) $(OBJS)
 
-# 패턴 규칙: .c → .o (libsbs.h 의존)
+# 패턴 규칙: .c → .o (libsbs.h가 바뀌면 전부 다시 컴파일)
 %.o: %.c libsbs.h
 	$(CC) $(CFLAGS) -c $&lt; -o $@
 
+# ---- libsbs.a를 링크하는 프로그램들 ----
+# 의존성에 $(NAME)을 넣어야 라이브러리가 먼저 만들어진다.
+$(WORDINFO): main.o $(NAME)
+	$(CC) $(CFLAGS) main.o -L. -lsbs -o $(WORDINFO)
+
+$(MINISHELL): minishell.o $(NAME)
+	$(CC) $(CFLAGS) minishell.o -L. -lsbs -o $(MINISHELL)
+
+# 프로그램 둘 다 빌드
+progs: $(WORDINFO) $(MINISHELL)
+
 # 오브젝트만 삭제
 clean:
-	$(RM) $(OBJS)
+	$(RM) $(OBJS) main.o minishell.o
 
-# 오브젝트 + 라이브러리 삭제
+# 오브젝트 + 라이브러리 + 실행 파일 삭제
 fclean: clean
-	$(RM) $(NAME)
+	$(RM) $(NAME) $(WORDINFO) $(MINISHELL)
 
 # 전체 재빌드
 re: fclean all
 
-.PHONY: all clean fclean re</code></pre></div></div>
+.PHONY: all progs clean fclean re</code></pre></div></div>
+<div class="answer"><div class="answer-head"><span class="answer-name">📄 <span class="file">main.c</span></span><button class="answer-toggle">정답 보기</button></div><div class="answer-body"><pre><code class="language-c">#include &lt;stdio.h&gt;
+#include &lt;stdlib.h&gt;
+#include "libsbs.h"
+
+/*
+ * wordinfo — libsbs.a를 링크해서 쓰는 첫 프로그램.
+ *
+ * 실행 예:
+ *   $ ./wordinfo hello C99
+ *
+ * 표준 라이브러리의 strlen/toupper/isalpha/strdup 대신
+ * 우리가 9~14차시에 직접 만든 sbs_ 버전을 쓴다.
+ * 라이브러리(libsbs.a)와 프로그램(main.c)이 분리돼 있다는 점이 핵심.
+ */
+
+static void	print_upper(const char *s)
+{
+	int	i;
+
+	i = 0;
+	while (s[i])
+	{
+		printf("%c", sbs_toupper((unsigned char)s[i]));
+		i++;
+	}
+}
+
+static int	all_alpha(const char *s)
+{
+	int	i;
+
+	if (s[0] == '\0')
+		return (0);
+	i = 0;
+	while (s[i])
+	{
+		if (!sbs_isalpha((unsigned char)s[i]))
+			return (0);
+		i++;
+	}
+	return (1);
+}
+
+int	main(int argc, char **argv)
+{
+	int		i;
+	char	*copy;
+
+	if (argc &lt; 2)
+	{
+		printf("사용법: ./wordinfo 단어 [단어...]\n");
+		return (1);
+	}
+	i = 1;
+	while (i &lt; argc)
+	{
+		copy = sbs_strdup(argv[i]);
+		if (copy == NULL)
+			return (1);
+		printf("[%s]\n", copy);
+		printf("  길이   : %zu\n", sbs_strlen(copy));
+		printf("  대문자 : ");
+		print_upper(copy);
+		printf("\n");
+		if (all_alpha(copy))
+			printf("  알파벳 : 예\n");
+		else
+			printf("  알파벳 : 아니오\n");
+		free(copy);
+		i++;
+	}
+	return (0);
+}</code></pre></div></div>
+<div class="answer"><div class="answer-head"><span class="answer-name">📄 <span class="file">minishell.c</span></span><button class="answer-toggle">정답 보기</button></div><div class="answer-body"><pre><code class="language-c">#include &lt;stdio.h&gt;
+#include &lt;stdlib.h&gt;
+#include "libsbs.h"
+
+/*
+ * minishell (15차시 버전 — '껍데기'만)
+ *
+ * 셸의 심장은 아래 4단계를 무한 반복하는 루프다:
+ *   1) 프롬프트를 찍고
+ *   2) 한 줄을 읽고
+ *   3) 해석해서 실행하고
+ *   4) 다시 1번으로
+ * 이 반복을 REPL(Read-Eval-Print Loop)이라 부른다. bash도 구조는 같다.
+ *
+ * 15차시에서는 1·2·4단계만 만든다. 3단계(해석/실행)는 지금은
+ * "입력한 걸 그대로 되돌려주기"로 때우고, 16차시에서 진짜 명령
+ * 해석기로 채운다.
+ *
+ * 여기서도 표준 함수 대신 우리가 만든 함수를 쓴다:
+ *   - sbs_strlen : 줄 끝의 개행(\n)을 찾아 지울 때
+ *   - sbs_strcmp : 입력이 "exit"인지 비교할 때
+ */
+
+#define BUF_SIZE 1024
+
+/*
+ * fgets는 사용자가 누른 Enter(\n)까지 함께 담아온다.
+ * 그대로 두면 "exit\n" != "exit" 라서 비교가 실패한다. 그래서 지운다.
+ */
+static void	strip_newline(char *line)
+{
+	size_t	len;
+
+	len = sbs_strlen(line);
+	if (len &gt; 0 &amp;&amp; line[len - 1] == '\n')
+		line[len - 1] = '\0';
+}
+
+int	main(void)
+{
+	char	line[BUF_SIZE];
+
+	while (1)
+	{
+		printf("minishell$ ");
+		/* fgets가 NULL → 입력이 끝났다는 뜻 (Ctrl+D) */
+		if (fgets(line, BUF_SIZE, stdin) == NULL)
+		{
+			printf("\n");
+			break ;
+		}
+		strip_newline(line);
+		if (sbs_strcmp(line, "exit") == 0)
+			break ;
+		if (sbs_strcmp(line, "") == 0)
+			continue ;
+		/* 16차시에서 이 자리에 '명령 해석 + 실행'이 들어간다 */
+		printf("입력: %s\n", line);
+	}
+	printf("bye\n");
+	return (0);
+}</code></pre></div></div>
 <div class="answer"><div class="answer-head"><span class="answer-name">📄 <span class="file">sbs_isalpha.c</span></span><button class="answer-toggle">정답 보기</button></div><div class="answer-body"><pre><code class="language-c">#include "libsbs.h"
 
 int	sbs_isalpha(int c)
@@ -251,6 +695,23 @@ int	sbs_isalpha(int c)
 	if ((c &gt;= 'a' &amp;&amp; c &lt;= 'z') || (c &gt;= 'A' &amp;&amp; c &lt;= 'Z'))
 		return (1);
 	return (0);
+}</code></pre></div></div>
+<div class="answer"><div class="answer-head"><span class="answer-name">📄 <span class="file">sbs_strcmp.c</span></span><button class="answer-toggle">정답 보기</button></div><div class="answer-body"><pre><code class="language-c">#include "libsbs.h"
+
+/*
+ * 두 문자열을 끝까지 비교한다 (길이 제한 없음).
+ *  - 처음 다른 글자에서 차이를 반환 (부호가 의미)
+ *  - 둘 다 '\0'까지 같으면 0
+ *  - unsigned char로 비교해야 부호가 정확 (14차시 strncmp와 같은 이유)
+ */
+int	sbs_strcmp(const char *s1, const char *s2)
+{
+	size_t	i;
+
+	i = 0;
+	while (s1[i] &amp;&amp; s1[i] == s2[i])
+		i++;
+	return ((unsigned char)s1[i] - (unsigned char)s2[i]);
 }</code></pre></div></div>
 <div class="answer"><div class="answer-head"><span class="answer-name">📄 <span class="file">sbs_strdup.c</span></span><button class="answer-toggle">정답 보기</button></div><div class="answer-body"><pre><code class="language-c">#include "libsbs.h"
 #include &lt;stdlib.h&gt;

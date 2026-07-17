@@ -168,13 +168,19 @@ function answerCards(dir) {
 }
 
 /* ---------- 페이지 템플릿 ---------- */
-function page(n, bodyHtml, quizFile) {
+function page(n, bodyHtml, quizFile, starterZip) {
   const title = TITLES[n];
   const quizCta = quizFile
     ? `      <div class="quiz-cta">
         <span class="quiz-cta-label">📝 수업 마무리 퀴즈 (15문항)</span>
         <a class="quiz-btn" href="${quizFile}" target="_blank" rel="noopener">퀴즈 풀기</a>
         <a class="quiz-btn ghost" href="${quizFile}" download>내려받기</a>
+      </div>\n`
+    : "";
+  const starterCta = starterZip
+    ? `      <div class="quiz-cta starter">
+        <span class="quiz-cta-label">📦 실습 파일 (Makefile 제외 전체)</span>
+        <a class="quiz-btn amber" href="${starterZip}" download>실습 파일 내려받기</a>
       </div>\n`
     : "";
   return `<!doctype html>
@@ -196,7 +202,7 @@ function page(n, bodyHtml, quizFile) {
       <div class="lesson-hero-inner">
         <span class="badge">${n <= 8 ? "C 기초" : "libsbs 구현"} · ${n}차시</span>
         <h1>${title}</h1>
-${quizCta}      </div>
+${starterCta}${quizCta}      </div>
     </header>
     <main class="wrap">
       <article class="md">
@@ -260,8 +266,10 @@ for (let n = 1; n <= 16; n++) {
 
   const quizName = "quiz_" + nn + ".html";
   const quizFile = fs.existsSync(path.join(dir, quizName)) ? quizName : null;
+  const starterName = "session_" + nn + "_starter.zip";
+  const starterZip = fs.existsSync(path.join(dir, starterName)) ? starterName : null;
 
-  fs.writeFileSync(path.join(dir, "lesson.html"), page(n, body, quizFile), "utf8");
+  fs.writeFileSync(path.join(dir, "lesson.html"), page(n, body, quizFile, starterZip), "utf8");
   built++;
   console.log("built session_" + nn + "/lesson.html");
 }
