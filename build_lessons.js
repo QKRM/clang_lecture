@@ -140,25 +140,31 @@ function mdToHtml(md) {
 
 /* ---------- 정답 코드 토글 ---------- */
 function answerCards(dir) {
-  const files = fs.readdirSync(dir).filter(f => {
-    const full = path.join(dir, f);
-    if (!fs.statSync(full).isFile()) return false;
-    return /\.c$/.test(f) || f === "Makefile" || f === "libsbs.h";
-  });
+  // dir(최상위)과, 있으면 dir/src(라이브러리 소스)를 함께 스캔
+  function collect(base, prefix) {
+    if (!fs.existsSync(base)) return [];
+    return fs.readdirSync(base).filter(f => {
+      const full = path.join(base, f);
+      if (!fs.statSync(full).isFile()) return false;
+      return /\.c$/.test(f) || f === "Makefile" || f === "libsbs.h";
+    }).map(f => ({ name: prefix + f, full: path.join(base, f), base: f }));
+  }
+  let files = collect(dir, "");
+  files = files.concat(collect(path.join(dir, "src"), "src/"));
   files.sort((a, b) => {
-    const rank = x => x === "libsbs.h" ? 0 : x === "Makefile" ? 1 : 2;
+    const rank = x => x.base === "libsbs.h" ? 0 : x.base === "Makefile" ? 1 : 2;
     if (rank(a) !== rank(b)) return rank(a) - rank(b);
-    return a.localeCompare(b);
+    return a.name.localeCompare(b.name);
   });
   if (files.length === 0) return "";
   let out = '<div class="section-split"><h2>정답 코드</h2><p>각 항목의 "정답 보기"를 눌러 펼치세요. 먼저 직접 풀어본 뒤 확인하는 것을 권장합니다.</p></div>\n';
   files.forEach(f => {
-    const code = fs.readFileSync(path.join(dir, f), "utf8").replace(/\s+$/, "");
-    const cls = f === "Makefile" ? "language-makefile" : "language-c";
+    const code = fs.readFileSync(f.full, "utf8").replace(/\s+$/, "");
+    const cls = f.base === "Makefile" ? "language-makefile" : "language-c";
     out +=
       '<div class="answer">' +
         '<div class="answer-head">' +
-          '<span class="answer-name">📄 <span class="file">' + f + "</span></span>" +
+          '<span class="answer-name">📄 <span class="file">' + f.name + "</span></span>" +
           '<button class="answer-toggle">정답 보기</button>' +
         "</div>" +
         '<div class="answer-body"><pre><code class="' + cls + '">' + esc(code) + "</code></pre></div>" +

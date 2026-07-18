@@ -36,8 +36,8 @@ fi
 
 # ---- 1) 금지 헤더 + libsbs.a 빌드 ----
 total=$((total + 1))
-if [ -f sbs_split.c ] && grep -Eq "include[[:space:]]*<($FORBIDDEN)>" sbs_split.c; then
-	echo "✗ sbs_split.c : <string.h>/<strings.h> 사용 금지 (직접 구현)"
+if [ -f src/sbs_split.c ] && grep -Eq "include[[:space:]]*<($FORBIDDEN)>" src/sbs_split.c; then
+	echo "✗ src/sbs_split.c : <string.h>/<strings.h> 사용 금지 (직접 구현)"
 	echo "결과: 0 / 5 통과 (금지 헤더)"
 	exit 1
 fi
@@ -97,7 +97,7 @@ fi
 # ---- 5) clean / fclean / re ----
 total=$((total + 1))
 make clean >/dev/null 2>&1
-obj_after_clean="$(ls *.o 2>/dev/null | wc -l)"
+obj_after_clean="$(ls obj/*.o 2>/dev/null | wc -l)"
 make fclean >/dev/null 2>&1
 lib_after_fclean=0
 [ -f "$NAME" ] && lib_after_fclean=1

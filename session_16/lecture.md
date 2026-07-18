@@ -375,24 +375,54 @@ void sbs_free_split(char **arr)
 
 ## 5부: 빌드하고 실행하기
 
-### 5.1 Makefile
+### 5.1 폴더 구조 — src / obj 분리
 
-15차시에서 배운 그대로입니다. 다만 `SRCS`에 이제 **지금까지 만든 함수 전체 + `sbs_split` + `sbs_free_split`**가 들어갑니다.
+파일이 많아지면 소스와 컴파일 결과를 섞어두기 지저분합니다. 그래서 이렇게 나눕니다.
 
-```makefile
-SRCS = sbs_isalpha.c ... sbs_atoi.c \
-       sbs_split.c sbs_free_split.c      # 오늘 추가한 2개
-
-$(MINISHELL): minishell.o $(NAME)
-	$(CC) $(CFLAGS) minishell.o -L. -lsbs -o $(MINISHELL)
+```
+session_16/
+├── src/          libsbs 소스(sbs_*.c) 전부 — 오늘 추가한 split 2개 포함
+├── obj/          컴파일 결과(.o) — make가 자동 생성
+├── libsbs.h      헤더
+├── minishell.c   프로그램 소스 (라이브러리 아님)
+└── Makefile
 ```
 
-`minishell.c`는 `SRCS`에 **넣지 않습니다.** `main`이 있으니 라이브러리가 아니라 프로그램입니다(15차시 규칙).
+### 5.2 Makefile
 
-### 5.2 빌드 & 실행
+15차시에서 배운 그대로에, **경로만** `src/` → `obj/`로 바뀝니다.
+
+```makefile
+SRC_DIR = src
+OBJ_DIR = obj
+# 함수 이름만 나열하고 경로/확장자는 자동으로 붙인다
+NAMES = sbs_isalpha ... sbs_atoi sbs_split sbs_free_split
+SRCS  = $(addprefix $(SRC_DIR)/, $(addsuffix .c, $(NAMES)))
+OBJS  = $(addprefix $(OBJ_DIR)/, $(addsuffix .o, $(NAMES)))
+
+# src/%.c → obj/%.o  ( | $(OBJ_DIR)로 obj/ 폴더를 먼저 만든다 )
+$(OBJ_DIR)/%.o: $(SRC_DIR)/%.c libsbs.h | $(OBJ_DIR)
+	$(CC) $(CFLAGS) -I. -c $< -o $@
+
+$(OBJ_DIR):
+	mkdir -p $(OBJ_DIR)
+
+$(MINISHELL): $(OBJ_DIR)/minishell.o $(NAME)
+	$(CC) $(CFLAGS) $(OBJ_DIR)/minishell.o -L. -lsbs -o $(MINISHELL)
+```
+
+세 가지가 새로 나옵니다.
+
+- **`| $(OBJ_DIR)`** — 파이프(`|`) 뒤는 "순서만 지키는(order-only) 의존성". "obj/ 폴더가 먼저 있어야 한다"는 뜻인데, 폴더의 수정 시각은 무시해서 불필요한 재빌드를 막습니다.
+- **`-I.`** — src/에서 컴파일하지만 `libsbs.h`는 루트에 있으니, "헤더를 현재 폴더(`.`)에서도 찾아라".
+- **`clean`은 `rm -rf obj`** — 이제 `.o`가 obj/ 안에 모여 있으니 폴더째 지웁니다.
+
+`minishell.c`는 `NAMES`(라이브러리 소스)에 **넣지 않습니다.** `main`이 있으니 라이브러리가 아니라 프로그램입니다(15차시 규칙).
+
+### 5.3 빌드 & 실행
 
 ```bash
-$ make            # libsbs.a 빌드
+$ make            # src/ 컴파일 → obj/*.o → libsbs.a
 $ make minishell  # libsbs.a를 링크해 minishell 실행 파일
 $ ./minishell
 minishell$ echo hello world

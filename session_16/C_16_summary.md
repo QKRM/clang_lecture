@@ -91,13 +91,26 @@ sbs_free_split(args);                        // + (누수 방지!)
 
 ---
 
-### 7. 빌드
+### 7. 빌드 (src / obj 분리)
+
+```
+src/  = libsbs 소스(sbs_*.c)     obj/ = 컴파일 결과(.o, 자동 생성)
+```
 
 ```makefile
-SRCS = sbs_*.c ... sbs_split.c sbs_free_split.c   # minishell.c는 제외!
-$(MINISHELL): minishell.o $(NAME)
-	$(CC) $(CFLAGS) minishell.o -L. -lsbs -o $(MINISHELL)
+SRC_DIR = src
+OBJ_DIR = obj
+$(OBJ_DIR)/%.o: $(SRC_DIR)/%.c libsbs.h | $(OBJ_DIR)
+	$(CC) $(CFLAGS) -I. -c $< -o $@
+$(OBJ_DIR):
+	mkdir -p $(OBJ_DIR)
+$(MINISHELL): $(OBJ_DIR)/minishell.o $(NAME)   # minishell.c는 라이브러리에서 제외
+	$(CC) $(CFLAGS) $(OBJ_DIR)/minishell.o -L. -lsbs -o $(MINISHELL)
+clean:
+	$(RM) -r $(OBJ_DIR)
 ```
+
+> `| $(OBJ_DIR)`(order-only)로 폴더 먼저 생성, `-I.`로 루트의 libsbs.h를 찾음.
 
 ---
 

@@ -18,16 +18,20 @@
 
 ```
 session_16_starter/
+├── src/
+│   ├── sbs_*.c              9~14차시 함수 32개 (제공)
+│   ├── sbs_split.c          ⭐ 직접 구현 (스켈레톤)
+│   └── sbs_free_split.c     ⭐ 직접 구현 (스켈레톤)
+├── obj/                     (make가 자동 생성 — .o 저장)
 ├── libsbs.h                 전체 프로토타입 (split 2개 포함)
-├── sbs_*.c                  9~14차시 함수 32개 (제공)
-├── sbs_split.c              ⭐ 직접 구현 (스켈레톤)
-├── sbs_free_split.c         ⭐ 직접 구현 (스켈레톤)
 ├── minishell.c              ⭐ 내장 명령 채우기 (스켈레톤)
-├── Makefile                 제공 (libsbs.a + minishell)
+├── Makefile                 제공 (src/ → obj/ → libsbs.a + minishell)
 ├── tests/test_split.c       split 단위 테스트
 ├── grade.sh                 채점 스크립트
 └── README.md
 ```
+
+> 소스는 `src/`, 컴파일 결과(.o)는 `obj/`로 분리돼 있습니다. `sbs_split.c`·`sbs_free_split.c`도 `src/` 안에 있습니다.
 
 ```bash
 $ unzip session_16_starter.zip
@@ -230,7 +234,7 @@ $ bash grade.sh
 - [ ] `minishell.c` - echo/upper/len/help 구현
 - [ ] `run_command` - `args[0]==NULL` 먼저 검사, exit 종료
 - [ ] 메인 루프에서 `sbs_free_split` 호출(누수 방지)
-- [ ] `minishell.c`가 SRCS에 **안** 들어갔는가
+- [ ] `minishell.c`가 라이브러리 목록(NAMES)에 **안** 들어갔는가
 - [ ] `bash grade.sh` → 5 / 5 통과
 
 ---
