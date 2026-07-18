@@ -1,7 +1,9 @@
 <!--
 Palette: Cyan & Amber (same as C_01..C_15 — consistent course design)
 Plan Summary: 16-slide interactive presentation for C Language Session 16 (final).
-Covers integrating 24 functions into libsbs, unified Makefile, libsbs.h organization, code review methodology + checklist, integration test, and course wrap-up.
+Capstone: build a mini-shell with libsbs. REPL recap, sbs_split (char**), memory
+free order, builtin commands (echo/upper/len/help/exit), dispatch, Makefile/link,
+grading, and course wrap-up. Builtin-only (no fork/exec).
 NEITHER Mermaid JS NOR SVG were used anywhere in this output.
 -->
 <!doctype html>
@@ -9,7 +11,7 @@ NEITHER Mermaid JS NOR SVG were used anywhere in this output.
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>16차시 강의자료: libsbs 종합 프로젝트</title>
+    <title>16차시 강의자료: 종합 프로젝트 — 미니셸</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
       @import url("https://fonts.googleapis.com/css2?family=Pretendard:wght@400;500;600;700;800;900&display=swap");
@@ -33,321 +35,325 @@ NEITHER Mermaid JS NOR SVG were used anywhere in this output.
 
     <div id="deckContainer" class="flex-grow flex items-center justify-center p-4 md:p-8">
 
-      <!-- 01 -->
+      <!-- 01 Cover -->
       <div id="slide1" class="bg-gradient-to-br from-slate-900 via-amber-950 to-slate-900 w-full max-w-5xl aspect-[16/9] rounded-3xl p-8 md:p-12 shadow-2xl border border-slate-800 flex flex-col justify-between">
-        <div class="flex justify-between items-start"><span class="text-amber-400 font-bold tracking-wider text-sm uppercase">Slide 01 / Cover · Final</span><span class="text-slate-500 text-sm">16차시: libsbs 종합 프로젝트</span></div>
+        <div class="flex justify-between items-start"><span class="text-amber-400 font-bold tracking-wider text-sm uppercase">Slide 01 / Cover · Final</span><span class="text-slate-500 text-sm">16차시: 종합 프로젝트 — 미니셸</span></div>
         <div class="my-auto">
-          <span class="inline-block bg-amber-500/20 text-amber-300 text-xs font-extrabold px-3 py-1.5 rounded-md mb-4 border border-amber-500/30">16차시 · 최종 · 24함수 통합 + 코드 리뷰</span>
-          <h2 class="text-3xl md:text-5xl font-black text-white leading-tight mb-4">libsbs<br /><span class="text-transparent bg-clip-text bg-gradient-to-r from-amber-400 to-orange-300">종합 프로젝트</span></h2>
-          <p class="text-slate-400 text-base md:text-lg max-w-2xl">9차시부터 만든 <span class="text-white font-semibold">24개 함수</span>를 하나의 <code class="text-cyan-300">libsbs.a</code>로 통합. 코드 리뷰로 마무리하는 마지막 차시.</p>
+          <span class="inline-block bg-amber-500/20 text-amber-300 text-xs font-extrabold px-3 py-1.5 rounded-md mb-4 border border-amber-500/30">16차시 · 최종 · 내가 만든 libsbs로 셸 만들기</span>
+          <h2 class="text-3xl md:text-5xl font-black text-white leading-tight mb-4">종합 프로젝트<br /><span class="text-transparent bg-clip-text bg-gradient-to-r from-amber-400 to-orange-300">미니셸 만들기</span></h2>
+          <p class="text-slate-400 text-base md:text-lg max-w-2xl">지금까지 만든 <code class="text-cyan-300">libsbs</code>를 링크해 진짜로 돌아가는 작은 셸을 완성한다. 새로 만드는 건 <code class="text-cyan-300">sbs_split</code> 하나.</p>
         </div>
         <div class="flex justify-between items-center text-xs text-slate-500 border-t border-slate-800/80 pt-4"><span>C Language — libsbs Implementation Course</span><span>Time Frame: 3 Hours</span></div>
       </div>
 
-      <!-- 02 -->
+      <!-- 02 Goal -->
       <div id="slide2" class="bg-slate-900 w-full max-w-5xl aspect-[16/9] rounded-3xl p-8 md:p-12 shadow-2xl border border-slate-800 flex flex-col justify-between hidden">
-        <div class="flex justify-between items-start"><span class="text-cyan-400 font-bold tracking-wider text-sm uppercase">Slide 02 / Goal</span><span class="text-slate-500 text-sm">16차시: libsbs 종합 프로젝트</span></div>
+        <div class="flex justify-between items-start"><span class="text-cyan-400 font-bold tracking-wider text-sm uppercase">Slide 02 / Goal</span><span class="text-slate-500 text-sm">16차시: 미니셸</span></div>
         <div class="my-auto">
           <h3 class="text-2xl md:text-3xl font-bold text-white mb-6 border-b border-slate-800 pb-3">오늘의 목표</h3>
           <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
             <div class="space-y-3">
-              <div class="p-4 bg-slate-800/30 rounded-xl border-l-4 border-cyan-500"><h4 class="font-bold text-white text-sm mb-1">1부 — 강사 설명</h4><p class="text-slate-400 text-xs">헤더 정리, 프로젝트 구조, 코드 리뷰 방법론</p></div>
-              <div class="p-4 bg-slate-800/30 rounded-xl border-l-4 border-amber-500"><h4 class="font-bold text-white text-sm mb-1">2부 — 통합 + 리뷰</h4><p class="text-slate-400 text-xs">전체 통합 + 상호 코드 리뷰 + 최종 빌드</p></div>
+              <div class="p-4 bg-slate-800/30 rounded-xl border-l-4 border-cyan-500"><h4 class="font-bold text-white text-sm mb-1">1부 — 강사 설명</h4><p class="text-slate-400 text-xs">REPL 복습, sbs_split, char** 메모리, 디스패치</p></div>
+              <div class="p-4 bg-slate-800/30 rounded-xl border-l-4 border-amber-500"><h4 class="font-bold text-white text-sm mb-1">2부 — 직접 구현</h4><p class="text-slate-400 text-xs">split + 내장 명령 + 미니셸 완성 + 채점</p></div>
             </div>
             <div class="bg-slate-800/50 p-6 rounded-xl border border-slate-700">
               <h4 class="font-bold text-amber-400 text-sm mb-3">오늘 수업이 끝나면</h4>
               <ul class="space-y-2 text-xs text-slate-300">
-                <li class="flex items-start gap-2"><span class="text-emerald-400 font-bold mt-0.5">1</span><span>24개 함수를 libsbs.a로 통합</span></li>
-                <li class="flex items-start gap-2"><span class="text-emerald-400 font-bold mt-0.5">2</span><span>통합 Makefile을 완성</span></li>
-                <li class="flex items-start gap-2"><span class="text-emerald-400 font-bold mt-0.5">3</span><span>동료 코드 리뷰를 한다</span></li>
+                <li class="flex items-start gap-2"><span class="text-emerald-400 font-bold mt-0.5">1</span><span>입력을 단어 배열로 쪼갠다 (split)</span></li>
+                <li class="flex items-start gap-2"><span class="text-emerald-400 font-bold mt-0.5">2</span><span>내장 명령을 만들어 실행한다</span></li>
+                <li class="flex items-start gap-2"><span class="text-emerald-400 font-bold mt-0.5">3</span><span>libsbs로 동작하는 프로그램을 완성한다</span></li>
               </ul>
-              <div class="mt-4 bg-amber-950/40 p-3 rounded-lg border border-amber-500/20"><p class="text-amber-300 text-xs font-semibold">과정 완성</p><p class="text-slate-400 text-[10px] mt-1">9~16차시 libsbs 구현의 마지막 단계</p></div>
+              <div class="mt-4 bg-amber-950/40 p-3 rounded-lg border border-amber-500/20"><p class="text-amber-300 text-xs font-semibold">15차시 연계</p><p class="text-slate-400 text-[10px] mt-1">15차시 셸 껍데기(REPL)에 오늘 알맹이를 채운다.</p></div>
             </div>
           </div>
         </div>
         <div class="flex justify-between items-center text-xs text-slate-500 border-t border-slate-800/80 pt-4"><span>Today's Goal</span><span>Session 16</span></div>
       </div>
 
-      <!-- 03 function map -->
+      <!-- 03 what is a shell / REPL recap -->
       <div id="slide3" class="bg-slate-900 w-full max-w-5xl aspect-[16/9] rounded-3xl p-8 md:p-12 shadow-2xl border border-slate-800 flex flex-col justify-between hidden">
-        <div class="flex justify-between items-start"><span class="text-cyan-400 font-bold tracking-wider text-sm uppercase">Slide 03 / 24 Functions</span><span class="text-slate-500 text-sm">16차시: libsbs 종합 프로젝트</span></div>
+        <div class="flex justify-between items-start"><span class="text-cyan-400 font-bold tracking-wider text-sm uppercase">Slide 03 / REPL</span><span class="text-slate-500 text-sm">16차시: 미니셸</span></div>
         <div class="my-auto">
-          <h3 class="text-2xl md:text-3xl font-bold text-white mb-4 border-b border-slate-800 pb-3">통합 — 24개 함수 전체 지도</h3>
-          <div class="bg-slate-950 rounded-xl border border-slate-700 overflow-hidden">
-            <table class="w-full text-xs">
-              <thead><tr class="border-b border-slate-700 bg-slate-800/60"><th class="text-left px-4 py-2 text-cyan-400">분류</th><th class="text-left px-4 py-2 text-amber-400">함수</th><th class="text-left px-4 py-2 text-amber-400">차시</th></tr></thead>
-              <tbody class="divide-y divide-slate-800">
-                <tr><td class="px-4 py-1.5 text-slate-300">문자 분류/변환</td><td class="px-4 py-1.5 text-slate-400 text-[10px]">isalpha isdigit isalnum isascii isprint toupper tolower</td><td class="px-4 py-1.5 text-slate-400">9</td></tr>
-                <tr><td class="px-4 py-1.5 text-slate-300">메모리 I</td><td class="px-4 py-1.5 text-slate-400 text-[10px]">memset bzero memcpy memccpy</td><td class="px-4 py-1.5 text-slate-400">10</td></tr>
-                <tr><td class="px-4 py-1.5 text-slate-300">메모리 II</td><td class="px-4 py-1.5 text-slate-400 text-[10px]">memmove memchr memcmp calloc</td><td class="px-4 py-1.5 text-slate-400">11</td></tr>
-                <tr><td class="px-4 py-1.5 text-slate-300">문자열 I/II/III</td><td class="px-4 py-1.5 text-slate-400 text-[10px]">strlen strlcpy strlcat strchr strrchr strnstr strncmp atoi strdup</td><td class="px-4 py-1.5 text-slate-400">12-14</td></tr>
-              </tbody>
-            </table>
-          </div>
-          <div class="mt-4 bg-amber-950/20 p-3 rounded-xl border border-amber-500/20"><p class="text-amber-300 text-xs font-semibold text-center">총 24개 함수 — 한 폴더로 모은다</p></div>
-        </div>
-        <div class="flex justify-between items-center text-xs text-slate-500 border-t border-slate-800/80 pt-4"><span>24 Functions Map</span><span>Session 16</span></div>
-      </div>
-
-      <!-- 04 libsbs.h -->
-      <div id="slide4" class="bg-slate-900 w-full max-w-5xl aspect-[16/9] rounded-3xl p-8 md:p-12 shadow-2xl border border-slate-800 flex flex-col justify-between hidden">
-        <div class="flex justify-between items-start"><span class="text-cyan-400 font-bold tracking-wider text-sm uppercase">Slide 04 / libsbs.h</span><span class="text-slate-500 text-sm">16차시: libsbs 종합 프로젝트</span></div>
-        <div class="my-auto">
-          <h3 class="text-2xl md:text-3xl font-bold text-white mb-4 border-b border-slate-800 pb-3">헤더 정리 — libsbs.h</h3>
+          <h3 class="text-2xl md:text-3xl font-bold text-white mb-4 border-b border-slate-800 pb-3">셸의 심장 — REPL 루프 (15차시 복습)</h3>
           <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
-              <pre class="bg-slate-950 text-slate-200 p-4 rounded-xl text-[11px] leading-relaxed border border-slate-700"><code><span class="text-amber-300">#ifndef</span> LIBSBS_H
-<span class="text-amber-300"># define</span> LIBSBS_H
-<span class="text-amber-300"># include</span> <span class="text-emerald-300">&lt;stddef.h&gt;</span>
-
-<span class="text-slate-500">/* 9차시 — 문자 */</span>
-<span class="text-cyan-300">int</span> sbs_isalpha(<span class="text-cyan-300">int</span> c);
-<span class="text-slate-500">/* ... */</span>
-<span class="text-slate-500">/* 14차시 — 문자열 III */</span>
-<span class="text-cyan-300">char</span> *sbs_strdup(<span class="text-cyan-300">const char</span> *s);
-
-<span class="text-amber-300">#endif</span></code></pre>
+              <pre class="bg-slate-950 text-slate-200 p-4 rounded-xl text-[11px] leading-relaxed border border-slate-700"><code>  ┌────────────────────────┐
+  │ 1. 프롬프트 ($)         │
+  │ 2. 한 줄 읽기 (Read)    │
+  │ 3. 해석·실행 (Eval)     │
+  │ 4. 결과 출력 (Print)    │
+  └──────────┬─────────────┘
+             └──▶ 1번으로 (Loop)</code></pre>
             </div>
-            <div class="space-y-3 self-center">
-              <div class="bg-cyan-950/30 p-4 rounded-xl border border-cyan-500/20"><p class="text-cyan-300 text-xs font-semibold mb-2">차시별 주석 구분</p><p class="text-slate-400 text-[10px]">24개 프로토타입을 차시 순서로 정리. 인클루드 가드 + stddef.h.</p></div>
-              <div class="bg-slate-800/40 p-4 rounded-xl border border-slate-700"><p class="text-slate-400 text-[10px]">이 헤더 + <code class="text-white">libsbs.a</code> 두 개만 있으면 다른 프로젝트에서 라이브러리를 쓸 수 있다.</p></div>
-            </div>
-          </div>
-        </div>
-        <div class="flex justify-between items-center text-xs text-slate-500 border-t border-slate-800/80 pt-4"><span>Header Organization</span><span>Session 16</span></div>
-      </div>
-
-      <!-- 05 makefile -->
-      <div id="slide5" class="bg-slate-900 w-full max-w-5xl aspect-[16/9] rounded-3xl p-8 md:p-12 shadow-2xl border border-slate-800 flex flex-col justify-between hidden">
-        <div class="flex justify-between items-start"><span class="text-cyan-400 font-bold tracking-wider text-sm uppercase">Slide 05 / Makefile</span><span class="text-slate-500 text-sm">16차시: libsbs 종합 프로젝트</span></div>
-        <div class="my-auto">
-          <h3 class="text-2xl md:text-3xl font-bold text-white mb-4 border-b border-slate-800 pb-3">통합 Makefile</h3>
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-              <pre class="bg-slate-950 text-slate-200 p-4 rounded-xl text-[10px] leading-relaxed border border-slate-700"><code>SRCS = sbs_isalpha.c ... \
-       sbs_strdup.c  <span class="text-slate-500"># 24개</span>
-OBJS = $(SRCS:.c=.o)
-
-$(NAME): $(OBJS)
-	ar rcs $(NAME) $(OBJS)
-%.o: %.c libsbs.h
-	$(CC) $(CFLAGS) -c $&lt; -o $@</code></pre>
-            </div>
-            <div class="space-y-3 self-center">
-              <div class="bg-slate-950 p-3 rounded-xl border border-slate-700"><pre class="text-emerald-300 text-[10px]"><code>$ make
-$ ar t libsbs.a | wc -l
-24</code></pre></div>
-              <div class="bg-amber-950/20 p-3 rounded-xl border border-amber-500/20"><p class="text-slate-400 text-[10px]">15차시 문법 그대로. SRCS에 24개만 나열하면 <code class="text-white">make</code>가 전부 빌드.</p></div>
-            </div>
-          </div>
-        </div>
-        <div class="flex justify-between items-center text-xs text-slate-500 border-t border-slate-800/80 pt-4"><span>Unified Makefile</span><span>Session 16</span></div>
-      </div>
-
-      <!-- 06 code review intro -->
-      <div id="slide6" class="bg-slate-900 w-full max-w-5xl aspect-[16/9] rounded-3xl p-8 md:p-12 shadow-2xl border border-slate-800 flex flex-col justify-between hidden">
-        <div class="flex justify-between items-start"><span class="text-cyan-400 font-bold tracking-wider text-sm uppercase">Slide 06 / Code Review</span><span class="text-slate-500 text-sm">16차시: libsbs 종합 프로젝트</span></div>
-        <div class="my-auto">
-          <h3 class="text-2xl md:text-3xl font-bold text-white mb-4 border-b border-slate-800 pb-3">코드 리뷰란?</h3>
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div class="bg-slate-800/40 p-5 rounded-xl border border-slate-700 self-center"><p class="text-white text-base font-semibold mb-2">동료가 내 코드를 읽고 개선점을 제안하는 과정</p><p class="text-slate-400 text-xs">버그를 미리 잡고, 더 읽기 쉬운 코드를 만든다. 실무에서 PR마다 한다.</p></div>
             <div class="space-y-3">
-              <div class="bg-cyan-950/30 p-4 rounded-xl border border-cyan-500/20"><p class="text-cyan-300 text-xs font-semibold mb-2">왜 하나?</p><ul class="space-y-1 text-[10px] text-slate-300"><li>• 버그를 배포 전에 발견</li><li>• 지식 공유</li><li>• 코드 일관성</li></ul></div>
-              <div class="bg-amber-950/20 p-4 rounded-xl border border-amber-500/20"><p class="text-amber-400 text-xs font-semibold mb-2">4가지 관점</p><p class="text-slate-400 text-[10px]">정확성 · 메모리 안전 · 스타일 · 중복/재사용</p></div>
+              <div class="bg-cyan-950/30 p-4 rounded-xl border border-cyan-500/20"><p class="text-cyan-300 text-xs font-semibold mb-1">15차시엔 껍데기만</p><p class="text-slate-400 text-[11px]">3번(해석·실행) 자리를 "입력을 그대로 되돌려 출력"으로 때웠다.</p></div>
+              <div class="bg-amber-950/20 p-4 rounded-xl border border-amber-500/20"><p class="text-amber-300 text-xs font-semibold mb-1">오늘 그 자리를 채운다</p><p class="text-slate-400 text-[11px]">bash, zsh, 파이썬 콘솔 — 전부 이 REPL 구조다.</p></div>
             </div>
           </div>
         </div>
-        <div class="flex justify-between items-center text-xs text-slate-500 border-t border-slate-800/80 pt-4"><span>What is Code Review</span><span>Session 16</span></div>
+        <div class="flex justify-between items-center text-xs text-slate-500 border-t border-slate-800/80 pt-4"><span>REPL Recap</span><span>Session 16</span></div>
       </div>
 
-      <!-- 07 checklist -->
+      <!-- 04 the 3-step core -->
+      <div id="slide4" class="bg-slate-900 w-full max-w-5xl aspect-[16/9] rounded-3xl p-8 md:p-12 shadow-2xl border border-slate-800 flex flex-col justify-between hidden">
+        <div class="flex justify-between items-start"><span class="text-cyan-400 font-bold tracking-wider text-sm uppercase">Slide 04 / Core</span><span class="text-slate-500 text-sm">16차시: 미니셸</span></div>
+        <div class="my-auto">
+          <h3 class="text-2xl md:text-3xl font-bold text-white mb-4 border-b border-slate-800 pb-3">알맹이 3단계 — 쪼개고, 판별하고, 실행</h3>
+          <pre class="bg-slate-950 text-slate-200 p-4 rounded-xl text-[11px] leading-relaxed border border-slate-700"><code>"echo hello world"                     사용자가 친 한 줄
+       │  ① sbs_split(line, ' ')        ← 오늘의 새 함수
+       ▼
+  {"echo", "hello", "world", NULL}      단어 배열
+       │  ② sbs_strcmp(args[0], ...)    첫 단어로 명령 판별
+       ▼
+  "echo"구나 → builtin_echo(args)       ③ 실행
+       ▼
+  hello world                           출력</code></pre>
+          <div class="mt-4 bg-amber-950/20 p-3 rounded-xl border border-amber-500/20"><p class="text-amber-300 text-xs font-semibold text-center">새 문법은 없다 — 대부분 이미 만든 함수의 조합. 새로 만드는 건 sbs_split(과 해제 도우미)뿐.</p></div>
+        </div>
+        <div class="flex justify-between items-center text-xs text-slate-500 border-t border-slate-800/80 pt-4"><span>3-Step Core</span><span>Session 16</span></div>
+      </div>
+
+      <!-- 05 split returns char** -->
+      <div id="slide5" class="bg-slate-900 w-full max-w-5xl aspect-[16/9] rounded-3xl p-8 md:p-12 shadow-2xl border border-slate-800 flex flex-col justify-between hidden">
+        <div class="flex justify-between items-start"><span class="text-cyan-400 font-bold tracking-wider text-sm uppercase">Slide 05 / sbs_split</span><span class="text-slate-500 text-sm">16차시: 미니셸</span></div>
+        <div class="my-auto">
+          <h3 class="text-2xl md:text-3xl font-bold text-white mb-4 border-b border-slate-800 pb-3">sbs_split — char ** 를 반환한다</h3>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <pre class="bg-slate-950 text-slate-200 p-4 rounded-xl text-[11px] leading-relaxed border border-slate-700"><code>sbs_split("echo hello world", ' ')
+
+ arr ─▶ ┌───────┐
+        │  •────┼──▶ "echo\0"
+        │  •────┼──▶ "hello\0"
+        │  •────┼──▶ "world\0"
+        │ NULL  │  ← 끝 표시
+        └───────┘</code></pre>
+            </div>
+            <div class="space-y-3">
+              <div class="bg-cyan-950/30 p-4 rounded-xl border border-cyan-500/20"><p class="text-cyan-300 text-xs font-semibold mb-1">char ** = 2단계</p><p class="text-slate-400 text-[11px]">배열 한 개 + 그 안의 문자열 여러 개. 그래서 해제도 2단계.</p></div>
+              <div class="bg-amber-950/20 p-4 rounded-xl border border-amber-500/20"><p class="text-amber-300 text-xs font-semibold mb-1">끝은 NULL로 표시</p><p class="text-slate-400 text-[11px]">문자열이 \0로 끝나듯, 포인터 배열은 NULL로 끝난다.</p></div>
+            </div>
+          </div>
+        </div>
+        <div class="flex justify-between items-center text-xs text-slate-500 border-t border-slate-800/80 pt-4"><span>Returns char**</span><span>Session 16</span></div>
+      </div>
+
+      <!-- 06 split spacing rule -->
+      <div id="slide6" class="bg-slate-900 w-full max-w-5xl aspect-[16/9] rounded-3xl p-8 md:p-12 shadow-2xl border border-slate-800 flex flex-col justify-between hidden">
+        <div class="flex justify-between items-start"><span class="text-cyan-400 font-bold tracking-wider text-sm uppercase">Slide 06 / Rule</span><span class="text-slate-500 text-sm">16차시: 미니셸</span></div>
+        <div class="my-auto">
+          <h3 class="text-2xl md:text-3xl font-bold text-white mb-4 border-b border-slate-800 pb-3">공백을 어떻게 다루나</h3>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="space-y-3">
+              <div class="bg-slate-800/40 p-4 rounded-xl border border-slate-700"><p class="text-slate-300 text-xs font-semibold mb-1">규칙</p><ul class="space-y-1 text-[11px] text-slate-400"><li>· 연속된 구분자는 하나로 취급</li><li>· 앞뒤 구분자는 무시</li><li>· 빈 단어는 만들지 않음</li></ul></div>
+            </div>
+            <div>
+              <pre class="bg-slate-950 text-slate-200 p-4 rounded-xl text-[11px] leading-relaxed border border-slate-700"><code>"  a   b  "
+     │ split(' ')
+     ▼
+ {"a", "b", NULL}
+
+빈 칸은 전부 건너뛴다
+→ 단어 2개</code></pre>
+            </div>
+          </div>
+          <div class="mt-4 bg-cyan-950/30 p-3 rounded-xl border border-cyan-500/20"><p class="text-cyan-300 text-xs font-semibold text-center">그래서 minishell$ echo   hi   there → "hi there" (공백 하나로 합쳐짐)</p></div>
+        </div>
+        <div class="flex justify-between items-center text-xs text-slate-500 border-t border-slate-800/80 pt-4"><span>Spacing Rule</span><span>Session 16</span></div>
+      </div>
+
+      <!-- 07 split 2-pass strategy -->
       <div id="slide7" class="bg-slate-900 w-full max-w-5xl aspect-[16/9] rounded-3xl p-8 md:p-12 shadow-2xl border border-slate-800 flex flex-col justify-between hidden">
-        <div class="flex justify-between items-start"><span class="text-cyan-400 font-bold tracking-wider text-sm uppercase">Slide 07 / Checklist</span><span class="text-slate-500 text-sm">16차시: libsbs 종합 프로젝트</span></div>
+        <div class="flex justify-between items-start"><span class="text-cyan-400 font-bold tracking-wider text-sm uppercase">Slide 07 / Strategy</span><span class="text-slate-500 text-sm">16차시: 미니셸</span></div>
         <div class="my-auto">
-          <h3 class="text-2xl md:text-3xl font-bold text-white mb-4 border-b border-slate-800 pb-3">리뷰 체크리스트</h3>
-          <div class="grid grid-cols-2 gap-4">
-            <div class="bg-slate-800/40 p-4 rounded-xl border border-slate-700"><p class="text-cyan-400 text-xs font-bold mb-2">정확성</p><ul class="space-y-1 text-[10px] text-slate-300"><li>□ 엣지 케이스(빈문자/NULL/0)</li><li>□ 반환값이 명세와 일치</li><li>□ \0 종결, 버퍼 범위</li></ul></div>
-            <div class="bg-slate-800/40 p-4 rounded-xl border border-slate-700"><p class="text-cyan-400 text-xs font-bold mb-2">메모리 안전</p><ul class="space-y-1 text-[10px] text-slate-300"><li>□ malloc 후 NULL 검사</li><li>□ free 또는 책임 명시</li><li>□ 오버플로 방어, const</li></ul></div>
-            <div class="bg-slate-800/40 p-4 rounded-xl border border-slate-700"><p class="text-amber-400 text-xs font-bold mb-2">스타일</p><ul class="space-y-1 text-[10px] text-slate-300"><li>□ 탭 들여쓰기, 상단 선언</li><li>□ sbs_ 접두사 snake_case</li><li>□ 경고 0 (-Werror)</li></ul></div>
-            <div class="bg-slate-800/40 p-4 rounded-xl border border-slate-700"><p class="text-amber-400 text-xs font-bold mb-2">중복/재사용</p><ul class="space-y-1 text-[10px] text-slate-300"><li>□ 작은 함수 재사용</li><li>□ isalnum→isalpha+isdigit</li><li>□ 매직 넘버 줄이기</li></ul></div>
+          <h3 class="text-2xl md:text-3xl font-bold text-white mb-4 border-b border-slate-800 pb-3">2단계 전략 — 세고, 자른다</h3>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="bg-slate-800/40 p-5 rounded-xl border border-cyan-500/20">
+              <p class="text-cyan-300 text-sm font-bold mb-2">1차: 단어 세기</p>
+              <p class="text-slate-400 text-[11px]">배열을 malloc하려면 단어 개수를 먼저 알아야 한다. <code class="text-cyan-300">count_words</code>로 한 번 훑어 개수 결정.</p>
+            </div>
+            <div class="bg-slate-800/40 p-5 rounded-xl border border-amber-500/20">
+              <p class="text-amber-300 text-sm font-bold mb-2">2차: 잘라 복사</p>
+              <p class="text-slate-400 text-[11px]">단어마다 <code class="text-cyan-300">sbs_substr</code>(11차시)로 잘라 새 메모리에 복사. 바퀴를 다시 만들지 않는다.</p>
+            </div>
           </div>
+          <div class="mt-4 bg-slate-950 p-3 rounded-xl border border-slate-700"><p class="text-slate-300 text-[11px] text-center">malloc 크기 = <code class="text-amber-300">sizeof(char *) * (단어 수 + 1)</code> &nbsp; ← +1은 마지막 NULL 자리</p></div>
         </div>
-        <div class="flex justify-between items-center text-xs text-slate-500 border-t border-slate-800/80 pt-4"><span>Review Checklist</span><span>Session 16</span></div>
+        <div class="flex justify-between items-center text-xs text-slate-500 border-t border-slate-800/80 pt-4"><span>Two-Pass</span><span>Session 16</span></div>
       </div>
 
-      <!-- 08 review etiquette -->
+      <!-- 08 split code -->
       <div id="slide8" class="bg-slate-900 w-full max-w-5xl aspect-[16/9] rounded-3xl p-8 md:p-12 shadow-2xl border border-slate-800 flex flex-col justify-between hidden">
-        <div class="flex justify-between items-start"><span class="text-cyan-400 font-bold tracking-wider text-sm uppercase">Slide 08 / Etiquette</span><span class="text-slate-500 text-sm">16차시: libsbs 종합 프로젝트</span></div>
+        <div class="flex justify-between items-start"><span class="text-cyan-400 font-bold tracking-wider text-sm uppercase">Slide 08 / Code</span><span class="text-slate-500 text-sm">16차시: 미니셸</span></div>
         <div class="my-auto">
-          <h3 class="text-2xl md:text-3xl font-bold text-white mb-4 border-b border-slate-800 pb-3">리뷰 코멘트 예절</h3>
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div class="space-y-2">
-              <div class="bg-slate-800/40 p-3 rounded-xl border border-slate-700"><p class="text-slate-300 text-[11px]">① 코드를 리뷰 (사람 X)</p></div>
-              <div class="bg-slate-800/40 p-3 rounded-xl border border-slate-700"><p class="text-slate-300 text-[11px]">② 질문형: "왜 이렇게 했나요?"</p></div>
-              <div class="bg-slate-800/40 p-3 rounded-xl border border-slate-700"><p class="text-slate-300 text-[11px]">③ 좋은 점도 언급</p></div>
-              <div class="bg-slate-800/40 p-3 rounded-xl border border-slate-700"><p class="text-slate-300 text-[11px]">④ 구체적으로 (줄·함수·이유)</p></div>
-              <div class="bg-slate-800/40 p-3 rounded-xl border border-slate-700"><p class="text-slate-300 text-[11px]">⑤ 비난 대신 제안</p></div>
-            </div>
-            <div class="bg-slate-950 p-4 rounded-xl border border-slate-700 self-center"><p class="text-cyan-400 text-[10px] font-bold mb-2">[sbs_strdup.c] 예시</p><p class="text-emerald-300 text-[10px] mb-1">✓ malloc NULL 검사 좋아요</p><p class="text-amber-300 text-[10px] mb-1">? len+1 이유를 주석으로?</p><p class="text-cyan-300 text-[10px]">→ sbs_strlen 재사용 제안</p></div>
-          </div>
+          <h3 class="text-2xl md:text-3xl font-bold text-white mb-4 border-b border-slate-800 pb-3">sbs_split 핵심 코드</h3>
+          <pre class="bg-slate-950 text-slate-200 p-4 rounded-xl text-[10px] leading-relaxed border border-slate-700"><code><span class="text-cyan-300">char</span> **sbs_split(<span class="text-cyan-300">const char</span> *s, <span class="text-cyan-300">char</span> c)
+{
+    words = count_words(s, c);
+    arr = malloc(<span class="text-cyan-300">sizeof</span>(<span class="text-cyan-300">char</span> *) * (words + <span class="text-amber-300">1</span>));   <span class="text-rose-400">// +1 = NULL 자리</span>
+    <span class="text-amber-300">if</span> (arr == NULL) <span class="text-amber-300">return</span> (NULL);
+    i = <span class="text-amber-300">0</span>; k = <span class="text-amber-300">0</span>;
+    <span class="text-amber-300">while</span> (k &lt; words) {
+        <span class="text-amber-300">while</span> (s[i] == c) i++;              <span class="text-rose-400">// 구분자 건너뛰기</span>
+        start = i;
+        <span class="text-amber-300">while</span> (s[i] &amp;&amp; s[i] != c) i++;      <span class="text-rose-400">// 단어 끝 찾기</span>
+        arr[k] = sbs_substr(s, start, i - start);  <span class="text-rose-400">// 11차시 재사용!</span>
+        k++;
+    }
+    arr[k] = NULL;                          <span class="text-rose-400">// 끝 표시</span>
+    <span class="text-amber-300">return</span> (arr);
+}</code></pre>
         </div>
-        <div class="flex justify-between items-center text-xs text-slate-500 border-t border-slate-800/80 pt-4"><span>Review Etiquette</span><span>Session 16</span></div>
+        <div class="flex justify-between items-center text-xs text-slate-500 border-t border-slate-800/80 pt-4"><span>split code</span><span>Session 16</span></div>
       </div>
 
-      <!-- 09 reuse map -->
+      <!-- 09 free_split order -->
       <div id="slide9" class="bg-slate-900 w-full max-w-5xl aspect-[16/9] rounded-3xl p-8 md:p-12 shadow-2xl border border-slate-800 flex flex-col justify-between hidden">
-        <div class="flex justify-between items-start"><span class="text-cyan-400 font-bold tracking-wider text-sm uppercase">Slide 09 / Reuse</span><span class="text-slate-500 text-sm">16차시: libsbs 종합 프로젝트</span></div>
+        <div class="flex justify-between items-start"><span class="text-cyan-400 font-bold tracking-wider text-sm uppercase">Slide 09 / Free</span><span class="text-slate-500 text-sm">16차시: 미니셸</span></div>
         <div class="my-auto">
-          <h3 class="text-2xl md:text-3xl font-bold text-white mb-4 border-b border-slate-800 pb-3">함수 재사용 관계</h3>
+          <h3 class="text-2xl md:text-3xl font-bold text-white mb-4 border-b border-slate-800 pb-3">char ** 해제 — 순서가 생명</h3>
           <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
-              <pre class="bg-slate-950 text-slate-200 p-4 rounded-xl text-[11px] leading-relaxed border border-slate-700"><code>isalnum  → isalpha + isdigit
-bzero    → memset
-calloc   → memset
-strlcpy  → strlen
-strlcat  → strlen
-strdup   → strlen</code></pre>
+              <pre class="bg-slate-950 text-slate-200 p-4 rounded-xl text-[11px] leading-relaxed border border-slate-700"><code> arr ─▶ ┌───────┐
+        │  •────┼─▶ "echo"  ① free
+        │  •────┼─▶ "hello" ① free
+        │  •────┼─▶ "world" ① free
+        │ NULL  │
+        └───────┘  ② free(arr)</code></pre>
             </div>
-            <div class="bg-cyan-950/30 p-5 rounded-xl border border-cyan-500/20 self-center"><p class="text-cyan-300 text-sm font-bold mb-2">작은 함수를 엮는다</p><p class="text-slate-400 text-xs">큰 함수가 이미 만든 작은 함수를 호출하면 코드가 짧고 일관됩니다. 라이브러리 설계의 핵심 감각.</p></div>
+            <div class="space-y-3">
+              <div class="bg-rose-950/20 p-4 rounded-xl border border-rose-500/20"><p class="text-rose-400 text-xs font-semibold mb-1">배열을 먼저 free하면?</p><p class="text-slate-400 text-[11px]">안에 있던 단어들의 주소를 잃어 영영 해제 못 함 → 메모리 누수.</p></div>
+              <div class="bg-emerald-950/20 p-4 rounded-xl border border-emerald-500/20"><p class="text-emerald-400 text-xs font-semibold mb-1">올바른 순서</p><p class="text-slate-400 text-[11px]">안쪽 단어부터, 바깥 배열은 마지막. NULL을 넣어도 안전하게.</p></div>
+            </div>
           </div>
         </div>
-        <div class="flex justify-between items-center text-xs text-slate-500 border-t border-slate-800/80 pt-4"><span>Function Reuse</span><span>Session 16</span></div>
+        <div class="flex justify-between items-center text-xs text-slate-500 border-t border-slate-800/80 pt-4"><span>Free Order</span><span>Session 16</span></div>
       </div>
 
-      <!-- 10 grade -->
+      <!-- 10 builtins -->
       <div id="slide10" class="bg-slate-900 w-full max-w-5xl aspect-[16/9] rounded-3xl p-8 md:p-12 shadow-2xl border border-slate-800 flex flex-col justify-between hidden">
-        <div class="flex justify-between items-start"><span class="text-cyan-400 font-bold tracking-wider text-sm uppercase">Slide 10 / grade.sh</span><span class="text-slate-500 text-sm">16차시: libsbs 종합 프로젝트</span></div>
+        <div class="flex justify-between items-start"><span class="text-cyan-400 font-bold tracking-wider text-sm uppercase">Slide 10 / Builtins</span><span class="text-slate-500 text-sm">16차시: 미니셸</span></div>
         <div class="my-auto">
-          <h3 class="text-2xl md:text-3xl font-bold text-white mb-4 border-b border-slate-800 pb-3">종합 채점</h3>
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-              <pre class="bg-slate-950 text-slate-200 p-4 rounded-xl text-[11px] leading-relaxed border border-slate-700"><code><span class="text-emerald-300">$</span> bash grade.sh
-=== 16차시 종합 채점 ===
-<span class="text-emerald-300">✓ 파일 구성 (24개)</span>
-<span class="text-emerald-300">✓ make → libsbs.a 빌드</span>
-<span class="text-emerald-300">✓ 24개 함수 통합 (ALL_OK)</span>
-<span class="text-emerald-300">✓ make re / fclean</span>
-결과: 4 / 4 통과
-<span class="text-amber-300">🎉 libsbs 완성!</span></code></pre>
-            </div>
-            <div class="bg-slate-800/40 p-4 rounded-xl border border-slate-700 self-center"><p class="text-amber-400 text-xs font-semibold mb-2">4가지 검사</p><ol class="space-y-1 text-[10px] text-slate-300"><li>① 24개 파일 + 헤더</li><li>② make 경고 없이 빌드</li><li>③ 링크 + 통합 동작</li><li>④ re/fclean 규칙</li></ol></div>
-          </div>
-        </div>
-        <div class="flex justify-between items-center text-xs text-slate-500 border-t border-slate-800/80 pt-4"><span>Final Grade</span><span>Session 16</span></div>
-      </div>
-
-      <!-- 11 practice 1-2 -->
-      <div id="slide11" class="bg-slate-900 w-full max-w-5xl aspect-[16/9] rounded-3xl p-8 md:p-12 shadow-2xl border border-slate-800 flex flex-col justify-between hidden">
-        <div class="flex justify-between items-start"><span class="text-cyan-400 font-bold tracking-wider text-sm uppercase">Slide 11 / Practice 1-2</span><span class="text-slate-500 text-sm">16차시: libsbs 종합 프로젝트</span></div>
-        <div class="my-auto">
-          <h3 class="text-2xl md:text-3xl font-bold text-white mb-4 border-b border-slate-800 pb-3">실습 ①② — 통합 &amp; 빌드</h3>
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div><span class="text-cyan-400 text-xs font-bold block mb-2">① 함수 통합</span><pre class="bg-slate-950 text-slate-200 p-3 rounded-xl text-[11px] leading-relaxed border border-slate-700"><code>$ ls sbs_*.c | wc -l
-24
-<span class="text-slate-500"># libsbs.h에 24개 선언</span></code></pre></div>
-            <div><span class="text-cyan-400 text-xs font-bold block mb-2">② 통합 Makefile</span><pre class="bg-slate-950 text-slate-200 p-3 rounded-xl text-[11px] leading-relaxed border border-slate-700"><code>$ make
-$ ar t libsbs.a | wc -l
-24</code></pre></div>
-          </div>
-        </div>
-        <div class="flex justify-between items-center text-xs text-slate-500 border-t border-slate-800/80 pt-4"><span>Practice 1-2</span><span>Session 16</span></div>
-      </div>
-
-      <!-- 12 practice 3-4 -->
-      <div id="slide12" class="bg-slate-900 w-full max-w-5xl aspect-[16/9] rounded-3xl p-8 md:p-12 shadow-2xl border border-slate-800 flex flex-col justify-between hidden">
-        <div class="flex justify-between items-start"><span class="text-cyan-400 font-bold tracking-wider text-sm uppercase">Slide 12 / Practice 3-4</span><span class="text-slate-500 text-sm">16차시: libsbs 종합 프로젝트</span></div>
-        <div class="my-auto">
-          <h3 class="text-2xl md:text-3xl font-bold text-white mb-4 border-b border-slate-800 pb-3">실습 ③④ — 통합 테스트 &amp; 코드 리뷰</h3>
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div><span class="text-cyan-400 text-xs font-bold block mb-2">③ 통합 테스트</span><pre class="bg-slate-950 text-slate-200 p-3 rounded-xl text-[11px] leading-relaxed border border-slate-700"><code>$ cc tests/test_all.c \
-   -L. -lsbs -o run
-$ ./run
-ALL_OK</code></pre></div>
-            <div><span class="text-cyan-400 text-xs font-bold block mb-2">④ 코드 리뷰</span><div class="bg-slate-950 p-3 rounded-xl border border-slate-700 text-[10px] text-slate-300"><p>1. 동료 함수 1~2개 읽기</p><p>2. CODE_REVIEW.md 체크</p><p>3. 코멘트 작성 (질문형)</p><p>4. 피드백으로 개선</p></div></div>
-          </div>
-        </div>
-        <div class="flex justify-between items-center text-xs text-slate-500 border-t border-slate-800/80 pt-4"><span>Practice 3-4</span><span>Session 16</span></div>
-      </div>
-
-      <!-- 13 pitfalls -->
-      <div id="slide13" class="bg-slate-900 w-full max-w-5xl aspect-[16/9] rounded-3xl p-8 md:p-12 shadow-2xl border border-slate-800 flex flex-col justify-between hidden">
-        <div class="flex justify-between items-start"><span class="text-cyan-400 font-bold tracking-wider text-sm uppercase">Slide 13 / Pitfalls</span><span class="text-slate-500 text-sm">16차시: libsbs 종합 프로젝트</span></div>
-        <div class="my-auto">
-          <h3 class="text-2xl md:text-3xl font-bold text-white mb-4 border-b border-slate-800 pb-3">통합 시 자주 하는 실수</h3>
+          <h3 class="text-2xl md:text-3xl font-bold text-white mb-4 border-b border-slate-800 pb-3">내장 명령 — 전부 libsbs 조합</h3>
           <div class="bg-slate-950 rounded-xl border border-slate-700 overflow-hidden">
             <table class="w-full text-xs">
-              <thead><tr class="border-b border-slate-700 bg-slate-800/60"><th class="text-left px-4 py-2 text-rose-400">증상</th><th class="text-left px-4 py-2 text-emerald-400">원인 / 해결</th></tr></thead>
+              <thead><tr class="border-b border-slate-700 bg-slate-800/60"><th class="text-left px-4 py-2 text-cyan-400">명령</th><th class="text-left px-4 py-2 text-amber-400">동작</th><th class="text-left px-4 py-2 text-amber-400">쓰는 함수</th></tr></thead>
               <tbody class="divide-y divide-slate-800">
-                <tr><td class="px-4 py-2 text-slate-300">ar t가 24개 미만</td><td class="px-4 py-2 text-slate-400">SRCS에 빠진 파일</td></tr>
-                <tr><td class="px-4 py-2 text-slate-300">통합 테스트 FAIL</td><td class="px-4 py-2 text-slate-400">해당 함수 -v로 점검</td></tr>
-                <tr><td class="px-4 py-2 text-slate-300">redefinition</td><td class="px-4 py-2 text-slate-400">같은 함수 중복 정의</td></tr>
-                <tr><td class="px-4 py-2 text-slate-300">make 경고</td><td class="px-4 py-2 text-slate-400">개별 차시 -Werror 통과 확인</td></tr>
+                <tr><td class="px-4 py-2 text-slate-300">echo</td><td class="px-4 py-2 text-slate-400">인자를 공백으로 이어 출력</td><td class="px-4 py-2 text-slate-400 text-[11px]">(인자 순회)</td></tr>
+                <tr><td class="px-4 py-2 text-slate-300">upper</td><td class="px-4 py-2 text-slate-400">대문자로 출력</td><td class="px-4 py-2 text-slate-400 text-[11px]">9차시 sbs_toupper</td></tr>
+                <tr><td class="px-4 py-2 text-slate-300">len</td><td class="px-4 py-2 text-slate-400">각 인자의 길이</td><td class="px-4 py-2 text-slate-400 text-[11px]">12차시 sbs_strlen</td></tr>
+                <tr><td class="px-4 py-2 text-slate-300">help</td><td class="px-4 py-2 text-slate-400">명령 목록</td><td class="px-4 py-2 text-slate-400 text-[11px]">—</td></tr>
+                <tr><td class="px-4 py-2 text-slate-300">exit</td><td class="px-4 py-2 text-slate-400">셸 종료</td><td class="px-4 py-2 text-slate-400 text-[11px]">12차시 sbs_strcmp</td></tr>
               </tbody>
             </table>
           </div>
+          <div class="mt-4 bg-amber-950/20 p-3 rounded-xl border border-amber-500/20"><p class="text-amber-300 text-xs font-semibold text-center">ls·cat 같은 외부 프로그램은 실행하지 않는다 (fork/execve는 다음 단계).</p></div>
         </div>
-        <div class="flex justify-between items-center text-xs text-slate-500 border-t border-slate-800/80 pt-4"><span>Common Pitfalls</span><span>Session 16</span></div>
+        <div class="flex justify-between items-center text-xs text-slate-500 border-t border-slate-800/80 pt-4"><span>Builtins</span><span>Session 16</span></div>
       </div>
 
-      <!-- 14 summary -->
+      <!-- 11 dispatch + NULL trap -->
+      <div id="slide11" class="bg-slate-900 w-full max-w-5xl aspect-[16/9] rounded-3xl p-8 md:p-12 shadow-2xl border border-slate-800 flex flex-col justify-between hidden">
+        <div class="flex justify-between items-start"><span class="text-cyan-400 font-bold tracking-wider text-sm uppercase">Slide 11 / Dispatch</span><span class="text-slate-500 text-sm">16차시: 미니셸</span></div>
+        <div class="my-auto">
+          <h3 class="text-2xl md:text-3xl font-bold text-white mb-4 border-b border-slate-800 pb-3">run_command — 이름 보고 갈래 정하기</h3>
+          <pre class="bg-slate-950 text-slate-200 p-4 rounded-xl text-[10px] leading-relaxed border border-slate-700"><code><span class="text-amber-300">if</span> (args[<span class="text-amber-300">0</span>] == NULL)        <span class="text-amber-300">return</span> (<span class="text-amber-300">0</span>);   <span class="text-rose-400">// 빈 줄 먼저! NULL 역참조 방지</span>
+<span class="text-amber-300">if</span> (sbs_strcmp(args[<span class="text-amber-300">0</span>], <span class="text-emerald-300">"exit"</span>) == <span class="text-amber-300">0</span>) <span class="text-amber-300">return</span> (<span class="text-amber-300">1</span>);  <span class="text-rose-400">// 종료 신호</span>
+<span class="text-amber-300">if</span> (sbs_strcmp(args[<span class="text-amber-300">0</span>], <span class="text-emerald-300">"echo"</span>) == <span class="text-amber-300">0</span>)  builtin_echo(args);
+<span class="text-amber-300">else if</span> (sbs_strcmp(args[<span class="text-amber-300">0</span>], <span class="text-emerald-300">"upper"</span>) == <span class="text-amber-300">0</span>) builtin_upper(args);
+<span class="text-amber-300">else if</span> (sbs_strcmp(args[<span class="text-amber-300">0</span>], <span class="text-emerald-300">"len"</span>) == <span class="text-amber-300">0</span>)   builtin_len(args);
+<span class="text-amber-300">else if</span> (sbs_strcmp(args[<span class="text-amber-300">0</span>], <span class="text-emerald-300">"help"</span>) == <span class="text-amber-300">0</span>)  builtin_help();
+<span class="text-amber-300">else</span>  printf(<span class="text-emerald-300">"minishell: %s: command not found\n"</span>, args[<span class="text-amber-300">0</span>]);</code></pre>
+          <div class="mt-4 bg-rose-950/20 p-3 rounded-xl border border-rose-500/20"><p class="text-rose-400 text-xs font-semibold text-center">함정: args[0]==NULL을 안 보고 strcmp하면 빈 줄에서 크래시 (13차시 NULL 역참조)</p></div>
+        </div>
+        <div class="flex justify-between items-center text-xs text-slate-500 border-t border-slate-800/80 pt-4"><span>Dispatch</span><span>Session 16</span></div>
+      </div>
+
+      <!-- 12 main loop -->
+      <div id="slide12" class="bg-slate-900 w-full max-w-5xl aspect-[16/9] rounded-3xl p-8 md:p-12 shadow-2xl border border-slate-800 flex flex-col justify-between hidden">
+        <div class="flex justify-between items-start"><span class="text-cyan-400 font-bold tracking-wider text-sm uppercase">Slide 12 / main</span><span class="text-slate-500 text-sm">16차시: 미니셸</span></div>
+        <div class="my-auto">
+          <h3 class="text-2xl md:text-3xl font-bold text-white mb-4 border-b border-slate-800 pb-3">메인 루프 — 15차시 껍데기 + 3줄</h3>
+          <pre class="bg-slate-950 text-slate-200 p-4 rounded-xl text-[10px] leading-relaxed border border-slate-700"><code><span class="text-amber-300">while</span> (!done) {
+    printf(<span class="text-emerald-300">"minishell$ "</span>); fflush(stdout);      <span class="text-rose-400">// 15차시</span>
+    <span class="text-amber-300">if</span> (fgets(line, BUF_SIZE, stdin) == NULL) <span class="text-amber-300">break</span>;  <span class="text-rose-400">// Ctrl+D</span>
+    strip_newline(line);                          <span class="text-rose-400">// sbs_strlen</span>
+    args = sbs_split(line, <span class="text-emerald-300">' '</span>);              <span class="text-cyan-300">// + 쪼개기</span>
+    <span class="text-amber-300">if</span> (args == NULL) <span class="text-amber-300">break</span>;
+    done = run_command(args);                     <span class="text-cyan-300">// + 판별·실행</span>
+    sbs_free_split(args);                         <span class="text-cyan-300">// + 해제(누수 방지!)</span>
+}</code></pre>
+          <div class="mt-4 bg-cyan-950/30 p-3 rounded-xl border border-cyan-500/20"><p class="text-cyan-300 text-xs font-semibold text-center">뼈대는 15차시 그대로. 늘어난 건 split → run_command → free_split 딱 세 줄.</p></div>
+        </div>
+        <div class="flex justify-between items-center text-xs text-slate-500 border-t border-slate-800/80 pt-4"><span>main loop</span><span>Session 16</span></div>
+      </div>
+
+      <!-- 13 Makefile / link -->
+      <div id="slide13" class="bg-slate-900 w-full max-w-5xl aspect-[16/9] rounded-3xl p-8 md:p-12 shadow-2xl border border-slate-800 flex flex-col justify-between hidden">
+        <div class="flex justify-between items-start"><span class="text-cyan-400 font-bold tracking-wider text-sm uppercase">Slide 13 / Build</span><span class="text-slate-500 text-sm">16차시: 미니셸</span></div>
+        <div class="my-auto">
+          <h3 class="text-2xl md:text-3xl font-bold text-white mb-4 border-b border-slate-800 pb-3">빌드 — libsbs.a를 링크</h3>
+          <pre class="bg-slate-950 text-slate-200 p-4 rounded-xl text-[11px] leading-relaxed border border-slate-700"><code>SRCS = sbs_isalpha.c ... sbs_atoi.c \
+       sbs_split.c sbs_free_split.c    <span class="text-rose-400"># 오늘 추가</span>
+
+$(MINISHELL): minishell.o $(NAME)
+	$(CC) $(CFLAGS) minishell.o -L. -lsbs -o $(MINISHELL)</code></pre>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+            <div class="bg-rose-950/20 p-3 rounded-xl border border-rose-500/20"><p class="text-rose-400 text-[11px] font-semibold">minishell.c는 SRCS에 넣지 않는다</p><p class="text-slate-400 text-[10px] mt-1">main이 있으니 라이브러리가 아니라 프로그램. 넣으면 multiple definition of main.</p></div>
+            <div class="bg-slate-800/40 p-3 rounded-xl border border-slate-700"><p class="text-cyan-300 text-[11px] font-semibold">-L. -lsbs</p><p class="text-slate-400 text-[10px] mt-1">현재 폴더의 libsbs.a 링크. 라이브러리는 소스 뒤에.</p></div>
+          </div>
+        </div>
+        <div class="flex justify-between items-center text-xs text-slate-500 border-t border-slate-800/80 pt-4"><span>Build &amp; Link</span><span>Session 16</span></div>
+      </div>
+
+      <!-- 14 run demo -->
       <div id="slide14" class="bg-slate-900 w-full max-w-5xl aspect-[16/9] rounded-3xl p-8 md:p-12 shadow-2xl border border-slate-800 flex flex-col justify-between hidden">
-        <div class="flex justify-between items-start"><span class="text-cyan-400 font-bold tracking-wider text-sm uppercase">Slide 14 / Summary</span><span class="text-slate-500 text-sm">16차시: libsbs 종합 프로젝트</span></div>
+        <div class="flex justify-between items-start"><span class="text-cyan-400 font-bold tracking-wider text-sm uppercase">Slide 14 / Run</span><span class="text-slate-500 text-sm">16차시: 미니셸</span></div>
         <div class="my-auto">
-          <h3 class="text-2xl md:text-3xl font-bold text-white mb-5 border-b border-slate-800 pb-3">16차시 핵심 정리</h3>
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
-            <div class="space-y-2.5">
-              <div class="flex gap-3 items-start p-3 bg-slate-800/30 rounded-xl"><span class="bg-cyan-600 text-white text-sm font-black w-7 h-7 rounded-full flex items-center justify-center shrink-0">1</span><div><p class="text-white text-sm font-semibold">24개 함수를 한 폴더로 통합</p></div></div>
-              <div class="flex gap-3 items-start p-3 bg-slate-800/30 rounded-xl"><span class="bg-cyan-600 text-white text-sm font-black w-7 h-7 rounded-full flex items-center justify-center shrink-0">2</span><div><p class="text-white text-sm font-semibold">libsbs.h에 전체 프로토타입</p></div></div>
-              <div class="flex gap-3 items-start p-3 bg-slate-800/30 rounded-xl"><span class="bg-cyan-600 text-white text-sm font-black w-7 h-7 rounded-full flex items-center justify-center shrink-0">3</span><div><p class="text-white text-sm font-semibold">통합 Makefile → libsbs.a</p></div></div>
-            </div>
-            <div class="space-y-2.5">
-              <div class="flex gap-3 items-start p-3 bg-slate-800/30 rounded-xl"><span class="bg-amber-500 text-white text-sm font-black w-7 h-7 rounded-full flex items-center justify-center shrink-0">4</span><div><p class="text-white text-sm font-semibold">코드 리뷰 4관점 + 예절</p></div></div>
-              <div class="flex gap-3 items-start p-3 bg-slate-800/30 rounded-xl"><span class="bg-amber-500 text-white text-sm font-black w-7 h-7 rounded-full flex items-center justify-center shrink-0">5</span><div><p class="text-white text-sm font-semibold">통합 테스트로 24개 동시 검증</p></div></div>
-              <div class="bg-amber-950/30 p-3 rounded-xl border border-amber-500/20"><p class="text-amber-300 text-xs font-semibold">과정 완료 🎓</p><p class="text-slate-400 text-[10px] mt-1">9~16차시 libsbs 구현 수료</p></div>
-            </div>
-          </div>
+          <h3 class="text-2xl md:text-3xl font-bold text-white mb-4 border-b border-slate-800 pb-3">실행해보기</h3>
+          <pre class="bg-slate-950 text-emerald-200 p-4 rounded-xl text-[11px] leading-relaxed border border-slate-700"><code><span class="text-slate-500">$ make minishell &amp;&amp; ./minishell</span>
+minishell$ echo hello world
+hello world
+minishell$ upper abc def
+ABC DEF
+minishell$ len hello
+hello: 5
+minishell$ nosuch
+minishell: nosuch: command not found
+minishell$ exit
+bye</code></pre>
+          <div class="mt-4 bg-amber-950/20 p-3 rounded-xl border border-amber-500/20"><p class="text-amber-300 text-xs font-semibold text-center">확인: Ctrl+D로도 종료되는가? 그냥 Enter(빈 줄)를 쳐도 안 죽는가?</p></div>
         </div>
-        <div class="flex justify-between items-center text-xs text-slate-500 border-t border-slate-800/80 pt-4"><span>Session 16 — Key Takeaways</span><span>Session 16</span></div>
+        <div class="flex justify-between items-center text-xs text-slate-500 border-t border-slate-800/80 pt-4"><span>Run Demo</span><span>Session 16</span></div>
       </div>
 
-      <!-- 15 course wrap -->
+      <!-- 15 grading + journey -->
       <div id="slide15" class="bg-slate-900 w-full max-w-5xl aspect-[16/9] rounded-3xl p-8 md:p-12 shadow-2xl border border-slate-800 flex flex-col justify-between hidden">
-        <div class="flex justify-between items-start"><span class="text-cyan-400 font-bold tracking-wider text-sm uppercase">Slide 15 / Course Wrap</span><span class="text-slate-500 text-sm">16차시: libsbs 종합 프로젝트</span></div>
+        <div class="flex justify-between items-start"><span class="text-cyan-400 font-bold tracking-wider text-sm uppercase">Slide 15 / Grade</span><span class="text-slate-500 text-sm">16차시: 미니셸</span></div>
         <div class="my-auto">
-          <h3 class="text-2xl md:text-3xl font-bold text-white mb-4 border-b border-slate-800 pb-3">16차시 여정 돌아보기</h3>
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div class="bg-slate-800/40 p-4 rounded-xl border border-slate-700">
-              <p class="text-cyan-400 text-xs font-bold mb-2">1~8차시 — 기초</p>
-              <p class="text-slate-400 text-[10px]">환경 세팅 · 자료형 · 제어문 · 함수/재귀 · 포인터 · 배열 · 문자열 · 구조체</p>
-            </div>
-            <div class="bg-slate-800/40 p-4 rounded-xl border border-slate-700">
-              <p class="text-amber-400 text-xs font-bold mb-2">9~16차시 — libsbs 구현</p>
-              <p class="text-slate-400 text-[10px]">문자 함수 · 메모리 함수 · 문자열 함수 · Makefile · 통합</p>
-            </div>
-          </div>
-          <div class="mt-4 bg-cyan-950/30 p-4 rounded-xl border border-cyan-500/20">
-            <p class="text-cyan-300 text-xs font-semibold mb-2">이제 여러분은</p>
-            <div class="grid grid-cols-2 gap-2 text-[10px] text-slate-300">
-              <p>✓ 표준 함수의 원리를 안다</p>
-              <p>✓ 메모리를 바이트로 다룬다</p>
-              <p>✓ 빌드 시스템을 만든다</p>
-              <p>✓ 동료 코드를 리뷰한다</p>
-            </div>
-          </div>
+          <h3 class="text-2xl md:text-3xl font-bold text-white mb-4 border-b border-slate-800 pb-3">채점 — 5 / 5</h3>
+          <pre class="bg-slate-950 text-slate-200 p-4 rounded-xl text-[11px] leading-relaxed border border-slate-700"><code>$ bash grade.sh
+<span class="text-emerald-300">✓</span> make → libsbs.a 빌드
+<span class="text-emerald-300">✓</span> sbs_split / sbs_free_split 동작 (SPLIT_OK)
+<span class="text-emerald-300">✓</span> make minishell — 빌드
+<span class="text-emerald-300">✓</span> minishell 동작 (echo/upper/len/미존재/exit)
+<span class="text-emerald-300">✓</span> clean / fclean / re 동작
+결과: 5 / 5 통과</code></pre>
+          <div class="mt-4 bg-cyan-950/30 p-3 rounded-xl border border-cyan-500/20"><p class="text-cyan-300 text-xs font-semibold text-center">9~16차시 여정: 문자 함수 → 메모리 → 동적 할당 → 문자열 → Makefile → 미니셸</p></div>
         </div>
-        <div class="flex justify-between items-center text-xs text-slate-500 border-t border-slate-800/80 pt-4"><span>Course Journey</span><span>Session 16</span></div>
+        <div class="flex justify-between items-center text-xs text-slate-500 border-t border-slate-800/80 pt-4"><span>Grading</span><span>Session 16</span></div>
       </div>
 
       <!-- 16 final -->
       <div id="slide16" class="bg-gradient-to-br from-slate-900 via-amber-950 to-slate-900 w-full max-w-5xl aspect-[16/9] rounded-3xl p-8 md:p-12 shadow-2xl border border-slate-800 flex flex-col justify-between hidden">
-        <div class="flex justify-between items-start"><span class="text-amber-400 font-bold tracking-wider text-sm uppercase">Slide 16 / Completion</span><span class="text-slate-500 text-sm">16차시: libsbs 종합 프로젝트</span></div>
+        <div class="flex justify-between items-start"><span class="text-amber-400 font-bold tracking-wider text-sm uppercase">Slide 16 / Completion</span><span class="text-slate-500 text-sm">16차시: 미니셸</span></div>
         <div class="my-auto text-center">
           <div class="text-5xl mb-4">🎓</div>
           <h3 class="text-3xl md:text-4xl font-black text-white mb-4">libsbs 과정 수료</h3>
-          <p class="text-slate-400 text-sm max-w-lg mx-auto mb-6">9차시부터 한 함수씩, 표준 라이브러리를 직접 구현했습니다. 포인터·메모리·문자열·빌드를 손으로 다루며 C의 본질에 닿았습니다.</p>
+          <p class="text-slate-400 text-sm max-w-lg mx-auto mb-6">표준 라이브러리를 직접 구현하고, 그것으로 동작하는 프로그램(미니셸)을 완성했습니다. 포인터·메모리·빌드를 손으로 겪은 사람만이 그 위의 모든 것을 두려움 없이 배웁니다.</p>
           <div class="inline-block bg-slate-800/50 px-8 py-4 rounded-2xl border border-amber-500/30">
-            <p class="text-amber-300 text-lg font-bold">24개 함수 · libsbs.a 완성</p>
-            <p class="text-slate-400 text-xs mt-1">수고하셨습니다!</p>
+            <p class="text-amber-300 text-lg font-bold">내가 만든 libsbs로 만든 셸</p>
+            <p class="text-slate-400 text-xs mt-1">다음 단계: cd/pwd · fork+execve · 수고하셨습니다!</p>
           </div>
         </div>
         <div class="flex justify-between items-center text-xs text-slate-500 border-t border-slate-800/80 pt-4"><span>Course Completion</span><span>Session 16 · Final</span></div>
